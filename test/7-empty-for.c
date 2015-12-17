@@ -1,0 +1,7 @@
+void emptyFor()
+{
+    for (;;)
+    {
+        break;
+    }
+}

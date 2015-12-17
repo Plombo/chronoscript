@@ -1,0 +1,5 @@
+*.o
+*.exe
+nv50
+ListTest*
+.sconsign.dblite

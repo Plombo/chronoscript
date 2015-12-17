@@ -157,10 +157,11 @@ public:
 
 // thin OOP wrapper around List, should have the same performance
 template <typename T>
-class CList {
+class CList
+{
+    DECLARE_RALLOC_CXX_OPERATORS(CList);
 public:
     List list;
-    DECLARE_RALLOC_CXX_OPERATORS(CList);
     inline CList() { List_Init(&list); }
     inline ~CList() { clear(); }
     inline void clear() { List_Clear(&list); }

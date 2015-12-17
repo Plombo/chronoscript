@@ -949,7 +949,7 @@ ScriptVariant *ScriptVariant_Boolean_Not(ScriptVariant *svar )
 
 }
 
-ScriptVariant *ScriptVariant_Bitwise_Not(ScriptVariant *svar )
+ScriptVariant *ScriptVariant_Bit_Not(ScriptVariant *svar )
 {
     static ScriptVariant retvar = {{.lVal=0}, VT_INTEGER};
     LONG l1;
