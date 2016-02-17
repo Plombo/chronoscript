@@ -61,6 +61,11 @@ bool RValue::isConstant()
     return false;
 }
 
+bool RValue::isLValue()
+{
+    return false;
+}
+
 bool RValue::isTemporary()
 {
     return false;
@@ -79,6 +84,11 @@ bool Undef::isUndefined()
 void Undef::printDst()
 {
     printf("(UNDEF)");
+}
+
+bool LValue::isLValue()
+{
+    return true;
 }
 
 bool Temporary::isTemporary()
@@ -580,7 +590,8 @@ void SSABuilder::prepareForRegAlloc()
         iter.value()->seqIndex = instCount++;
         if (!iter.value()->isExpression()) continue;
         Expression *expr = static_cast<Expression*>(iter.value());
-        Temporary *temp = expr->value();
+        if (!expr->value()->isTemporary()) continue;
+        Temporary *temp = static_cast<Temporary*>(expr->value());
         temp->id = tempCount++; // renumber temporaries
         temporaries.insertAfter(temp);
     }
@@ -607,7 +618,7 @@ void SSABuilder::prepareForRegAlloc()
             if (inst->op != OP_PHI) break; // only process phis, which are always at start of block
             Phi *phi = (Phi*) inst;
             // update phiDefs with phi definition
-            block->phiDefs.set(phi->value()->id);
+            block->phiDefs.set(static_cast<Temporary*>(phi->value())->id);
             foreach_list(phi->operands, RValue, srcIter)
             {
                 // update phiUses for each phi operand

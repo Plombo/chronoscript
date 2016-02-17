@@ -37,8 +37,9 @@ void dagDFS(BasicBlock *block)
         // remove variables defined at p from Live
         if (inst->isExpression())
         {
-            Temporary *temp = static_cast<Expression*>(inst)->value();
-            live.clr(temp->id);
+            LValue *dst = static_cast<Expression*>(inst)->value();
+            if (dst->isTemporary())
+                live.clr(static_cast<Temporary*>(dst)->id);
         }
 
         // add uses at p in Live
@@ -151,7 +152,9 @@ void LivenessAnalyzer::computeLiveIntervals()
             if (inst->isExpression())
             {
                 // clear dst from live set
-                liveSet.clr(static_cast<Expression*>(inst)->value()->id);
+                LValue *dst = static_cast<Expression*>(inst)->value();
+                if (dst->isTemporary())
+                    liveSet.clr(static_cast<Temporary*>(dst)->id);
             }
             
             foreach_list(inst->operands, RValue, srcIter)
@@ -215,7 +218,8 @@ void LivenessAnalyzer::coalesce()
         while (inst->op == OP_PHI)
         {
             Phi *phi = static_cast<Phi*>(inst);
-            Temporary *dst = phi->value();
+            assert(phi->value()->isTemporary());
+            Temporary *dst = static_cast<Temporary*>(phi->value());
             foreach_list(inst->operands, RValue, srcIter)
             {
                 // merge phi dst with phi src (i.e. phi move)
@@ -227,7 +231,9 @@ void LivenessAnalyzer::coalesce()
                 // merge mov dst with mov src (okay if this fails)
                 Expression *srcExpr = src->expr;
                 assert(srcExpr->op == OP_MOV);
-                mergeNodes(src, static_cast<Temporary*>(srcExpr->operands.retrieve()));
+                RValue *movSrc = srcExpr->operands.retrieve();
+                if (movSrc->isTemporary())
+                    mergeNodes(src, static_cast<Temporary*>(movSrc));
             }
             
             instNode = instNode->next;
