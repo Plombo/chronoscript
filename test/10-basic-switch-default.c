@@ -9,8 +9,8 @@ void basicSwitchDefault(int param)
         case 2:
             var = "one or two";
             break;
+        default: var = "unknown"; break;
         case 3: var = "three"; break;
-        default: var = "unknown";
     }
     return var;
 }
