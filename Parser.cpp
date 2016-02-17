@@ -270,20 +270,22 @@ void Parser::externalDecl2(BOOL variableonly)
     }
     match();
 
-#if 0 // global variables
+    // global variable declaration
+#if 0 // global variables with initializer not supported yet
     //type a =
-    if (ParserSet_First(&(pparser->theParserSet), Productions::initializer, pparser->theNextToken.theType ))
+    if (ParserSet_First(&theParserSet, Productions::initializer, theNextToken.theType))
     {
         //switch to immediate mode and allocate a variable.
-        Parser_AddInstructionViaToken(pparser, IMMEDIATE, (Token *)NULL, NULL );
-        Parser_AddInstructionViaToken(pparser, DATA, &token, NULL );
+        globalState.declareGlobalVariable(token.theSource);
+        // Parser_AddInstructionViaToken(pparser, IMMEDIATE, (Token *)NULL, NULL );
+        // Parser_AddInstructionViaToken(pparser, DATA, &token, NULL );
 
         //Get the initializer; type a = expression
-        Parser_Initializer(pparser );
+        RValue *initialValue = initializer();
         //type a = expresson;
-        if(Parser_Check(pparser, TOKEN_SEMICOLON ))
+        if(check(TOKEN_SEMICOLON))
         {
-            Parser_Match(pparser);
+            match();
 
             //Save the initializer
             Parser_AddInstructionViaToken(pparser, SAVE, &token, NULL );
@@ -306,31 +308,29 @@ void Parser::externalDecl2(BOOL variableonly)
             Parser_Error(pparser, external_decl );
         }
     }
-    // semicolon, end expression.
-    else if ( Parser_Check(pparser, TOKEN_SEMICOLON ))
-    {
-        Parser_Match(pparser);
-        //switch to immediate mode and allocate a variable.
-        Parser_AddInstructionViaToken(pparser, IMMEDIATE, (Token *)NULL, NULL );
-        Parser_AddInstructionViaToken(pparser, DATA, &token, NULL );
-
-        //Switch back to deferred mode
-        Parser_AddInstructionViaToken(pparser, DEFERRED, (Token *)NULL, NULL );
-    }
-    // still comma? there should be another identifier so allocate the variable and go for the next
-    else if ( Parser_Check(pparser, TOKEN_COMMA ))
-    {
-        Parser_Match(pparser);
-        Parser_AddInstructionViaToken(pparser, DATA, &token, NULL );
-        Parser_External_decl2(pparser, TRUE);
-    }
+    else
 #endif
+    // semicolon, end expression.
+    if (check(TOKEN_SEMICOLON))
+    {
+        match();
+        // declare the variable
+        globalState.declareGlobalVariable(token.theSource);
+    }
+    // still comma? there should be another identifier so declare the variable and go for the next
+    else if (check(TOKEN_COMMA))
+    {
+        match();
+        globalState.declareGlobalVariable(token.theSource);
+        externalDecl2(true);
+    }
+
     // not a comma, semicolon, or initializer, so must be a function declaration
-    /*else*/ if (variableonly == FALSE && ParserSet_First(&theParserSet, Productions::funcDecl, theNextToken.theType))
+    else if (!variableonly && ParserSet_First(&theParserSet, Productions::funcDecl, theNextToken.theType))
     {
         bld = new(memCtx) SSABuilder(memCtx, token.theSource);
         delete bldUtil;
-        bldUtil = new SSABuildUtil(bld);
+        bldUtil = new SSABuildUtil(bld, &globalState);
         BasicBlock *startBlock = bldUtil->createBBAfter(NULL);
         bld->sealBlock(startBlock);
         bldUtil->setCurrentBlock(startBlock);
@@ -778,6 +778,7 @@ void Parser::selectStmt()
         }
         else // standalone if
         {
+            afterIfBlock = bldUtil->createBBAfter(endIfBlock);
             if (!endIfBlock->endsWithJump())
                 afterIfBlock->addPred(endIfBlock);
             afterIfBlock->addPred(startBlock);

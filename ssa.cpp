@@ -104,6 +104,11 @@ void Temporary::printDst()
         printf("%%r%i", id);
 }
 
+void GlobalVarRef::printDst()
+{
+    printf("@%i", id);
+}
+
 Constant::Constant(ScriptVariant val)
 {
     constValue = val;
@@ -319,6 +324,15 @@ void BlockDecl::print()
     if (seqIndex >= 0) printf("%i: ", seqIndex);
     printf("%s ", opCodeNames[op]);
     block->print();
+    printf("\n");
+}
+
+void Export::print()
+{
+    if (seqIndex >= 0) printf("%i: ", seqIndex);
+    dst->printDst();
+    printf(" := %s ", opCodeNames[op]);
+    operands.retrieve()->printDst();
     printf("\n");
 }
 
@@ -675,8 +689,38 @@ Loop::Loop(BasicBlock *header, Loop *parent)
     this->parent = parent;
 }
 
-SSABuildUtil::SSABuildUtil(SSABuilder *builder)
-    : builder(builder), currentBlock(NULL)
+// returns true on success, false if name already in use
+bool GlobalState::declareGlobalVariable(const char *varName)
+{
+    if (globalVariables.findByName(varName))
+    {
+        // name already defined
+        printf("Error: global variable %s redefined\n", varName);
+        return false;
+    }
+    globalVariables.gotoLast();
+    globalVariables.insertAfter(NULL, varName);
+    printf("Declare global variable '%s'\n", varName);
+    return true;
+}
+
+// bool GlobalState::initializeGlobalVariable(const char *varName, ScriptVariant *value)
+// {
+// }
+
+GlobalVarRef *GlobalState::readGlobalVariable(const char *varName, void *memCtx)
+{
+    printf("Try to read global variable '%s'\n", varName);
+    if (globalVariables.findByName(varName))
+    {
+        return new(memCtx) GlobalVarRef(globalVariables.getIndex());
+    }
+    else
+        return NULL;
+}
+
+SSABuildUtil::SSABuildUtil(SSABuilder *builder, GlobalState *globalState)
+    : builder(builder), globalState(globalState), currentBlock(NULL)
 {
     StackedSymbolTable_Init(&symbolTable);
     currentLoop = NULL;
@@ -821,6 +865,13 @@ RValue *SSABuildUtil::mkMove(RValue *src)
     return inst->value();
 }
 
+Export *SSABuildUtil::mkExport(GlobalVarRef *dst, RValue *src)
+{
+    Export *inst = new(builder->memCtx) Export(dst, src);
+    builder->insertInstruction(inst, currentBlock);
+    return inst;
+}
+
 // starts a function call but doesn't put it in the instruction list
 FunctionCall *SSABuildUtil::startFunctionCall(const char *name)
 {
@@ -852,9 +903,21 @@ bool SSABuildUtil::writeVariable(const char *varName, RValue *value)
     char scopedName[MAX_STR_LEN * 2 + 1];
     Symbol *sym;
     bool found = StackedSymbolTable_FindSymbol(&symbolTable, varName, &sym, scopedName);
-    if (!found) return false;
-    builder->writeVariable(varName, currentBlock, value);
-    return true;
+    if (found)
+    {
+        builder->writeVariable(varName, currentBlock, value);
+        return true;
+    }
+    else
+    {
+        GlobalVarRef *global = globalState->readGlobalVariable(varName, builder->memCtx);
+        if (global)
+        {
+            mkExport(global, value);
+            return true;
+        }
+        else return false;
+    }
 }
 
 // returns an Undef if varName is invalid in current scope
@@ -863,9 +926,18 @@ RValue *SSABuildUtil::readVariable(const char *varName)
     char scopedName[MAX_STR_LEN * 2 + 1];
     Symbol *sym;
     bool found = StackedSymbolTable_FindSymbol(&symbolTable, varName, &sym, scopedName);
-    if (!found) return undef();
-    RValue *value = builder->readVariable(varName, currentBlock);
-    return value;
+    if (found)
+    {
+        RValue *value = builder->readVariable(varName, currentBlock);
+        return value;
+    }
+    else
+    {
+        // it's either a global variable or undefined
+        GlobalVarRef *global = globalState->readGlobalVariable(varName, builder->memCtx);
+        if (global) return mkMove(global);
+        else return undef();
+    }
 }
 
 void SSABuildUtil::pushScope()
@@ -905,7 +977,8 @@ int ssaMain(int argc, char **argv)
     char str[64] = {"string"};
     void *memCtx = ralloc_context(NULL);
     SSABuilder bld = SSABuilder(memCtx);
-    SSABuildUtil bldUtil = SSABuildUtil(&bld);
+    GlobalState globalState;
+    SSABuildUtil bldUtil = SSABuildUtil(&bld, &globalState);
     BasicBlock *startBlock = bld.createBBAfter(NULL);
     bld.sealBlock(startBlock);
     bldUtil.setCurrentBlock(startBlock);

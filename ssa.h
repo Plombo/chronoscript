@@ -56,6 +56,9 @@ enum OpCode
     // function call
     OP_CALL,
 
+    // write to global variable
+    OP_EXPORT,
+
     // error
     OP_ERR,
 };
@@ -97,6 +100,8 @@ static const char *opCodeNames[] = {
     "mod",
 
     "call",
+
+    "export",
 };
 
 class Instruction;
@@ -170,11 +175,13 @@ public:
     int reg; // register number; -1 if RA hasn't happened yet
 };
 
-// a global variable, defined outside of the function scope
-class GlobalVariable : public LValue
+// reference a global variable, defined outside of the function scope
+class GlobalVarRef : public LValue
 {
 public:
-    int id;
+    int id; // index of the referenced global variable
+    inline GlobalVarRef(int id) : LValue(), id(id) {}
+    virtual void printDst();
 };
 
 // an immediate value
@@ -276,6 +283,17 @@ public:
     Jump(OpCode opCode, BasicBlock *target, RValue *src0, RValue *src1);
     void print();
     bool isJump();
+};
+
+class Export : public Instruction
+{
+public:
+    GlobalVarRef *dst;
+    inline Export(GlobalVarRef *dst, RValue *src) : Instruction(OP_EXPORT), dst(dst)
+    {
+        appendOperand(src);
+    }
+    void print();
 };
 
 class BasicBlock
@@ -387,12 +405,27 @@ public:
     inline int valueId() { return nextValueId++; }
 };
 
+// state for global variables, enums, and anything else not function-local
+class GlobalState
+{
+private:
+    // name=var name, value=initial value (or NULL if uninitialized)
+    CList<ScriptVariant> globalVariables;
+public:
+    inline GlobalState() {}
+    inline ~GlobalState() {}
+    bool declareGlobalVariable(const char *varName);
+    // bool writeGlobalVariable(const char *variable, RValue *value);
+    GlobalVarRef *readGlobalVariable(const char *varName, void *memCtx);
+};
+
 class SSABuildUtil
 {
 private:
     SSABuilder *builder;
     StackedSymbolTable symbolTable;
     Loop *currentLoop;
+    GlobalState *globalState;
 
     Constant *applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *src1); // used for constant folding
 public:
@@ -400,7 +433,7 @@ public:
     CStack<BasicBlock> breakTargets;
     CStack<BasicBlock> continueTargets;
     
-    SSABuildUtil(SSABuilder *builder);
+    SSABuildUtil(SSABuilder *builder, GlobalState *globalState);
     ~SSABuildUtil();
     inline void setCurrentBlock(BasicBlock *block) { currentBlock = block; }
     
@@ -417,6 +450,7 @@ public:
     Jump *mkJump(OpCode op, BasicBlock *target, RValue *src0, RValue *src1 = NULL);
     Instruction *mkReturn(RValue *src0);
     RValue *mkMove(RValue *val);
+    Export *mkExport(GlobalVarRef *dst, RValue *src);
     
     // creates a function call instruction but doesn't put it in the instruction list yet
     FunctionCall *startFunctionCall(const char *name);

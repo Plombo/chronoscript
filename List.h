@@ -191,6 +191,7 @@ public:
     inline void clear() { List_Clear(&list); }
     inline void copyFrom(const List *src) { List_Copy(&list, src); }
     inline void copyFrom(const CList<T> *src) { List_Copy(&list, &src->list); }
+    inline int getIndex() { return List_GetIndex(&list); }
     inline void insertBefore(T *e, const char *theName) { List_InsertBefore(&list, e, theName); }
     inline void insertAfter(T *e, const char *theName = NULL) { List_InsertAfter(&list, e, theName); }
     inline void remove() { List_Remove(&list); }

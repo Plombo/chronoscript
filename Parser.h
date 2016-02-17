@@ -32,10 +32,12 @@ public:
     char currentPath[256];                 // current path info of the text
     BOOL errorFound;
     BOOL isImport;
+
     void *memCtx;
+    GlobalState globalState;
     SSABuilder *bld;
     SSABuildUtil *bldUtil;
-    
+
     Parser();
     ~Parser();
     void parseText(pp_context *pcontext, List *pIList, LPSTR scriptText,
