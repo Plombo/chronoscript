@@ -121,7 +121,7 @@ void LivenessAnalyzer::addLiveRange(Temporary *value, BasicBlock *block, int end
 
     printf("%%%i <- live range [%i(%i), %i)\n", value->id, begin, value->expr->seqIndex, end);
 
-    if (begin != end) // empty ranges are only added as hazards for fixed regs
+    if (begin != end) // empty ranges are only added as hazards for dead writes
         nodeForTemp[value->id]->livei.extend(begin, end);
 }
 
@@ -152,9 +152,15 @@ void LivenessAnalyzer::computeLiveIntervals()
             if (inst->isExpression())
             {
                 // clear dst from live set
-                LValue *dst = static_cast<Expression*>(inst)->value();
-                if (dst->isTemporary())
-                    liveSet.clr(static_cast<Temporary*>(dst)->id);
+                LValue *dstLV = static_cast<Expression*>(inst)->value();
+                if (dstLV->isTemporary())
+                {
+                    Temporary *dst = static_cast<Temporary*>(dstLV);
+                    if (liveSet.test(dst->id))
+                        liveSet.clr(dst->id);
+                    else // add empty range to dead write as a hazard
+                        nodeForTemp[dst->id]->livei.extend(inst->seqIndex, inst->seqIndex);
+                }
             }
             
             foreach_list(inst->operands, RValue, srcIter)

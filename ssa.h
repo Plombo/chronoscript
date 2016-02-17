@@ -234,7 +234,7 @@ public:
     virtual void print();
     virtual bool isExpression();
     virtual bool isTrivial();
-    inline bool isDead() { return dst->users.size() == 0; }
+    virtual bool isDead();
 };
 
 class NoOp : public Instruction
@@ -265,6 +265,7 @@ class FunctionCall : public Expression
 public:
     char *functionName;
     FunctionCall(const char *functionName, int valueId);
+    virtual bool isDead();
     virtual void print();
 };
 

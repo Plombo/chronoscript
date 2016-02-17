@@ -41,13 +41,13 @@ void doTest(char *scriptText, const char *filename)
     livenessAnalyzer.coalesce();
     livenessAnalyzer.buildInterferenceGraph();
     
-    printf("\nOrdering: ");
     InterferenceNode **ordering = MCS(livenessAnalyzer.values, livenessAnalyzer.uniqueNodes);
-    for (int i = 0; ordering[i] != NULL; i++)
-    {
-        printf("%i ", ordering[i]->id);
-    }
-    printf("\n\n");
+    // printf("\nOrdering: ");
+    // for (int i = 0; ordering[i] != NULL; i++)
+    // {
+        // printf("%i ", ordering[i]->id);
+    // }
+    // printf("\n\n");
     greedyColoring(ordering, livenessAnalyzer.uniqueNodes);
     for (int i = 0; i < livenessAnalyzer.uniqueNodes; i++)
     {

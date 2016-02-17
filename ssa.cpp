@@ -220,6 +220,11 @@ Expression::Expression(OpCode opCode, int valueId, RValue *src0, RValue *src1)
         appendOperand(src1);
 }
 
+bool Expression::isDead()
+{
+    return dst->isDead();
+}
+
 void Expression::print()
 {
     if (isDead()) printf("[dead] ");
@@ -255,6 +260,11 @@ FunctionCall::FunctionCall(const char *function, int valueId)
     : Expression(OP_CALL, valueId)
 {
     this->functionName = ralloc_strdup(this, function);
+}
+
+bool FunctionCall::isDead()
+{
+    return false;
 }
 
 void FunctionCall::print()
