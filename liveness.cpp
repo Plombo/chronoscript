@@ -37,9 +37,8 @@ void dagDFS(BasicBlock *block)
         // remove variables defined at p from Live
         if (inst->isExpression())
         {
-            LValue *dst = static_cast<Expression*>(inst)->value();
-            if (dst->isTemporary())
-                live.clr(static_cast<Temporary*>(dst)->id);
+            Temporary *dst = static_cast<Expression*>(inst)->value();
+            live.clr(dst->id);
         }
 
         // add uses at p in Live
@@ -152,15 +151,11 @@ void LivenessAnalyzer::computeLiveIntervals()
             if (inst->isExpression())
             {
                 // clear dst from live set
-                LValue *dstLV = static_cast<Expression*>(inst)->value();
-                if (dstLV->isTemporary())
-                {
-                    Temporary *dst = static_cast<Temporary*>(dstLV);
-                    if (liveSet.test(dst->id))
-                        liveSet.clr(dst->id);
-                    else // add empty range to dead write as a hazard
-                        nodeForTemp[dst->id]->livei.extend(inst->seqIndex, inst->seqIndex);
-                }
+                Temporary *dst = static_cast<Expression*>(inst)->value();
+                if (liveSet.test(dst->id))
+                    liveSet.clr(dst->id);
+                else // add empty range to dead write as a hazard
+                    nodeForTemp[dst->id]->livei.extend(inst->seqIndex, inst->seqIndex);
             }
             
             foreach_list(inst->operands, RValue, srcIter)

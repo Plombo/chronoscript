@@ -132,7 +132,6 @@ public:
     void unref(Instruction *inst);
 
     virtual bool isConstant();
-    virtual bool isLValue();
     virtual bool isTemporary();
     virtual bool isUndefined();
     virtual void printDst() = 0;
@@ -151,20 +150,13 @@ public:
     virtual void printDst();
 };
 
-// a writable value
-class LValue : public RValue
-{
-public:
-    virtual bool isLValue();
-};
-
 // a temporary, i.e. the result of an expression
-class Temporary : public LValue
+class Temporary : public RValue
 {
 public:
     int id;
     Expression *expr;
-    inline Temporary(int id, Expression *expr) : LValue(), id(id), expr(expr), reg(-1) {}
+    inline Temporary(int id, Expression *expr) : RValue(), id(id), expr(expr), reg(-1) {}
     virtual bool isTemporary();
     virtual void printDst();
     
@@ -176,11 +168,11 @@ public:
 };
 
 // reference a global variable, defined outside of the function scope
-class GlobalVarRef : public LValue
+class GlobalVarRef : public RValue
 {
 public:
     int id; // index of the referenced global variable
-    inline GlobalVarRef(int id) : LValue(), id(id) {}
+    inline GlobalVarRef(int id) : RValue(), id(id) {}
     virtual void printDst();
 };
 
@@ -233,11 +225,11 @@ public:
 class Expression : public Instruction // subclasses Phi, Constant, Expression, etc.
 {
 public:
-    LValue *dst;
+    Temporary *dst;
     bool isPhiMove; // this instruction is a move used by a phi in a successor block
 
     Expression(OpCode opCode, int valueId, RValue *src0 = NULL, RValue *src1 = NULL);
-    inline LValue *value() { return dst; }
+    inline Temporary *value() { return dst; }
     virtual void print();
     virtual bool isExpression();
     virtual bool isTrivial();

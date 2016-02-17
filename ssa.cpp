@@ -61,11 +61,6 @@ bool RValue::isConstant()
     return false;
 }
 
-bool RValue::isLValue()
-{
-    return false;
-}
-
 bool RValue::isTemporary()
 {
     return false;
@@ -84,11 +79,6 @@ bool Undef::isUndefined()
 void Undef::printDst()
 {
     printf("(UNDEF)");
-}
-
-bool LValue::isLValue()
-{
-    return true;
 }
 
 bool Temporary::isTemporary()
