@@ -1369,8 +1369,25 @@ RValue *Parser::logAndExpr2(RValue *lhs)
     if (check(TOKEN_AND_OP))
     {
         match();
+        char varName[64];
+        sprintf(varName, "&&%i", labelCount++);
+        bldUtil->declareVariable(varName);
+        bldUtil->writeVariable(varName, lhs);
+        Jump *jumpFromFirst = bldUtil->mkJump(OP_BRANCH_FALSE, NULL, lhs);
+        BasicBlock *firstBlock = bldUtil->currentBlock,
+                   *secondBlock = bldUtil->createBBAfter(firstBlock);
+        secondBlock->addPred(firstBlock);
+        bld->sealBlock(secondBlock);
+        bldUtil->currentBlock = secondBlock;
         RValue *rhs = bitOrExpr();
-        RValue *result = bldUtil->mkBinaryOp(OP_BOOL_AND, lhs, rhs);
+        bldUtil->writeVariable(varName, rhs);
+        BasicBlock *afterBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
+        jumpFromFirst->target = afterBlock;
+        afterBlock->addPred(firstBlock);
+        afterBlock->addPred(bldUtil->currentBlock);
+        bld->sealBlock(afterBlock);
+        bldUtil->currentBlock = afterBlock;
+        RValue *result = bldUtil->readVariable(varName);
         return logAndExpr2(result);
     }
     else if (ParserSet_Follow(&theParserSet, Productions::log_and_expr2, theNextToken.theType))
