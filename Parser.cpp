@@ -17,7 +17,7 @@ Parser::Parser()
     
     Stack_Init(&LabelStack);
     ParserSet_Buildup(&theParserSet);
-    LabelCount = 0;
+    labelCount = 0;
     theFieldToken.theType = END_OF_TOKENS;
     theNextToken.theType = END_OF_TOKENS;
     rewound = false;
@@ -1249,7 +1249,7 @@ RValue *Parser::condExpr()
     if (ParserSet_First(&theParserSet, Productions::log_or_expr, theNextToken.theType))
     {
         RValue *lhs = logOrExpr();
-        return lhs; //return condExpr2(lhs);
+        return condExpr2(lhs);
     }
     else
     {
@@ -1258,50 +1258,61 @@ RValue *Parser::condExpr()
     return bldUtil->undef();
 }
 
-// void Parser_Cond_expr2(Parser *pparser )
 RValue *Parser::condExpr2(RValue *lhs)
 {
-#if 0 // ternary ?: operator
-    Label falseLabel, endLabel, varName;
-    Token var;
-    TEXTPOS pos = {0, 0};
+    char varName[64];
+    sprintf(varName, "?:%i", labelCount++);
     if (check(TOKEN_CONDITIONAL))
     {
-        falseLabel = Parser_CreateLabel(pparser);
-        endLabel = Parser_CreateLabel(pparser);
-        varName = Parser_CreateLabel(pparser);
-        Token_Init(&var, TOKEN_IDENTIFIER, varName, pos, 0);
-        Parser_AddInstructionViaToken(pparser, DATA, &var, NULL );
+        match();
+        bldUtil->declareVariable(varName);
+        Jump *branch = bldUtil->mkJump(OP_BRANCH_FALSE, NULL, lhs);
 
-        Parser_Match(pparser);
-        Parser_AddInstructionViaLabel(pparser, Branch_FALSE, falseLabel, NULL );
-        Parser_Expr(pparser );
-        Parser_AddInstructionViaToken(pparser, SAVE, &var, NULL );
-        Parser_AddInstructionViaLabel(pparser, JUMP, endLabel, NULL );
-        if (Parser_Check(pparser, TOKEN_COLON ))
+        // evaluate if-true expression
+        BasicBlock *firstBlock = bldUtil->currentBlock,
+                   *trueBlock = bldUtil->createBBAfter(firstBlock);
+        trueBlock->addPred(bldUtil->currentBlock);
+        bld->sealBlock(trueBlock);
+        bldUtil->currentBlock = trueBlock;
+        RValue *trueVal = expr();
+        bldUtil->writeVariable(varName, trueVal);
+        Jump *jumpAfterTrue = bldUtil->mkJump(OP_JMP, NULL, NULL);
+        if (check(TOKEN_COLON))
         {
-            Parser_Match(pparser);
-            Parser_AddInstructionViaToken(pparser, NOOP, NULL, falseLabel );
-            Parser_Cond_expr(pparser );
-            Parser_AddInstructionViaToken(pparser, SAVE, &var, NULL );
-            Parser_AddInstructionViaToken(pparser, NOOP, NULL, endLabel );
-            Parser_AddInstructionViaToken(pparser, LOAD, &var, NULL );
+            match();
+            BasicBlock *lastTrueBlock = bldUtil->currentBlock,
+                       *falseBlock = bldUtil->createBBAfter(lastTrueBlock);
+            falseBlock->addPred(firstBlock);
+            bld->sealBlock(falseBlock);
+            branch->target = falseBlock;
+            bldUtil->currentBlock = falseBlock;
+            RValue *falseVal = condExpr();
+            bldUtil->writeVariable(varName, falseVal);
+            // assert(!(bldUtil->currentBlock->endsWithJump());
+
+            BasicBlock *afterBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
+            jumpAfterTrue->target = afterBlock;
+            afterBlock->addPred(lastTrueBlock);
+            afterBlock->addPred(bldUtil->currentBlock);
+            bld->sealBlock(afterBlock);
+            bldUtil->currentBlock = afterBlock;
+            return bldUtil->readVariable(varName);
         }
         else
         {
-            Parser_Error(pparser, cond_expr2);
+            Parser_Error(this, cond_expr2);
+            return bldUtil->undef();
         }
-        free(falseLabel);
-        free(endLabel);
-        free(varName);
     }
-    else if (ParserSet_Follow(&(pparser->theParserSet), Productions::cond_expr2, pparser->theNextToken.theType )) {}
+    else if (ParserSet_Follow(&theParserSet, Productions::cond_expr2, theNextToken.theType))
+    {
+        return lhs;
+    }
     else
     {
-        Parser_Error(pparser, cond_expr2);
+        Parser_Error(this, cond_expr2);
+        return bldUtil->undef();
     }
-#endif
-    return bldUtil->undef();
 }
 
 // void Parser_Log_or_expr(Parser *pparser )

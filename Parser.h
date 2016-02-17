@@ -24,7 +24,7 @@ public:
     Token theNextNextToken;            //The token after the next one (used for overread)
     bool rewound;                      //If true, use theNextNextToken instead of lexing another
     List  *pIList;                      //A pointer to the instruction list
-    LONG LabelCount;                   //A counter to track the number of labels
+    int labelCount;                   //A counter to track the number of labels
     Stack LabelStack;                  //A stack of labels for use in jumps
     CHAR theRetLabel[MAX_STR_LEN + 1];  //A label which holds the target of returns
     Token theFieldToken;               //A pointer to the field source token
