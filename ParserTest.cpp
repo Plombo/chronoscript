@@ -2,6 +2,8 @@
 #include "pp_parser.h"
 #include "Parser.h"
 #include "List.h"
+#include "regalloc.h"
+#include "liveness.h"
 
 void doTest(char *scriptText, const char *filename)
 {
@@ -12,8 +14,55 @@ void doTest(char *scriptText, const char *filename)
     pp_context_init(&ppContext);
     List_Init(&fakeIList);
     parser.parseText(&ppContext, &fakeIList, scriptText, 1, filename);
-    parser.bld->printInstructionList();
     pp_context_destroy(&ppContext);
+
+    printf("Instructions before processing:\n");
+    parser.bld->printInstructionList();
+    while(parser.bld->removeDeadCode());
+    parser.bld->prepareForRegAlloc();
+    printf("\nInstructions after processing:\n");
+    parser.bld->printInstructionList();
+    printf("\n%i temporaries\n\n", parser.bld->temporaries.size());
+    
+    computeLiveSets(parser.bld);
+    printf("\nLive sets:\n");
+    foreach_list(parser.bld->basicBlockList, BasicBlock, iter)
+    {
+        BasicBlock *block = iter.value();
+        printf("BB %i: in: ", block->id);
+        block->liveIn.print();
+        printf(", out:", block->id);
+        block->liveOut.print();
+        printf("\n");
+    }
+    
+    LivenessAnalyzer livenessAnalyzer(parser.bld);
+    livenessAnalyzer.computeLiveIntervals();
+    livenessAnalyzer.coalesce();
+    livenessAnalyzer.buildInterferenceGraph();
+    
+    printf("\nOrdering: ");
+    InterferenceNode **ordering = MCS(livenessAnalyzer.values, livenessAnalyzer.uniqueNodes);
+    for (int i = 0; ordering[i] != NULL; i++)
+    {
+        printf("%i ", ordering[i]->id);
+    }
+    printf("\n\n");
+    greedyColoring(ordering, livenessAnalyzer.uniqueNodes);
+    for (int i = 0; i < livenessAnalyzer.uniqueNodes; i++)
+    {
+        printf("node %i -> $%i\n", livenessAnalyzer.values[i]->id, livenessAnalyzer.values[i]->color);
+    }
+    
+    // assign registers
+    foreach_list(parser.bld->temporaries, Temporary, iter)
+    {
+        Temporary *value = iter.value();
+        value->reg = livenessAnalyzer.nodeForTemp[value->id]->color;
+    }
+
+    // print instruction list again
+    parser.bld->printInstructionList();
 }
 
 bool testFile(const char *filename)

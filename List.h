@@ -140,19 +140,43 @@ unsigned char ptrhash(void *value); // need to export that as well for unittest.
 }; // extern "C"
 extern "C++" {
 
+template <typename T> class CList;
+
 // only works on non-solid lists
 template <typename T>
 class ListIterator {
 private:
+    CList<T> *list;
     Node *current;
+    bool removed;
 public:
-    inline ListIterator(Node *node) : current(node) {}
+    inline ListIterator(CList<T> *list) : list(list), current(list->list.first), removed(false) {}
     inline Node *node() { return current; }
     inline char *name() { return current->name; }
     inline T *value() { return static_cast<T*>(current->value); }
+    inline void update(T *newValue) { current->value = newValue; }
     inline bool isFinished() { return (current == NULL); }
-    inline ListIterator<T> next() { return ListIterator<T>(current->next); }
+    //inline ListIterator<T> next() { return ListIterator<T>(current->next); }
     inline bool hasNext() { return current && current->next; }
+    inline void gotoNext()
+    {
+        // if we just removed a node, we're already on the next node
+        if (current && !removed)
+            current = current->next;
+        removed = false;
+    }
+    inline void remove()
+    {
+        assert(this->current);
+        Node *next = this->current->next,
+             *savedCurrent = list->currentNode();
+        list->setCurrent(this->current);
+        list->remove();
+        if (current != savedCurrent)
+            list->setCurrent(savedCurrent);
+        this->current = next;
+        removed = true;
+    }
 };
 
 // thin OOP wrapper around List, should have the same performance
@@ -184,14 +208,17 @@ public:
     inline Node *currentNode() { return List_GetCurrentNode(&list); }
     inline void setCurrent(Node *node) { List_SetCurrent(&list, node); }
     inline bool gotoIndex(int index) { return List_GotoIndex(&list, index); }
-    inline ListIterator<T> iterator() { return ListIterator<T>(list.first); }
+    inline ListIterator<T> iterator() { return ListIterator<T>(this); }
 };
 
 #define foreach_list(list, type, var) \
-    for(ListIterator<type> var = list.iterator(); !var.isFinished(); var = var.next())
+    for(ListIterator<type> var = list.iterator(); !var.isFinished(); var.gotoNext())
+
+#define foreach_plist(list, type, var) \
+    for(ListIterator<type> var = list->iterator(); !var.isFinished(); var.gotoNext())
 
 };
-#endif
+#endif // __cplusplus
 
 #endif
 

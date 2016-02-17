@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "ssa.h"
+#include "regalloc.h"
 
 #if SSA_MAIN
 #define ssaMain main
@@ -12,6 +13,7 @@
 // referenced by another instruction
 void RValue::ref(Instruction *inst)
 {
+    // if (isTemporary()) { printDst(); printf(" ref'd by %s\n", opCodeNames[inst->op]); }
     users.gotoLast();
     users.insertAfter(inst, NULL);
 }
@@ -24,6 +26,7 @@ void RValue::unref(Instruction *inst)
     if (users.includes(inst))
     {
         users.remove();
+        // if (isTemporary()) { printDst(); printf(" unref'd by %s\n", opCodeNames[inst->op]); }
     }
 }
 
@@ -44,6 +47,12 @@ void RValue::replaceBy(RValue *newValue)
                 break;
             }
         }
+    }
+    while(!phiRefs.isEmpty())
+    {
+        BasicBlock *refBlock = phiRefs.retrieve();
+        newValue->phiRefs.insertAfter(refBlock, NULL);
+        phiRefs.remove();
     }
 }
 
@@ -79,7 +88,10 @@ bool Temporary::isTemporary()
 
 void Temporary::printDst()
 {
-    printf("%%r%i", id);
+    if (reg >= 0)
+        printf("$%i", reg);
+    else
+        printf("%%r%i", id);
 }
 
 Constant::Constant(ScriptVariant val)
@@ -166,15 +178,26 @@ void Instruction::printOperands()
 
 void Instruction::print()
 {
+    if (seqIndex >= 0) printf("%i: ", seqIndex);
     printf("%s ", opCodeNames[op]);
     printOperands();
     printf("\n");
 }
 
-Expression::Expression(OpCode opCode, int valueId, RValue *src0, RValue *src1)
-    : Instruction(opCode)
+bool Instruction::isExpression()
 {
-    dst = new(this) Temporary(valueId);
+    return false;
+}
+
+bool Instruction::isJump()
+{
+    return false;
+}
+
+Expression::Expression(OpCode opCode, int valueId, RValue *src0, RValue *src1)
+    : Instruction(opCode), isPhiMove(false)
+{
+    dst = new(this) Temporary(valueId, this);
     //snprintf(dst->name, sizeof(dst->name), "%%r%i", valueId);
     if (src0)
         appendOperand(src0);
@@ -184,12 +207,18 @@ Expression::Expression(OpCode opCode, int valueId, RValue *src0, RValue *src1)
 
 void Expression::print()
 {
-    if (dst->users.size() == 0) printf("[dead] ");
+    if (isDead()) printf("[dead] ");
+    if (seqIndex >= 0) printf("%i: ", seqIndex);
     dst->printDst();
     printf(" := ");
     printf("%s ", opCodeNames[op]);
     printOperands();
     printf("\n");
+}
+
+bool Expression::isExpression()
+{
+    return true;
 }
 
 FunctionCall::FunctionCall(const char *function, int valueId)
@@ -200,6 +229,7 @@ FunctionCall::FunctionCall(const char *function, int valueId)
 
 void FunctionCall::print()
 {
+    if (seqIndex >= 0) printf("%i: ", seqIndex);
     dst->printDst();
     printf(" := ");
     printf("%s %s ", opCodeNames[op], functionName);
@@ -231,6 +261,11 @@ void Jump::print()
     printf("\n");
 }
 
+bool Jump::isJump()
+{
+    return true;
+}
+
 void BlockDecl::print()
 {
     printf("%s ", opCodeNames[op]);
@@ -248,7 +283,7 @@ void BasicBlock::addPred(BasicBlock *newPred)
 bool BasicBlock::endsWithJump()
 {
     Instruction *lastInstruction = static_cast<Instruction*>(end->prev->value);
-    return (lastInstruction->op == OP_JMP || lastInstruction->op == OP_RETURN);
+    return (lastInstruction->isJump());
 }
 
 void BasicBlock::printName()
@@ -266,6 +301,11 @@ void BasicBlock::print()
         if (iter.hasNext()) printf(", ");
     }
     printf(")");
+    
+    if (loop)
+    {
+        printf(" (loop %i)", loop->header->id);
+    }
 }
 
 const char *SSABuilder::getIdentString(const char *variable, BasicBlock *block)
@@ -343,28 +383,42 @@ RValue *SSABuilder::addPhiOperands(const char *variable, BasicBlock *block, Phi 
     // Determine operands from predecessors
     foreach_list(block->preds, BasicBlock, iter)
     {
-        phi->appendOperand(readVariable(variable, iter.value()));
+        BasicBlock *pred = iter.value();
+        RValue *operand = readVariable(variable, pred);
+        phi->appendOperand(operand);
+        // operand->phiRefs.insertAfter(pred); // we do this later now, after inserting phi moves
+        // operand->printDst(); printf(" phi ref from BB %i\n", pred->id);
     }
     return tryRemoveTrivialPhi(phi);
 }
 
 RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
 {
+    printf("tryRemoveTrivialPhi: "); phi->print(); 
     RValue *same = NULL;
     foreach_list(phi->operands, RValue, iter)
     {
         RValue *op = iter.value();
         if (op == same || op == phi->value())
             continue; // Unique value or self−reference
-        if (same != NULL)
+        if (same != NULL) {
+            printf("not trivial: "); same->printDst(); printf(" and "); op->printDst(); printf("\n");
             return phi->value(); // The phi merges at least two values: not trivial
+        }
         same = op;
     }
     if (same == NULL)
     {
         same = new(memCtx) Undef(); // The phi is unreachable or in the start block
     }
+    printf("trivial phi; replace with "); same->printDst(); printf("\n");
     phi->value()->replaceBy(same); // Reroute all uses of phi to same and remove phi
+    foreach_list(currentDef, RValue, iter)
+    {
+        // replace variable value with same
+        if (iter.value() == phi->value())
+            iter.update(same);
+    }
     
     // Try to recursively remove all phi users, which might have become trivial
     CList<Phi> phis;
@@ -414,6 +468,7 @@ void SSABuilder::insertInstruction(Instruction *inst, BasicBlock *bb)
 {
     instructionList.setCurrent(bb->end);
     instructionList.insertBefore(inst, NULL);
+    inst->block = bb;
 }
 
 // insert instruction at start of basic block
@@ -421,6 +476,7 @@ void SSABuilder::insertInstructionAtStart(Instruction *inst, BasicBlock *bb)
 {
     instructionList.setCurrent(bb->start);
     instructionList.insertAfter(inst, NULL);
+    inst->block = bb;
 }
 
 // insert instruction at end of basic block
@@ -441,32 +497,135 @@ void SSABuilder::printInstructionList()
     }
 }
 
-// predecessor: the basic block right before the loop
-Loop::Loop(SSABuilder *bld, BasicBlock *predecessor)
+// returns true if dead code was removed
+// XXX: this would be more efficient with an iterator that lets us delete members
+bool SSABuilder::removeDeadCode()
 {
-    // create basic blocks
-    loopEntry = bld->createBBAfter(predecessor);
-    loopHeader = bld->createBBAfter(loopEntry);
-    bodyEntry = bld->createBBAfter(loopHeader);
-    bodyExit = bld->createBBAfter(bodyEntry);
-    loopExit = bld->createBBAfter(bodyExit);
-    
-    // set predecessors
-    loopEntry->addPred(predecessor);
-    loopHeader->addPred(loopEntry);
-    loopHeader->addPred(bodyExit);
-    bodyEntry->addPred(loopHeader);
-    loopExit->addPred(loopHeader);
+    bool codeRemoved = false;
+    instructionList.gotoFirst();
+    int i, size = instructionList.size();
+    for (i = 0; i < size; i++)
+    {
+        Instruction *inst = instructionList.retrieve();
+        if (inst->isExpression())
+        {
+            Expression *expr = static_cast<Expression*>(inst);
+            if (expr->isDead())
+            {
+                // RValue *undefined = new(memCtx) Undef();
+                foreach_list(expr->operands, RValue, iter)
+                {
+                    iter.value()->unref(expr);
+                }
+                instructionList.remove();
+                codeRemoved = true;
+                continue;
+            }
+        }
+        instructionList.gotoNext();
+    }
+    return codeRemoved;
+}
 
-    // seal blocks
-    bld->sealBlock(loopEntry);
-    bld->sealBlock(bodyEntry);
+void SSABuilder::prepareForRegAlloc()
+{
+    // insert phi moves
+    foreach_list(basicBlockList, BasicBlock, iter)
+    {
+        BasicBlock *block = iter.value();
+        Node *instNode = block->start;
+        while (instNode = instNode->next)
+        {
+            Instruction *inst = (Instruction*) instNode->value;
+            if (inst->op != OP_PHI) break; // only process phis, which are always at start of block
+            Phi *phi = (Phi*) inst;
+            // phi->print();
+            // insert moves for phi before last jump in src block
+            foreach_list(phi->operands, RValue, srcIter)
+            {
+                Temporary *phiSrc = (Temporary*) srcIter.value();
+                BasicBlock *srcBlock = phiSrc->expr->block;
+                Node *insertPoint = srcBlock->end->prev;
+                Expression *move = new(memCtx) Expression(OP_MOV, valueId(), phiSrc);
+                move->block = srcBlock;
+                while (((Instruction*)insertPoint->value)->isJump()) insertPoint = insertPoint->prev;
+                instructionList.setCurrent(insertPoint);
+                instructionList.insertAfter(move, NULL);
+                // replace reference
+                srcIter.update(move->value());
+                move->value()->ref(phi);
+                phiSrc->unref(phi);
+                move->value()->phiRefs.insertAfter(block);
+                // move->value()->printDst(); printf(" ref'd by phi in BB:%i\n", block->id);
+                move->isPhiMove = true;
+            }
+        }
+        
+        // build successor lists
+        foreach_list(block->preds, BasicBlock, predIter)
+        {
+            predIter.value()->succs.insertAfter(block, NULL);
+        }
+    }
+    
+    // build temporary list and assign sequential indices to instructions
+    assert(temporaries.isEmpty());
+    int tempCount = 0, instCount = 0;
+    foreach_list(instructionList, Instruction, iter)
+    {
+        iter.value()->seqIndex = instCount++;
+        if (!iter.value()->isExpression()) continue;
+        Expression *expr = static_cast<Expression*>(iter.value());
+        Temporary *temp = expr->value();
+        temp->id = tempCount++; // renumber temporaries
+        temporaries.insertAfter(temp);
+    }
+
+    // build basic block live sets
+    foreach_list(basicBlockList, BasicBlock, iter)
+    {
+        BasicBlock *block = iter.value();
+        block->liveIn.allocate(tempCount, true);
+        block->liveOut.allocate(tempCount, true);
+        block->phiDefs.allocate(tempCount, true);
+        block->phiUses.allocate(tempCount, true);
+        block->processed = false;
+    }
+
+    // build phiUses and phiDefs sets
+    foreach_list(basicBlockList, BasicBlock, iter)
+    {
+        BasicBlock *block = iter.value();
+        Node *instNode = block->start;
+        while (instNode = instNode->next)
+        {
+            Instruction *inst = (Instruction*) instNode->value;
+            if (inst->op != OP_PHI) break; // only process phis, which are always at start of block
+            Phi *phi = (Phi*) inst;
+            // update phiDefs with phi definition
+            block->phiDefs.set(phi->value()->id);
+            foreach_list(phi->operands, RValue, srcIter)
+            {
+                // update phiUses for each phi operand
+                Temporary *phiSrc = static_cast<Temporary*>(srcIter.value());
+                phiSrc->expr->block->phiUses.set(phiSrc->id);
+            }
+        }
+    }
+}
+
+// predecessor: the basic block right before the loop
+Loop::Loop(BasicBlock *header, Loop *parent)
+{
+    this->header = header;
+    this->parent = parent;
 }
 
 SSABuildUtil::SSABuildUtil(SSABuilder *builder)
     : builder(builder), currentBlock(NULL)
 {
     StackedSymbolTable_Init(&symbolTable);
+    currentLoop = NULL;
 }
 
 SSABuildUtil::~SSABuildUtil()
@@ -665,6 +824,27 @@ void SSABuildUtil::pushScope()
 void SSABuildUtil::popScope()
 {
     StackedSymbolTable_PopScope(&symbolTable);
+}
+
+void SSABuildUtil::pushLoop(Loop *loop)
+{
+    loop->parent = currentLoop;
+    if (currentLoop == NULL) // this is a top-level loop
+        builder->loops.insertAfter(loop);
+    currentLoop = loop;
+}
+
+void SSABuildUtil::popLoop()
+{
+    assert(currentLoop);
+    currentLoop = currentLoop->parent;
+}
+
+BasicBlock *SSABuildUtil::createBBAfter(BasicBlock *existingBB, Loop *loop)
+{
+    BasicBlock *block = builder->createBBAfter(existingBB);
+    block->loop = loop ? loop : currentLoop;
+    return block;
 }
 
 // temporary

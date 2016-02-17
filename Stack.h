@@ -26,7 +26,7 @@ int Stack_IsEmpty(const Stack *stack);
 };
 
 template <typename T>
-class CStack : CList<T>
+class CStack : public CList<T>
 {
 public:
     inline void push(T *e) { Stack_Push(&this->list, e); }

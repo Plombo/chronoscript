@@ -4,5 +4,5 @@ void doWhile()
     do {
         j++;
     } while(--i > 0);
-    // return j;
+    return j;
 }

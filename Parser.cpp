@@ -331,7 +331,7 @@ void Parser::externalDecl2(BOOL variableonly)
         bld = new(memCtx) SSABuilder(memCtx, token.theSource);
         delete bldUtil;
         bldUtil = new SSABuildUtil(bld);
-        BasicBlock *startBlock = bld->createBBAfter(NULL);
+        BasicBlock *startBlock = bldUtil->createBBAfter(NULL);
         bld->sealBlock(startBlock);
         bldUtil->setCurrentBlock(startBlock);
         bldUtil->pushScope();
@@ -747,7 +747,7 @@ void Parser::selectStmt()
 
         // body
         BasicBlock *startBlock = bldUtil->currentBlock,
-                   *ifBlock = bld->createBBAfter(bldUtil->currentBlock),
+                   *ifBlock = bldUtil->createBBAfter(bldUtil->currentBlock),
                    *endIfBlock,
                    *afterIfBlock;
         ifBlock->addPred(startBlock);
@@ -761,14 +761,14 @@ void Parser::selectStmt()
         if (check(TOKEN_ELSE)) // if-else
         {
             match();
-            BasicBlock *elseBlock = bld->createBBAfter(endIfBlock); // comes before afterIfBlock
+            BasicBlock *elseBlock = bldUtil->createBBAfter(endIfBlock); // comes before afterIfBlock
             elseBlock->addPred(startBlock);
             bld->sealBlock(elseBlock);
             skipIfJump->target = elseBlock;
             bldUtil->setCurrentBlock(elseBlock);
             stmt();
             BasicBlock *endElseBlock = bldUtil->currentBlock;
-            afterIfBlock = bld->createBBAfter(endElseBlock);
+            afterIfBlock = bldUtil->createBBAfter(endElseBlock);
             if (!endIfBlock->endsWithJump())
                 afterIfBlock->addPred(endIfBlock);
             if (!endElseBlock->endsWithJump())
@@ -813,9 +813,9 @@ void Parser::selectStmt()
 
 void Parser::switchBody(RValue *baseVal)
 {
-    BasicBlock *jumps = bld->createBBAfter(bldUtil->currentBlock),
-               *body = bld->createBBAfter(jumps),
-               *after = bld->createBBAfter(body),
+    BasicBlock *jumps = bldUtil->createBBAfter(bldUtil->currentBlock),
+               *body = bldUtil->createBBAfter(jumps),
+               *after = bldUtil->createBBAfter(body),
                *defaultTarget = after;
     jumps->addPred(bldUtil->currentBlock);
     bld->sealBlock(jumps);
@@ -832,7 +832,7 @@ void Parser::switchBody(RValue *baseVal)
         {
             if (!body->isEmpty())
             {
-                BasicBlock *newBody = bld->createBBAfter(body);
+                BasicBlock *newBody = bldUtil->createBBAfter(body);
                 newBody->addPred(jumps);
                 if (!body->endsWithJump())
                     newBody->addPred(body);
@@ -905,17 +905,20 @@ void Parser::iterStmt()
     // startLabel = Parser_CreateLabel(pparser);
     // continueLabel = Parser_CreateLabel(pparser);
     BasicBlock *before, *header, *bodyStart, *bodyEnd, *footer, *after;
+    Loop *loop;
     before = bldUtil->currentBlock;
 
     if (check(TOKEN_WHILE))
     {
-        header = bld->createBBAfter(before);
+        header = bldUtil->createBBAfter(before);
+        loop = new(memCtx) Loop(header);
         header->addPred(before);
+        bldUtil->pushLoop(loop);
         // can't seal header yet
-        bodyStart = bld->createBBAfter(header);
+        bodyStart = bldUtil->createBBAfter(header, loop);
         bodyStart->addPred(header);
         bld->sealBlock(bodyStart);
-        after = bld->createBBAfter(bodyStart);
+        after = bldUtil->createBBAfter(bodyStart, NULL);
         after->addPred(header);
         // can't seal after yet either
         
@@ -949,15 +952,17 @@ void Parser::iterStmt()
         bldUtil->breakTargets.pop();
         bldUtil->continueTargets.pop();
         bldUtil->currentBlock = after;
+        bldUtil->popLoop();
     }
     else if (check(TOKEN_DO))
     {
         match();
-        bodyStart = bld->createBBAfter(before);
+        bodyStart = bldUtil->createBBAfter(before);
+        loop = new(memCtx) Loop(bodyStart);
         bodyStart->addPred(before);
-        footer = bld->createBBAfter(bodyStart);
+        footer = bldUtil->createBBAfter(bodyStart, loop);
         // can't seal footer yet (continue target, plus end of body)
-        after = bld->createBBAfter(footer);
+        after = bldUtil->createBBAfter(footer, NULL);
         after->addPred(footer);
         // can't seal after yet (break target)
         
@@ -966,6 +971,7 @@ void Parser::iterStmt()
         bldUtil->continueTargets.push(footer);
 
         // loop body
+        bldUtil->pushLoop(loop);
         bldUtil->currentBlock = bodyStart;
         stmt();
         bodyEnd = bldUtil->currentBlock;
@@ -996,13 +1002,15 @@ void Parser::iterStmt()
         bldUtil->breakTargets.pop();
         bldUtil->continueTargets.pop();
         bldUtil->currentBlock = after;
+        bldUtil->popLoop();
     }
     else if (check(TOKEN_FOR))
     {
-        header = bld->createBBAfter(before);
-        bodyStart = bld->createBBAfter(header);
-        footer = bld->createBBAfter(bodyStart);
-        after = bld->createBBAfter(footer);
+        header = bldUtil->createBBAfter(before);
+        loop = new(memCtx) Loop(header);
+        bodyStart = bldUtil->createBBAfter(header, loop);
+        footer = bldUtil->createBBAfter(bodyStart, loop);
+        after = bldUtil->createBBAfter(footer, NULL);
         
         match();
         check(TOKEN_LPAREN);
@@ -1016,6 +1024,7 @@ void Parser::iterStmt()
 
         //Build the conditional statement
         bldUtil->currentBlock = header;
+        bldUtil->pushLoop(loop);
         RValue *condition = optExpr();
         if (condition)
             bldUtil->mkJump(OP_BRANCH_FALSE, after, condition);
@@ -1059,6 +1068,7 @@ void Parser::iterStmt()
         bld->sealBlock(footer);
         bld->sealBlock(after);
         bldUtil->currentBlock = after;
+        bldUtil->popLoop();
     }
     else
     {

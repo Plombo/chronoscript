@@ -6,6 +6,7 @@
 #include "Stack.h"
 #include "ScriptVariant.h"
 #include "SymbolTable.h"
+#include "RegAllocUtil.h"
 
 #ifndef __cplusplus
 #error C++ header included from C source file
@@ -97,7 +98,9 @@ static const char *opCodeNames[] = {
 };
 
 class Instruction;
+class Expression;
 class BasicBlock;
+class Loop;
 
 // abstract base class for SSA values
 class RValue
@@ -108,6 +111,9 @@ public:
     const char *lvalue; // variable name if this is an lvalue, otherwise NULL
 
     inline RValue() : lvalue(NULL) {}
+
+    // returns true if this value is unused
+    inline bool isDead() { return users.size() == 0; }
 
     // replace all uses of this value with another
     void replaceBy(RValue *newValue);
@@ -122,6 +128,10 @@ public:
     virtual bool isTemporary();
     virtual bool isUndefined();
     virtual void printDst() = 0;
+
+    // for liveness analysis
+    // blocks from which a phi references this value
+    CList<BasicBlock> phiRefs;
 };
 
 // an undefined value; will cause a compile error if program depends on it
@@ -138,9 +148,16 @@ class Temporary : public RValue
 {
 public:
     int id;
-    inline Temporary(int id) : RValue(), id(id) {}
+    Expression *expr;
+    inline Temporary(int id, Expression *expr) : RValue(), id(id), expr(expr), reg(-1) {}
     virtual bool isTemporary();
     virtual void printDst();
+    
+    // for register allocation
+    // Interval livei;
+    // Temporary *mcsPrev, *mcsNext;
+    // int cardinality;
+    int reg; // register number; -1 if RA hasn't happened yet
 };
 
 // an immediate value
@@ -171,8 +188,10 @@ class Instruction
 public:
     OpCode op; // opcode
     CList<RValue> operands; // sources
+    BasicBlock *block; // basic block
+    int seqIndex; // for live ranges in register allocation
 
-    inline Instruction(OpCode opCode) : op(opCode) {}
+    inline Instruction(OpCode opCode) : op(opCode), block(NULL), seqIndex(-1) {}
 
     void appendOperand(RValue *value);
     RValue *src(int index);
@@ -180,16 +199,21 @@ public:
     
     virtual void print();
     void printOperands();
+    virtual bool isExpression();
+    virtual bool isJump();
 };
 
 class Expression : public Instruction // subclasses Phi, Constant, Expression, etc.
 {
 public:
-    RValue *dst;
+    Temporary *dst;
+    bool isPhiMove; // this instruction is a move used by a phi in a successor block
 
     Expression(OpCode opCode, int valueId, RValue *src0 = NULL, RValue *src1 = NULL);
-    inline RValue *value() { return dst; }
+    inline Temporary *value() { return dst; }
     virtual void print();
+    virtual bool isExpression();
+    inline bool isDead() { return dst->users.size() == 0; }
 };
 
 class NoOp : public Instruction
@@ -201,8 +225,8 @@ public:
 class BlockDecl : public NoOp
 {
 public:
-    BasicBlock *block;
-    inline BlockDecl(BasicBlock *block) : NoOp(OP_BB_START), block(block) {}
+    //BasicBlock *block;
+    inline BlockDecl(BasicBlock *block) : NoOp(OP_BB_START) { this->block = block; }
     void print();
 };
 
@@ -226,6 +250,7 @@ public:
     BasicBlock *target;
     Jump(OpCode opCode, BasicBlock *target, RValue *condition);
     void print();
+    bool isJump();
 };
 
 class BasicBlock
@@ -241,7 +266,18 @@ public:
     Node *start;
     Node *end;
     
-    inline BasicBlock(int id) : id(id), isSealed(false), start(NULL), end(NULL)
+    // loop that this basic block is part of
+    Loop *loop;
+    
+    // for liveness analysis
+    CList<BasicBlock> succs; // successors
+    bool processed; // processed by depth-first search
+    BitSet liveIn;
+    BitSet liveOut;
+    BitSet phiDefs;
+    BitSet phiUses;
+    
+    inline BasicBlock(int id) : id(id), isSealed(false), start(NULL), end(NULL), loop(NULL)
     {}
     
     void addPred(BasicBlock *newPred);
@@ -251,21 +287,27 @@ public:
     void print();
 };
 
-class SSABuilder;
 class Loop
 {
+    DECLARE_RALLOC_CXX_OPERATORS(Loop);
 public:
-    BasicBlock *loopEntry, *loopHeader, *loopExit, *bodyEntry, *bodyExit;
+    BasicBlock *header;
+    CList<BasicBlock> nodes;
+    Loop *parent;
+    CList<Loop> children;
     
-    Loop(SSABuilder *bld, BasicBlock *predecessor);
+    Loop(BasicBlock *header, Loop *parent = NULL);
 };
 
 class SSABuilder // SSA form of a script function, rename to SSAFunction?
 {
     DECLARE_RALLOC_CXX_OPERATORS(SSABuilder);
-private:
+public:
     CList<Instruction> instructionList;
     CList<BasicBlock> basicBlockList;
+    CList<Loop> loops; // loop-nesting forest
+    CList<Temporary> temporaries; // constructed right before regalloc
+private:
     CList<Constant> constantList;
     int nextBBId; // init to 0
     int nextValueId; // init to 0
@@ -307,6 +349,10 @@ public:
     // add a constant
     Constant *addConstant(ScriptVariant sv);
     
+    // dead code elimination
+    bool removeDeadCode();
+    void prepareForRegAlloc();
+    
     void printInstructionList();
     inline int valueId() { return nextValueId++; }
 };
@@ -316,6 +362,7 @@ class SSABuildUtil
 private:
     SSABuilder *builder;
     StackedSymbolTable symbolTable;
+    Loop *currentLoop;
 
     Constant *applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *src1); // used for constant folding
 public:
@@ -354,6 +401,12 @@ public:
 
     void pushScope();
     void popScope();
+    
+    void pushLoop(Loop *loop);
+    void popLoop();
+    
+    // create BB and insert after the given block
+    BasicBlock *createBBAfter(BasicBlock *existingBB, Loop *loop = NULL);
 };
 
 #endif // !defined(SSA_H)

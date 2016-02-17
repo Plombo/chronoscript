@@ -6,4 +6,5 @@ void forLoop()
     {
         someFunction(i);
     }
+    return i;
 }
