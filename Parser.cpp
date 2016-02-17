@@ -844,9 +844,7 @@ void Parser::switchBody(RValue *baseVal)
                 match();
                 bldUtil->currentBlock = jumps;
                 RValue *caseVal = constant();
-                // TODO: branch_equal instruction
-                RValue *condition = bldUtil->mkBinaryOp(OP_EQ, baseVal, caseVal);
-                bldUtil->mkJump(OP_BRANCH_TRUE, body, condition);
+                bldUtil->mkJump(OP_BRANCH_EQUAL, body, baseVal, caseVal);
                 check(TOKEN_COLON);
                 match();
             }

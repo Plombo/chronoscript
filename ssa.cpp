@@ -204,6 +204,11 @@ bool Instruction::isJump()
     return false;
 }
 
+bool Instruction::isTrivial()
+{
+    return false;
+}
+
 Expression::Expression(OpCode opCode, int valueId, RValue *src0, RValue *src1)
     : Instruction(opCode), isPhiMove(false)
 {
@@ -231,6 +236,21 @@ bool Expression::isExpression()
     return true;
 }
 
+bool Expression::isTrivial()
+{
+    if (op == OP_MOV && dst->isTemporary() && operands.retrieve()->isTemporary())
+    {
+        if (static_cast<Temporary*>(dst)->reg == static_cast<Temporary*>(operands.retrieve())->reg)
+            return true;
+    }
+    return false;
+}
+
+bool Phi::isTrivial()
+{
+    return true;
+}
+
 FunctionCall::FunctionCall(const char *function, int valueId)
     : Expression(OP_CALL, valueId)
 {
@@ -251,23 +271,26 @@ void FunctionCall::print()
     printf("\n");
 }
 
-Jump::Jump(OpCode opCode, BasicBlock *target, RValue *condition)
+Jump::Jump(OpCode opCode, BasicBlock *target, RValue *src0, RValue *src1)
     : Instruction(opCode), target(target)
 {
-    if (condition)
-        appendOperand(condition);
+    if (src0)
+        appendOperand(src0);
+    if (src1)
+        appendOperand(src1);
 }
 
 void Jump::print()
 {
+    if (seqIndex >= 0) printf("%i: ", seqIndex);
     printf("%s ", opCodeNames[op]);
-    if (!operands.isEmpty()) // branch (conditional jump)
-    {
-        operands.retrieve()->printDst();
-        printf(" ");
-    }
+    printOperands();
+    if (!operands.isEmpty()) printf(" ");
     printf("=> ");
-    target->printName();
+    if (target->startIndex >= 0)
+        printf("%i", target->startIndex);
+    else
+        target->printName();
     printf("\n");
 }
 
@@ -276,8 +299,14 @@ bool Jump::isJump()
     return true;
 }
 
+bool NoOp::isTrivial()
+{
+    return true;
+}
+
 void BlockDecl::print()
 {
+    if (seqIndex >= 0) printf("%i: ", seqIndex);
     printf("%s ", opCodeNames[op]);
     block->print();
     printf("\n");
@@ -757,9 +786,9 @@ Constant *SSABuildUtil::mkNull()
     return builder->addConstant(var);
 }
 
-Jump *SSABuildUtil::mkJump(OpCode op, BasicBlock *target, RValue *condition)
+Jump *SSABuildUtil::mkJump(OpCode op, BasicBlock *target, RValue *src0, RValue *src1)
 {
-    Jump *inst = new(builder->memCtx) Jump(op, target, condition);
+    Jump *inst = new(builder->memCtx) Jump(op, target, src0, src1);
     builder->insertInstruction(inst, currentBlock);
     return inst;
 }
@@ -814,8 +843,6 @@ bool SSABuildUtil::writeVariable(const char *varName, RValue *value)
     Symbol *sym;
     bool found = StackedSymbolTable_FindSymbol(&symbolTable, varName, &sym, scopedName);
     if (!found) return false;
-    if (!value->isTemporary()) // need a temporary for phi functions
-        value = mkMove(value);
     builder->writeVariable(varName, currentBlock, value);
     return true;
 }

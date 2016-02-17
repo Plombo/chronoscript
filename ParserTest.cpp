@@ -23,7 +23,7 @@ void doTest(char *scriptText, const char *filename)
     printf("\nInstructions after processing:\n");
     parser.bld->printInstructionList();
     printf("\n%i temporaries\n\n", parser.bld->temporaries.size());
-    
+
     computeLiveSets(parser.bld);
     printf("\nLive sets:\n");
     foreach_list(parser.bld->basicBlockList, BasicBlock, iter)
@@ -62,7 +62,29 @@ void doTest(char *scriptText, const char *filename)
     }
 
     // print instruction list again
+    printf("\n");
     parser.bld->printInstructionList();
+    printf("\n");
+
+    // give instructions their final indices
+    int nextIndex = 0;
+    foreach_list(parser.bld->instructionList, Instruction, iter)
+    {
+        Instruction *inst = iter.value();
+        if (inst->op == OP_BB_START)
+            inst->block->startIndex = nextIndex;
+        if (inst->isTrivial()) inst->seqIndex = -1;
+        else
+        {
+            inst->seqIndex = nextIndex++;
+        }
+    }
+    // print the final instruction list
+    foreach_list(parser.bld->instructionList, Instruction, iter)
+    {
+        Instruction *inst = iter.value();
+        if (inst->seqIndex >= 0) inst->print();
+    }
 }
 
 bool testFile(const char *filename)

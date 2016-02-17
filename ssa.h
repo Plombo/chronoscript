@@ -22,6 +22,7 @@ enum OpCode
     OP_JMP,
     OP_BRANCH_FALSE,
     OP_BRANCH_TRUE,
+    OP_BRANCH_EQUAL,
     OP_RETURN,
 
     // move
@@ -67,6 +68,7 @@ static const char *opCodeNames[] = {
     "jmp",
     "branch_false",
     "branch_true",
+    "branch_equal",
     "return",
     
     "mov",
@@ -216,6 +218,9 @@ public:
     void printOperands();
     virtual bool isExpression();
     virtual bool isJump();
+
+    // used after register allocation
+    virtual bool isTrivial();
 };
 
 class Expression : public Instruction // subclasses Phi, Constant, Expression, etc.
@@ -228,6 +233,7 @@ public:
     inline LValue *value() { return dst; }
     virtual void print();
     virtual bool isExpression();
+    virtual bool isTrivial();
     inline bool isDead() { return dst->users.size() == 0; }
 };
 
@@ -235,6 +241,7 @@ class NoOp : public Instruction
 {
 public:
     inline NoOp(OpCode opCode = OP_NOOP) : Instruction(opCode) {}
+    virtual bool isTrivial();
 };
 
 class BlockDecl : public NoOp
@@ -249,6 +256,7 @@ class Phi : public Expression
 {
 public:
     inline Phi(int valueId) : Expression(OP_PHI, valueId) {}
+    virtual bool isTrivial();
     BasicBlock **sourceBlocks;
 };
 
@@ -264,7 +272,7 @@ class Jump : public Instruction
 {
 public:
     BasicBlock *target;
-    Jump(OpCode opCode, BasicBlock *target, RValue *condition);
+    Jump(OpCode opCode, BasicBlock *target, RValue *src0, RValue *src1);
     void print();
     bool isJump();
 };
@@ -292,10 +300,15 @@ public:
     BitSet liveOut;
     BitSet phiDefs;
     BitSet phiUses;
-    
-    inline BasicBlock(int id) : id(id), isSealed(false), start(NULL), end(NULL), loop(NULL)
+
+    // index in final instruction list where this block starts
+    int startIndex;
+
+    inline BasicBlock(int id)
+       : id(id), isSealed(false), start(NULL), end(NULL),
+         loop(NULL), startIndex(-1)
     {}
-    
+
     void addPred(BasicBlock *newPred);
     bool endsWithJump(); // returns true if this block ends with an unconditional jump
     inline bool isEmpty() { return start->next == end; }
@@ -400,7 +413,7 @@ public:
     Constant *mkConstString(char *val);
     Constant *mkConstFloat(double val);
     Constant *mkNull();
-    Jump *mkJump(OpCode op, BasicBlock *target, RValue *condition);
+    Jump *mkJump(OpCode op, BasicBlock *target, RValue *src0, RValue *src1 = NULL);
     Instruction *mkReturn(RValue *src0);
     RValue *mkMove(RValue *val);
     
