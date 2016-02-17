@@ -283,7 +283,7 @@ void BasicBlock::addPred(BasicBlock *newPred)
 bool BasicBlock::endsWithJump()
 {
     Instruction *lastInstruction = static_cast<Instruction*>(end->prev->value);
-    return (lastInstruction->isJump());
+    return (lastInstruction->isJump() || lastInstruction->op == OP_RETURN);
 }
 
 void BasicBlock::printName()
