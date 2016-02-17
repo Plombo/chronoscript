@@ -234,6 +234,7 @@ class Phi : public Expression
 {
 public:
     inline Phi(int valueId) : Expression(OP_PHI, valueId) {}
+    BasicBlock **sourceBlocks;
 };
 
 class FunctionCall : public Expression

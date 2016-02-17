@@ -381,11 +381,14 @@ RValue *SSABuilder::readVariableRecursive(const char *variable, BasicBlock *bloc
 RValue *SSABuilder::addPhiOperands(const char *variable, BasicBlock *block, Phi *phi)
 {
     // Determine operands from predecessors
+    phi->sourceBlocks = ralloc_array(memCtx, BasicBlock*, block->preds.size());
+    int i = 0;
     foreach_list(block->preds, BasicBlock, iter)
     {
         BasicBlock *pred = iter.value();
         RValue *operand = readVariable(variable, pred);
         phi->appendOperand(operand);
+        phi->sourceBlocks[i++] = pred;
         // operand->phiRefs.insertAfter(pred); // we do this later now, after inserting phi moves
         // operand->printDst(); printf(" phi ref from BB %i\n", pred->id);
     }
@@ -541,10 +544,11 @@ void SSABuilder::prepareForRegAlloc()
             Phi *phi = (Phi*) inst;
             // phi->print();
             // insert moves for phi before last jump in src block
+            int i = 0;
             foreach_list(phi->operands, RValue, srcIter)
             {
                 Temporary *phiSrc = (Temporary*) srcIter.value();
-                BasicBlock *srcBlock = phiSrc->expr->block;
+                BasicBlock *srcBlock = phi->sourceBlocks[i++];
                 Node *insertPoint = srcBlock->end->prev;
                 Expression *move = new(memCtx) Expression(OP_MOV, valueId(), phiSrc);
                 move->block = srcBlock;
