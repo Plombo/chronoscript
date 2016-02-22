@@ -902,9 +902,7 @@ void Parser::iterStmt()
         match();
 
         //Add any initializer code
-        optExpr();
-        check(TOKEN_SEMICOLON);
-        match();
+        optExprStmt();
         header->addPred(before);
 
         //Build the conditional statement
@@ -969,6 +967,14 @@ void Parser::optExprStmt() // used in for loop
     if (ParserSet_First(&theParserSet, Productions::expr_stmt, theNextToken.theType))
     {
         exprStmt();
+    }
+    else if (ParserSet_First(&theParserSet, Productions::decl, theNextToken.theType))
+    {
+        decl();
+    }
+    else if (check(TOKEN_SEMICOLON))
+    {
+        match();
     }
     else if (ParserSet_Follow(&theParserSet, Productions::opt_expr_stmt, theNextToken.theType)) {}
     else
