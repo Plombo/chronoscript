@@ -390,7 +390,6 @@ void Parser::funcDeclare1()
     }
     else if (check(TOKEN_RPAREN))
     {
-        // Parser_AddInstructionViaLabel(pparser, CHECKARG, "0", NULL );
         match();
     }
     else
@@ -461,7 +460,6 @@ void Parser::paramList2()
     else
     {
         Parser_Error(this, param_list2 );
-        //pparser->paramCount =1 ;
     }
 }
 
@@ -781,14 +779,6 @@ void Parser::switchBody(RValue *baseVal)
 
 void Parser::iterStmt()
 {
-    // Label endLabel, startLabel, continueLabel;
-    // List *pDefInst = NULL;
-    // Instruction *pInstruction;
-    // int i, size;
-    ////Create some labels for jump targets
-    // endLabel = Parser_CreateLabel(pparser);
-    // startLabel = Parser_CreateLabel(pparser);
-    // continueLabel = Parser_CreateLabel(pparser);
     BasicBlock *before, *header, *bodyStart, *bodyEnd, *footer, *after;
     Loop *loop;
     before = bldUtil->currentBlock;
@@ -957,9 +947,6 @@ void Parser::iterStmt()
     {
         Parser_Error(this, iter_stmt);
     }
-    // free(startLabel);
-    // free(endLabel);
-    // free(continueLabel);
 }
 
 void Parser::optExprStmt() // used in for loop
