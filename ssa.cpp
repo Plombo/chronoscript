@@ -597,21 +597,6 @@ bool SSABuilder::removeDeadCode()
 
 void SSABuilder::prepareForRegAlloc()
 {
-    // temporary: examine BB dominance relations
-    int numBBs = basicBlockList.size();
-    foreach_list(basicBlockList, BasicBlock, iter)
-    {
-        BasicBlock *a = iter.value();
-        foreach_list(basicBlockList, BasicBlock, iter2)
-        {
-            BasicBlock *b = iter2.value();
-            printf("Block %i %s block %i\n",
-                   a->id,
-                   a->dominates(b, numBBs) ? "dominates" : "does not dominate",
-                   b->id);
-        }
-    }
-
     // insert phi moves
     foreach_list(basicBlockList, BasicBlock, iter)
     {
@@ -642,6 +627,7 @@ void SSABuilder::prepareForRegAlloc()
                 move->isPhiMove = true;
 
                 // replace other references if we can, to improve register allocation
+                int numBBs = basicBlockList.size();
                 foreach_list(phiSrc->users, Instruction, refIter)
                 {
                     Instruction *inst2 = refIter.value();
