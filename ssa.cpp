@@ -487,6 +487,16 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
         same = new(memCtx) Undef(); // The phi is unreachable or in the start block
     }
     printf("trivial phi; replace with "); same->printDst(); printf("\n");
+    // remember all users except the phi itself
+    CList<Phi> phiUsers;
+    foreach_list(phi->value()->users, Instruction, iter)
+    {
+        Instruction *use = iter.value();
+        if (use->isPhi() && use != phi)
+        {
+            phiUsers.insertAfter(static_cast<Phi*>(use), NULL);
+        }
+    }
     phi->value()->replaceBy(same); // Reroute all uses of phi to same and remove phi
     foreach_list(currentDef, RValue, iter)
     {
@@ -496,16 +506,7 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
     }
     
     // Try to recursively remove all phi users, which might have become trivial
-    CList<Phi> phis;
-    foreach_list(phi->value()->users, Instruction, iter)
-    {
-        Instruction *use = iter.value();
-        if (use->op == OP_PHI)
-        {
-            phis.insertAfter((Phi*)use, NULL);
-        }
-    }
-    foreach_list(phis, Phi, iter)
+    foreach_list(phiUsers, Phi, iter)
     {
         tryRemoveTrivialPhi(iter.value());
     }
