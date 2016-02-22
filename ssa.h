@@ -206,8 +206,9 @@ public:
     CList<RValue> operands; // sources
     BasicBlock *block; // basic block
     int seqIndex; // for live ranges in register allocation
+    bool isPhiMove; // this instruction is a move used by a phi in a successor block
 
-    inline Instruction(OpCode opCode) : op(opCode), block(NULL), seqIndex(-1) {}
+    inline Instruction(OpCode opCode) : op(opCode), block(NULL), seqIndex(-1), isPhiMove(false) {}
 
     void appendOperand(RValue *value);
     RValue *src(int index);
@@ -217,6 +218,7 @@ public:
     void printOperands();
     virtual bool isExpression();
     virtual bool isJump();
+    inline bool isPhi() { return op == OP_PHI; }
 
     // used after register allocation
     virtual bool isTrivial();
@@ -226,7 +228,6 @@ class Expression : public Instruction // subclasses Phi, Constant, Expression, e
 {
 public:
     Temporary *dst;
-    bool isPhiMove; // this instruction is a move used by a phi in a successor block
 
     Expression(OpCode opCode, int valueId, RValue *src0 = NULL, RValue *src1 = NULL);
     inline Temporary *value() { return dst; }
@@ -325,6 +326,11 @@ public:
     inline bool isEmpty() { return start->next == end; }
     void printName();
     void print();
+
+    // dominance relation
+    bool dominates(BasicBlock *b, int numBlocks);
+private:
+    bool dominates(BasicBlock *b, BitSet *tested);
 };
 
 class Loop

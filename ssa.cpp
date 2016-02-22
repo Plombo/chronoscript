@@ -205,7 +205,7 @@ bool Instruction::isTrivial()
 }
 
 Expression::Expression(OpCode opCode, int valueId, RValue *src0, RValue *src1)
-    : Instruction(opCode), isPhiMove(false)
+    : Instruction(opCode)
 {
     dst = new(this) Temporary(valueId, this);
     //snprintf(dst->name, sizeof(dst->name), "%%r%i", valueId);
@@ -359,6 +359,25 @@ void BasicBlock::print()
     {
         printf(" (loop %i)", loop->header->id);
     }
+}
+
+bool BasicBlock::dominates(BasicBlock *other, int numBlocks)
+{
+    BitSet tested(numBlocks, true);
+    return this->dominates(other, &tested);
+}
+
+bool BasicBlock::dominates(BasicBlock *b, BitSet *tested)
+{
+    if (tested->test(b->id)) return true;
+    tested->set(b->id);
+    if (b == this) return true;
+    if (b->preds.isEmpty()) return false; // start block
+    foreach_list(b->preds, BasicBlock, iter)
+    {
+        if (!this->dominates(iter.value(), tested)) return false;
+    }
+    return true;
 }
 
 const char *SSABuilder::getIdentString(const char *variable, BasicBlock *block)
@@ -585,6 +604,21 @@ bool SSABuilder::removeDeadCode()
 
 void SSABuilder::prepareForRegAlloc()
 {
+    // temporary: examine BB dominance relations
+    int numBBs = basicBlockList.size();
+    foreach_list(basicBlockList, BasicBlock, iter)
+    {
+        BasicBlock *a = iter.value();
+        foreach_list(basicBlockList, BasicBlock, iter2)
+        {
+            BasicBlock *b = iter2.value();
+            printf("Block %i %s block %i\n",
+                   a->id,
+                   a->dominates(b, numBBs) ? "dominates" : "does not dominate",
+                   b->id);
+        }
+    }
+
     // insert phi moves
     foreach_list(basicBlockList, BasicBlock, iter)
     {
@@ -615,6 +649,37 @@ void SSABuilder::prepareForRegAlloc()
                 move->value()->phiRefs.insertAfter(block);
                 // move->value()->printDst(); printf(" ref'd by phi in BB:%i\n", block->id);
                 move->isPhiMove = true;
+
+                // replace other references if we can, to improve register allocation
+                // XXX: this code is very ugly
+                CList<Instruction> replaceList;
+                foreach_list(phiSrc->users, Instruction, refIter)
+                {
+                    Instruction *inst2 = refIter.value();
+                    if (inst2->isPhi() || inst2->isPhiMove) continue;
+                    // we can replace a reference if and only if the phi move dominates it
+                    // if user is a jump in this block, it's at the end so the phi move dominates it
+                    if ((inst2->block == move->block && inst2->isJump()) ||
+                        (inst2->block != move->block && move->block->dominates(inst2->block, numBBs)))
+                    {
+                        // do the actual replace later so we don't screw up the iteration
+                        replaceList.insertAfter(inst2);
+                    }
+                }
+                foreach_list(replaceList, Instruction, refIter)
+                {
+                    Instruction *inst2 = refIter.value();
+                    // replace reference each time it appears
+                    foreach_list(inst2->operands, RValue, srcIter2)
+                    {
+                        if (srcIter2.value() == phiSrc)
+                        {
+                            srcIter2.update(move->value());
+                            move->value()->ref(inst2);
+                            phiSrc->unref(inst2);
+                        }
+                    }
+                }
             }
         }
         
