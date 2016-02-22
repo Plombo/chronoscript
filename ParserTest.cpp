@@ -9,11 +9,9 @@ void doTest(char *scriptText, const char *filename)
 {
     pp_context ppContext;
     Parser parser;
-    List fakeIList;
 
     pp_context_init(&ppContext);
-    List_Init(&fakeIList);
-    parser.parseText(&ppContext, &fakeIList, scriptText, 1, filename);
+    parser.parseText(&ppContext, scriptText, 1, filename);
     pp_context_destroy(&ppContext);
 
     printf("Instructions before processing:\n");

@@ -12,7 +12,6 @@ Parser *pcurParser = NULL;
 
 Parser::Parser()
 {
-    //memset(this, 0, sizeof(Parser));
     memCtx = ralloc_context(NULL);
     
     Stack_Init(&LabelStack);
@@ -26,16 +25,8 @@ Parser::Parser()
 
 Parser::~Parser()
 {
-    // Label label;
     Lexer_Clear(&theLexer);
     ParserSet_Clear(&theParserSet);
-    // while(!Stack_IsEmpty(&LabelStack))
-    // {
-        // label = (Label)Stack_Top(&LabelStack);
-        // free(label);
-        // Stack_Pop(&LabelStack);
-    // }
-    // List_Clear(&LabelStack);
 }
 
 /******************************************************************************
@@ -50,90 +41,42 @@ Parser::~Parser()
 *                        line counts.
 *  Returns:
 ******************************************************************************/
-void Parser_ParseText(Parser *pparser, pp_context *pcontext, List *pIList, LPSTR scriptText,
-                      ULONG startingLineNumber, LPCSTR path )
+void Parser::parseText(pp_context *pcontext, LPSTR scriptText,
+                      ULONG startingLineNumber, LPCSTR path)
 {
     //Create a new CLexer for this script text.
     TEXTPOS thePosition;
     thePosition.row = startingLineNumber;
     thePosition.col = 1;
-    pcurParser = pparser;
+    pcurParser = this;
     if(path)
     {
-        strncpy(pparser->currentPath, path, 255);
+        strncpy(this->currentPath, path, 255);
     }
     else
     {
-        pparser->currentPath[0] = 0;
+        this->currentPath[0] = 0;
     }
-    pparser->errorFound = FALSE;
-    Lexer_Init(&(pparser->theLexer), pcontext, path, scriptText, thePosition );
+    this->errorFound = false;
+    Lexer_Init(&(this->theLexer), pcontext, path, scriptText, thePosition );
 
     //Get the first token from the CLexer.
-    Lexer_GetNextToken(&(pparser->theLexer), &(pparser->theNextToken));
-
-    //Setup the instruction list so we can add instructions.
-    pparser->pIList = pIList;
-
-    //Make sure we're pointing at the end of that list
-    List_GotoLast(pparser->pIList);
+    Lexer_GetNextToken(&(this->theLexer), &(this->theNextToken));
 
 #if 0 // global include? obscure feature that apparently exists
-    if(!pparser->isImport && testpackfile("data/scripts/openbor.h", packfile) >= 0)
+    if(!this->isImport && testpackfile("data/scripts/openbor.h", packfile) >= 0)
     {
-        pp_parser_include(&pparser->theLexer.preprocessor, "data/scripts/openbor.h");
+        pp_parser_include(&theLexer.preprocessor, "data/scripts/openbor.h");
     }
 #endif
 
     //Parse the script text until you reach the end of the file, or until
     //an error occurs.
-    while( pparser->theNextToken.theType != TOKEN_EOF )
+    while(theNextToken.theType != TOKEN_EOF)
     {
-        Parser_External_decl(pparser );
+        externalDecl();
     }
 }
-
-void Parser::parseText(pp_context *pcontext, List *pIList, LPSTR scriptText,
-                      ULONG startingLineNumber, LPCSTR path)
-{
-    Parser_ParseText(this, pcontext, pIList, scriptText, startingLineNumber, path);
-}
-
-
-#if 0
-/******************************************************************************
-*  AddInstruction -- This method creates a new CInstruction and adds it to the
-*  instruction list.  It serves to simplify the parser code slightly, and to
-*  allow for easier extension of the CInstruction class for debugging.
-*  Parameters: pCode -- OpCode of the new instruction
-*              pToken -- CToken associated with the new instruction
-*              label -- entry point label in the instruction list
-******************************************************************************/
-
-void Parser_AddInstructionViaToken(Parser *pparser, OpCode pCode, Token *pToken, Label label )
-{
-    Instruction *pInstruction = NULL;
-    pInstruction = (Instruction *)malloc(sizeof(Instruction));
-    Instruction_InitViaToken(pInstruction, pCode, pToken);
-    List_InsertAfter(pparser->pIList, pInstruction, label);
-}
-
-/******************************************************************************
-*  AddInstruction -- This method creates a new CInstruction and adds it to the
-*  instruction list.  It serves to simplify the parser code slightly, and to
-*  allow for easier extension of the CInstruction class for debugging.
-*  Parameters: pCode -- OpCode of the new instruction
-*              instrLabel -- Label associated with this instruction
-*              listLabel -- entry point label in the instruction list
-******************************************************************************/
-void Parser_AddInstructionViaLabel(Parser *pparser, OpCode pCode, Label instrLabel, Label listLabel )
-{
-    Instruction *pInstruction = NULL;
-    pInstruction = (Instruction *)malloc(sizeof(Instruction));
-    Instruction_InitViaLabel(pInstruction, pCode, instrLabel);
-    List_InsertAfter(pparser->pIList, pInstruction, listLabel);
-}
-#endif
 
 /******************************************************************************
 *  Check -- This method compares the type of the current token with a specified
@@ -146,11 +89,6 @@ bool Parser::check(MY_TOKEN_TYPE theType)
 {
     //compare the token types
     return (theNextToken.theType == theType);
-}
-
-BOOL Parser_Check(Parser *pparser, MY_TOKEN_TYPE theType )
-{
-    return pparser->check(theType);
 }
 
 /*****************************************************************************
@@ -171,11 +109,6 @@ void Parser::match()
     }
 }
 
-void Parser_Match( Parser *pparser )
-{
-    pparser->match();
-}
-
 /*****************************************************************************
 *  Rewind -- This method sets the current token to the given token. The
 *  previous current token will be treated as the next token in the stream.
@@ -190,76 +123,34 @@ void Parser::rewind(Token *token)
     rewound = true;
 }
 
-#if 0
-/******************************************************************************
-*   CreateLabel -- This method creates a label, unique within this parser, to
-*   serve as a target for jumps and calls.
-*   Parameters: none
-*   Returns: A unique Label
-******************************************************************************/
-Label Parser_CreateLabel( Parser *pparser )
-{
-    //Allocate a buffer for the new Label.  A long can take 10 characters at
-    //most, so allocate that plus two extra for the "" and the null
-    //terminator
-    Label theLabel = (CHAR *)malloc(12);
-    memset(theLabel, 0, 12);
-
-    //Increment the label count.
-    pparser->LabelCount++;
-
-    sprintf(theLabel, "L%d", pparser->LabelCount);
-
-    return theLabel;
-}
-#endif
-
 /******************************************************************************
 *  Productions -- These methods recursively parse the token stream into an
 *  Abstract Syntax Tree.
 ******************************************************************************/
 
-void Parser_Start(Parser *pparser )
-{
-    if (ParserSet_First(&(pparser->theParserSet), Productions::external_decl, pparser->theNextToken.theType))
-    {
-        Parser_External_decl(pparser);
-        Parser_Start(pparser );
-    }
-    else if (ParserSet_Follow(&(pparser->theParserSet), Productions::start, pparser->theNextToken.theType )) {}
-    else
-    {
-        Parser_Error(pparser, start );
-    }
-}
 
 /******************************************************************************
 *  Declaration evaluation -- These methods translate declarations into
 *  appropriate instructions.
 ******************************************************************************/
-void Parser_External_decl(Parser *pparser )
+void Parser::externalDecl()
 {
-    if (ParserSet_First(&(pparser->theParserSet), Productions::decl_spec, pparser->theNextToken.theType ))
+    if (ParserSet_First(&theParserSet, Productions::decl_spec, theNextToken.theType))
     {
-        Parser_Decl_spec(pparser );
-        Parser_External_decl2(pparser, FALSE); // go for the declaration
+        declSpec();
+        externalDecl2(false); // go for the declaration
     }
 
     else
     {
-        Parser_Error(pparser, external_decl );
+        Parser_Error(this, external_decl);
     }
 }
 
-// this function is used by Parser_External_decl, because there can be multiple identifiers share only one type token
+// this function is used by Parser::externalDecl, because there can be multiple identifiers share only one type token
 // variable only means the function only accept variables, not function declaration, e.g.
 // int a, b=1, c;
-void Parser_External_decl2(Parser *pparser, BOOL variableonly )
-{
-    pparser->externalDecl2(variableonly);
-}
-
-void Parser::externalDecl2(BOOL variableonly)
+void Parser::externalDecl2(bool variableonly)
 {
     Token token = theNextToken;
     //ignore the type of this declaration
@@ -294,18 +185,18 @@ void Parser::externalDecl2(BOOL variableonly)
             Parser_AddInstructionViaToken(pparser, DEFERRED, (Token *)NULL, NULL );
         }
         //there's a comma instead of semicolon, so there should be another identifier
-        else if(Parser_Check(pparser, TOKEN_COMMA ))
+        else if(check(TOKEN_COMMA))
         {
-            Parser_Match(pparser);
+            match();
             //Save the initializer
             Parser_AddInstructionViaToken(pparser, SAVE, &token, NULL );
-            Parser_External_decl2(pparser, TRUE);
+            externalDecl2(TRUE);
         }
         else
         {
-            Parser_Match(pparser);
-            printf("Semicolon or comma expected before '%s'\n", pparser->theNextToken.theSource);
-            Parser_Error(pparser, external_decl );
+            match();
+            printf("Semicolon or comma expected before '%s'\n", theNextToken.theSource);
+            Parser_Error(this, external_decl );
         }
     }
     else
@@ -347,53 +238,53 @@ void Parser::externalDecl2(BOOL variableonly)
     }
 }
 
-void Parser_Decl_spec(Parser *pparser )
+void Parser::declSpec()
 {
-    if (Parser_Check(pparser, TOKEN_CONST ))
+    if (check(TOKEN_CONST))
     {
-        Parser_Match(pparser);
+        match();
     }
 
-    if (Parser_Check(pparser, TOKEN_SIGNED ))
+    if (check(TOKEN_SIGNED))
     {
-        Parser_Match(pparser);
+        match();
     }
-    else if (Parser_Check(pparser, TOKEN_UNSIGNED ))
+    else if (check(TOKEN_UNSIGNED))
     {
-        Parser_Match(pparser);
+        match();
     }
-// It's OK though not all delow are valid types for C language
-    if (Parser_Check(pparser, TOKEN_VOID ))
+    // It's OK though not all below are valid types for our language
+    if (check(TOKEN_VOID))
     {
-        Parser_Match(pparser);
+        match();
     }
-    else if (Parser_Check(pparser, TOKEN_CHAR ))
+    else if (check(TOKEN_CHAR))
     {
-        Parser_Match(pparser);
+        match();
     }
-    else if (Parser_Check(pparser, TOKEN_SHORT ))
+    else if (check(TOKEN_SHORT))
     {
-        Parser_Match(pparser);
+        match();
     }
-    else if (Parser_Check(pparser, TOKEN_INT ))
+    else if (check(TOKEN_INT))
     {
-        Parser_Match(pparser);
+        match();
     }
-    else if (Parser_Check(pparser, TOKEN_LONG ))
+    else if (check(TOKEN_LONG))
     {
-        Parser_Match(pparser);
+        match();
     }
-    else if (Parser_Check(pparser, TOKEN_FLOAT ))
+    else if (check(TOKEN_FLOAT))
     {
-        Parser_Match(pparser);
+        match();
     }
-    else if (Parser_Check(pparser, TOKEN_DOUBLE ))
+    else if (check(TOKEN_DOUBLE))
     {
-        Parser_Match(pparser);
+        match();
     }
     else
     {
-        Parser_Error(pparser, decl_spec );
+        Parser_Error(this, decl_spec);
     }
 }
 
@@ -403,7 +294,7 @@ void Parser::decl()
     if (ParserSet_First(&theParserSet, Productions::decl_spec, theNextToken.theType ))
     {
         //ignore the type of this declaration
-        Parser_Decl_spec(this);
+        declSpec();
         decl2();
     }
     else
@@ -527,18 +418,13 @@ void Parser::parmDecl()
 {
     if (ParserSet_First(&theParserSet, Productions::decl_spec, theNextToken.theType ))
     {
-        Parser_Decl_spec(this);
+        declSpec();
 
         if (check(TOKEN_IDENTIFIER))
         {
-            // Parser_AddInstructionViaToken(pparser, PARAM, &(pparser->theNextToken), NULL );
             bldUtil->addParam(theNextToken.theSource);
             match();
         }
-        // else // no params
-        // {
-            // Parser_AddInstructionViaToken(pparser, PARAM, (Token *)NULL, NULL );
-        // }
     }
     else
     {
@@ -1148,19 +1034,6 @@ RValue *Parser::optExpr()
     {
         Parser_Error(this, opt_expr);
         return NULL;
-    }
-}
-
-// RValue *Parser::expr()
-void Parser_Expr(Parser *pparser)
-{
-    if (ParserSet_First(&(pparser->theParserSet), Productions::assignment_expr, pparser->theNextToken.theType ))
-    {
-        pparser->assignmentExpr();
-    }
-    else
-    {
-        Parser_Error(pparser, expr );
     }
 }
 
@@ -1895,18 +1768,18 @@ RValue *Parser::postfixExpr2(RValue *lhs)
         return postfixExpr2(call->value());
     }
 #if 0 // Structure field reference? WTF? We don't have structures!
-    else if (Parser_Check(pparser, TOKEN_FIELD ))
+    else if (check(TOKEN_FIELD))
     {
         //cache the token of the field source for assignment expressions.
         pInstruction = (Instruction *)List_Retrieve(pparser->pIList);
         pparser->theFieldToken = *(pInstruction->theToken);
 
         Parser_AddInstructionViaToken(pparser, FIELD, &(pparser->theNextToken), NULL );
-        Parser_Match(pparser);
-        Parser_Check(pparser, TOKEN_IDENTIFIER );
+        match();
+        check(TOKEN_IDENTIFIER);
         Parser_AddInstructionViaToken(pparser, LOAD, &(pparser->theNextToken), NULL );
-        Parser_Match(pparser);
-        Parser_Postfix_expr2(pparser );
+        match();
+        postfixExpr2();
     }
 #endif
     else if (check(TOKEN_INC_OP) || check(TOKEN_DEC_OP))
@@ -2061,15 +1934,15 @@ const char  *_production_error_message(Parser *pparser, PRODUCTION offender)
 }
 
 
-void Parser_Error2(Parser *pparser, PRODUCTION offender, const char *offenderStr )
+void Parser::error(PRODUCTION offender, const char *offenderStr)
 {
     //Report the offending token to the error handler, along with the production
     //it offended in.
     if (offender != Productions::error)
-        pp_error(&(pparser->theLexer.preprocessor), "%s '%s' (in production '%s')",
-                 _production_error_message(pparser, offender), pparser->theNextToken.theSource, offenderStr);
+        pp_error(&(theLexer.preprocessor), "%s '%s' (in production '%s')",
+                 _production_error_message(this, offender), theNextToken.theSource, offenderStr);
 
-    pparser->errorFound = TRUE;
+    errorFound = true;
 
     if (offender == Productions::error)
         return;
@@ -2079,11 +1952,11 @@ void Parser_Error2(Parser *pparser, PRODUCTION offender, const char *offenderStr
     //grabbing tokens until we find one we can use
     do
     {
-        while (!SUCCEEDED(Lexer_GetNextToken(&(pparser->theLexer), &(pparser->theNextToken))));
-        if (pparser->theNextToken.theType == TOKEN_EOF)
+        while (!SUCCEEDED(Lexer_GetNextToken(&theLexer, &theNextToken)));
+        if (theNextToken.theType == TOKEN_EOF)
         {
             break;
         }
     }
-    while (!ParserSet_Follow(&(pparser->theParserSet), offender, pparser->theNextToken.theType));
+    while (!ParserSet_Follow(&theParserSet, offender, theNextToken.theType));
 }
