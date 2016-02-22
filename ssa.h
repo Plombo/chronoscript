@@ -135,10 +135,6 @@ public:
     virtual bool isTemporary();
     virtual bool isUndefined();
     virtual void printDst() = 0;
-
-    // for liveness analysis
-    // blocks from which a phi references this value
-    CList<BasicBlock> phiRefs;
 };
 
 // an undefined value; will cause a compile error if program depends on it

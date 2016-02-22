@@ -48,12 +48,6 @@ void RValue::replaceBy(RValue *newValue)
             }
         }
     }
-    while(!phiRefs.isEmpty())
-    {
-        BasicBlock *refBlock = phiRefs.retrieve();
-        newValue->phiRefs.insertAfter(refBlock, NULL);
-        phiRefs.remove();
-    }
 }
 
 bool RValue::isConstant()
@@ -461,8 +455,6 @@ RValue *SSABuilder::addPhiOperands(const char *variable, BasicBlock *block, Phi 
         RValue *operand = readVariable(variable, pred);
         phi->appendOperand(operand);
         phi->sourceBlocks[i++] = pred;
-        // operand->phiRefs.insertAfter(pred); // we do this later now, after inserting phi moves
-        // operand->printDst(); printf(" phi ref from BB %i\n", pred->id);
     }
     return tryRemoveTrivialPhi(phi);
 }
@@ -647,8 +639,6 @@ void SSABuilder::prepareForRegAlloc()
                 srcIter.update(move->value());
                 move->value()->ref(phi);
                 phiSrc->unref(phi);
-                move->value()->phiRefs.insertAfter(block);
-                // move->value()->printDst(); printf(" ref'd by phi in BB:%i\n", block->id);
                 move->isPhiMove = true;
 
                 // replace other references if we can, to improve register allocation
