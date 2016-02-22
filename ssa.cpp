@@ -651,8 +651,6 @@ void SSABuilder::prepareForRegAlloc()
                 move->isPhiMove = true;
 
                 // replace other references if we can, to improve register allocation
-                // XXX: this code is very ugly
-                CList<Instruction> replaceList;
                 foreach_list(phiSrc->users, Instruction, refIter)
                 {
                     Instruction *inst2 = refIter.value();
@@ -662,21 +660,15 @@ void SSABuilder::prepareForRegAlloc()
                     if ((inst2->block == move->block && inst2->isJump()) ||
                         (inst2->block != move->block && move->block->dominates(inst2->block, numBBs)))
                     {
-                        // do the actual replace later so we don't screw up the iteration
-                        replaceList.insertAfter(inst2);
-                    }
-                }
-                foreach_list(replaceList, Instruction, refIter)
-                {
-                    Instruction *inst2 = refIter.value();
-                    // replace reference each time it appears
-                    foreach_list(inst2->operands, RValue, srcIter2)
-                    {
-                        if (srcIter2.value() == phiSrc)
+                        // replace the reference
+                        foreach_list(inst2->operands, RValue, srcIter2)
                         {
-                            srcIter2.update(move->value());
-                            move->value()->ref(inst2);
-                            phiSrc->unref(inst2);
+                            if (srcIter2.value() == phiSrc)
+                            {
+                                refIter.remove();
+                                srcIter2.update(move->value());
+                                move->value()->ref(inst2);
+                            }
                         }
                     }
                 }
