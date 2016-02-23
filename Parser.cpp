@@ -653,12 +653,14 @@ void Parser::selectStmt()
             stmt();
             BasicBlock *endElseBlock = bldUtil->currentBlock;
             afterIfBlock = bldUtil->createBBAfter(endElseBlock);
-            if (!endIfBlock->endsWithJump())
-                afterIfBlock->addPred(endIfBlock);
             if (!endElseBlock->endsWithJump())
                 afterIfBlock->addPred(endElseBlock);
             bldUtil->setCurrentBlock(endIfBlock);
-            Jump *skipElseJump = bldUtil->mkJump(OP_JMP, afterIfBlock, NULL);
+            if (!endIfBlock->endsWithJump())
+            {
+                bldUtil->mkJump(OP_JMP, afterIfBlock, NULL);
+                afterIfBlock->addPred(endIfBlock);
+            }
         }
         else // standalone if
         {
