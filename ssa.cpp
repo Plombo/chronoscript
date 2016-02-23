@@ -6,10 +6,6 @@
 #include "ssa.h"
 #include "regalloc.h"
 
-#if SSA_MAIN
-#define ssaMain main
-#endif
-
 // referenced by another instruction
 void RValue::ref(Instruction *inst)
 {
@@ -996,107 +992,5 @@ BasicBlock *SSABuildUtil::createBBAfter(BasicBlock *existingBB, Loop *loop)
     BasicBlock *block = builder->createBBAfter(existingBB);
     block->loop = loop ? loop : currentLoop;
     return block;
-}
-
-// temporary
-int ssaMain(int argc, char **argv)
-{
-    char str[64] = {"string"};
-    void *memCtx = ralloc_context(NULL);
-    SSABuilder bld = SSABuilder(memCtx);
-    GlobalState globalState;
-    SSABuildUtil bldUtil = SSABuildUtil(&bld, &globalState);
-    BasicBlock *startBlock = bld.createBBAfter(NULL);
-    bld.sealBlock(startBlock);
-    bldUtil.setCurrentBlock(startBlock);
-    Expression *nonConst1;
-    bld.insertInstruction(nonConst1 = new(bld.memCtx) Expression(OP_CALL, bld.valueId()), startBlock);
-    Constant *const1 = bldUtil.mkConstInt(3);
-    Constant *const2 = bldUtil.mkConstInt(5);
-    Constant *const3 = bldUtil.mkConstString(str);
-    Constant *const4 = bldUtil.mkConstFloat(4.1);
-    
-    #define RSIZE 11
-    RValue *r[RSIZE];
-    memset(r, 0, sizeof(r));
-    
-    // declare "bar" as a parameter
-    bldUtil.addParam("bar");
-    
-    // entry basic block
-    r[0] = bldUtil.mkUnaryOp(OP_NEG, const1);
-    r[1] = bldUtil.mkUnaryOp(OP_BIT_NOT, nonConst1->value());
-    r[2] = bldUtil.mkBinaryOp(OP_ADD, const1, const2);
-    r[3] = bldUtil.mkBinaryOp(OP_ADD, const1, nonConst1->value());
-    r[4] = bldUtil.mkBinaryOp(OP_BOOL_AND, const1, const2);
-    r[5] = bldUtil.mkBinaryOp(OP_ADD, const1, const3);
-    r[6] = bldUtil.mkBinaryOp(OP_ADD, const1, const4);
-
-    // int foo;
-    bldUtil.declareVariable("foo");
-    //bldUtil.declareVariable("bar");
-    
-    BasicBlock *ifBlock = bld.createBBAfter(startBlock),
-               *endIfBlock = bld.createBBAfter(ifBlock),
-               *afterIfBlock;
-    ifBlock->addPred(startBlock);
-    bld.sealBlock(ifBlock);
-
-    // if (r[2]) {
-    Jump *skipIfJump = bldUtil.mkJump(OP_BRANCH_FALSE, NULL, r[2]);
-    bldUtil.pushScope();
-    bldUtil.setCurrentBlock(ifBlock);
-    // foo = r[2] + r[1];
-    r[7] = bldUtil.mkBinaryOp(OP_ADD, r[2], r[1]);
-    bldUtil.writeVariable("foo", r[7]);
-    bldUtil.writeVariable("bar", r[0]);
-    // }
-    endIfBlock->addPred(bldUtil.currentBlock); // == ifBlock, in this simple case
-    bld.sealBlock(endIfBlock);
-    bldUtil.popScope();
-    
-    bool hasElse = true;
-    if (hasElse)
-    {
-        // else {
-        BasicBlock *elseBlock = bld.createBBAfter(endIfBlock);
-        afterIfBlock = bld.createBBAfter(elseBlock);
-        elseBlock->addPred(startBlock);
-        bld.sealBlock(elseBlock);
-        skipIfJump->target = elseBlock;
-        bldUtil.setCurrentBlock(elseBlock);
-
-        // foo = r[0] + r[1];
-        r[8] = bldUtil.mkBinaryOp(OP_ADD, r[0], const2);
-        bldUtil.writeVariable("foo", r[8]);
-        // }
-        afterIfBlock->addPred(bldUtil.currentBlock); // == elseBlock, in this simple case
-        bldUtil.setCurrentBlock(endIfBlock);
-        Jump *skipElseJump = bldUtil.mkJump(OP_JMP, afterIfBlock, NULL);
-        afterIfBlock->addPred(endIfBlock);
-        bld.sealBlock(afterIfBlock);
-    }
-    else
-    {
-        skipIfJump->target = endIfBlock;
-        afterIfBlock = endIfBlock;
-    }
-    // common to both if-only and if-else
-    bldUtil.setCurrentBlock(afterIfBlock);
-
-    // now read the "foo" variable
-    r[9] = bldUtil.readVariable("foo");
-    r[10] = bldUtil.readVariable("bar"); // this one has an undefined path
-
-    bld.printInstructionList();
-    for (int i=0; i < RSIZE; i++)
-    {
-        printf("\n%i = ", i);
-        if (r[i]) r[i]->printDst();
-        else printf("(none)");
-    }
-    
-    ralloc_free(memCtx);
-    return 0;
 }
 
