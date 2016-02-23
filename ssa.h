@@ -323,10 +323,10 @@ public:
     void printName();
     void print();
 
-    // dominance relation
-    bool dominates(BasicBlock *b, int numBlocks);
+    // true if this dominates b, and the path from this to b doesn't include 'without'
+    bool dominates(BasicBlock *b, BasicBlock *without, int numBlocks);
 private:
-    bool dominates(BasicBlock *b, BitSet *tested);
+    bool dominates(BasicBlock *b, BasicBlock *without, BitSet *tested);
 };
 
 class Loop

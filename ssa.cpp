@@ -355,21 +355,22 @@ void BasicBlock::print()
     }
 }
 
-bool BasicBlock::dominates(BasicBlock *other, int numBlocks)
+bool BasicBlock::dominates(BasicBlock *other, BasicBlock *without, int numBlocks)
 {
     BitSet tested(numBlocks, true);
-    return this->dominates(other, &tested);
+    return this->dominates(other, without, &tested);
 }
 
-bool BasicBlock::dominates(BasicBlock *b, BitSet *tested)
+bool BasicBlock::dominates(BasicBlock *b, BasicBlock *without, BitSet *tested)
 {
     if (tested->test(b->id)) return true;
     tested->set(b->id);
     if (b == this) return true;
+    if (b == without) return false;
     if (b->preds.isEmpty()) return false; // start block
     foreach_list(b->preds, BasicBlock, iter)
     {
-        if (!this->dominates(iter.value(), tested)) return false;
+        if (!this->dominates(iter.value(), without, tested)) return false;
     }
     return true;
 }
@@ -627,13 +628,17 @@ void SSABuilder::prepareForRegAlloc()
                 move->isPhiMove = true;
 
                 // replace other references if we can, to improve register allocation
+                int numBBs = basicBlockList.size();
                 if (!phiSrc->isTemporary()) continue; // no advantage to this if src isn't a temp
                 foreach_list(phiSrc->users, Instruction, refIter)
                 {
                     Instruction *inst2 = refIter.value();
                     if (inst2->isPhi() || inst2->isPhiMove) continue;
-                    // if user is a jump in this block, it's at the end so the phi move dominates it
-                    if (inst2->block == move->block && inst2->isJump())
+                    // If user is a jump in this block, it's at the end so the phi move
+                    // dominates it. We can also replace if the phi move dominates the
+                    // user without passing through the phi.
+                    if ((inst2->block == srcBlock && inst2->isJump()) ||
+                        (inst2->block != srcBlock && srcBlock->dominates(inst2->block, block, numBBs)))
                     {
                         // replace the reference
                         foreach_list(inst2->operands, RValue, srcIter2)
