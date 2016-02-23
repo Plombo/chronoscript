@@ -39,14 +39,8 @@ void doTest(char *scriptText, const char *filename)
     livenessAnalyzer.coalesce();
     livenessAnalyzer.buildInterferenceGraph();
     
-    InterferenceNode **ordering = MCS(livenessAnalyzer.values, livenessAnalyzer.uniqueNodes);
-    // printf("\nOrdering: ");
-    // for (int i = 0; ordering[i] != NULL; i++)
-    // {
-        // printf("%i ", ordering[i]->id);
-    // }
-    // printf("\n\n");
-    greedyColoring(ordering, livenessAnalyzer.uniqueNodes);
+    RegAlloc registerAllocator(livenessAnalyzer.values, livenessAnalyzer.uniqueNodes);
+    registerAllocator.run();
     for (int i = 0; i < livenessAnalyzer.uniqueNodes; i++)
     {
         printf("node %i -> $%i\n", livenessAnalyzer.values[i]->id, livenessAnalyzer.values[i]->color);

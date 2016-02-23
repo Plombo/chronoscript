@@ -3,7 +3,24 @@
 
 #include "liveness.h"
 
-InterferenceNode **MCS(InterferenceNode **vertices, int vertexCount);
-void greedyColoring(InterferenceNode **ordering, int vertexCount);
+/**
+ * Does register allocation by coloring an interference graph.
+ */
+class RegAlloc {
+public:
+    // vertices: the interference graph to color
+    // vertexCount: number of vertices in the interference graph
+    inline RegAlloc(InterferenceNode **vertices, int vertexCount)
+        : vertices(vertices), vertexCount(vertexCount), ordering(NULL) {}
+    ~RegAlloc();
+    void run(); // run the register allocator
+private:
+    void maximumCardinalitySearch();
+    void greedyColoring();
+
+    InterferenceNode **vertices;
+    InterferenceNode **ordering;
+    int vertexCount;
+};
 
 #endif

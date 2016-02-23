@@ -1,12 +1,39 @@
+/* This implementation of register allocation is based on the algorithms
+ * described in the paper "Register Allocation via Coloring of Chordal Graphs"
+ * by Fernando Magno Quintao Pereira and Jens Palsberg:
+ * http://web.cs.ucla.edu/~palsberg/paper/aplas05.pdf
+ */
+
 #include <stdlib.h>
-#include "ssa.h"
 #include "regalloc.h"
 #include "liveness.h"
 
-static InterferenceNode **buckets; // buckets[i] == pointer to first temp with cardinality i
-int maxWeight;
+// stores interference nodes in buckets according to their weight
+class WeightBuckets {
+private:
+    InterferenceNode **buckets; // buckets[i] == pointer to first node with weight i
+    int maxWeight;
+public:
+    WeightBuckets(int vertexCount);
+    ~WeightBuckets();
+    void removeValue(InterferenceNode *value);
+    void insertValue(InterferenceNode *value);
+    inline InterferenceNode *next() { return buckets[maxWeight]; }
+};
 
-static void removeValue(InterferenceNode *value)
+WeightBuckets::WeightBuckets(int vertexCount)
+{
+    maxWeight = 0;
+    buckets = (InterferenceNode**) malloc(vertexCount * sizeof(InterferenceNode*));
+    memset(buckets, 0, vertexCount * sizeof(InterferenceNode*));
+}
+
+WeightBuckets::~WeightBuckets()
+{
+    free(buckets);
+}
+
+void WeightBuckets::removeValue(InterferenceNode *value)
 {
     if (buckets[value->weight] == value)
         buckets[value->weight] = value->mcsNext;
@@ -18,7 +45,7 @@ static void removeValue(InterferenceNode *value)
     while(maxWeight > 0 && buckets[maxWeight] == NULL) --maxWeight;
 }
 
-static void insertValue(InterferenceNode *value)
+void WeightBuckets::insertValue(InterferenceNode *value)
 {
     int w = value->weight;
     value->mcsPrev = NULL;
@@ -31,31 +58,27 @@ static void insertValue(InterferenceNode *value)
     if (w > maxWeight) maxWeight = w;
 }
 
-InterferenceNode **MCS(InterferenceNode **vertices, int vertexCount)
+RegAlloc::~RegAlloc()
 {
-    void *memCtx = ralloc_context(NULL); // FIXME: memory leak, put this in a class and free it!
-    buckets = (InterferenceNode**)malloc(vertexCount * sizeof(InterferenceNode*));
-    memset(buckets, 0, vertexCount * sizeof(InterferenceNode*));
+    free(ordering);
+}
 
-    // For all v ∈ V do λ(v) ← 0
-    // we already start with weight==0 for each node
-#if 0
-    foreach_list((*instructionList), Instruction, iter)
-    {
-        if (!iter.value()->isExpression()) continue;
-        Temporary *value = static_cast<Expression*>(iter.value())->value();
-        if (value->isDead()) continue;
-        value->cardinality = 0;
-        insertValue(value);
-        numTemps++;
-    }
-#endif
+void RegAlloc::run()
+{
+    maximumCardinalitySearch();
+    greedyColoring();
+}
+
+// generates a simplicial elimination ordering of interference vertices
+void RegAlloc::maximumCardinalitySearch()
+{
+    WeightBuckets nodeBuckets(vertexCount);
 
     // initialize simplicial elimination ordering array
-    InterferenceNode **ordering = ralloc_array(memCtx, InterferenceNode*, vertexCount);
-    maxWeight = 0;
+    ordering = (InterferenceNode**) malloc(vertexCount * sizeof(InterferenceNode*));
 
-    // we iterate backwards just to make the register numbers come out nicer
+    // For all v ∈ V do λ(v) ← 0
+    // we iterate backwards just so the register numbers come out slightly nicer
     for (int i = vertexCount - 1; i >= 0; i--)
     {
         InterferenceNode *v = vertices[i];
@@ -63,35 +86,35 @@ InterferenceNode **MCS(InterferenceNode **vertices, int vertexCount)
         v->weight = 0;
         v->ordered = false;
         v->color = -1;
-        insertValue(v);
+        nodeBuckets.insertValue(v);
     }
-    
+
     for (int i = 0; i < vertexCount; i++)
     {
-        // let v ∈ V be a vertex such that ∀u ∈ V,λ(v) ≥ λ(u)
-        InterferenceNode *v = buckets[maxWeight];
+        // let v ∈ V be a vertex such that ∀u ∈ V, λ(v) ≥ λ(u)
+        InterferenceNode *v = nodeBuckets.next();
         // σ(i) ← v
         ordering[i] = v;
         // For all u ∈ V ∩ N(v) do λ(u) ← λ(u) + 1
         foreach_list(v->interferesWith, InterferenceNode, iter)
         {
             InterferenceNode *u = iter.value();
-            if (u->ordered) continue; // make sure u ∈ V
-            removeValue(u);
+            if (u->ordered) continue; // make sure u is in V
+            nodeBuckets.removeValue(u);
             ++u->weight;
-            insertValue(u);
+            nodeBuckets.insertValue(u);
         }
         // V ← V − {v}
         v->ordered = true;
-        removeValue(v);
+        nodeBuckets.removeValue(v);
     }
-    
-    free(buckets);
-    return ordering;
 }
 
-// input: temps in simplicial elimination ordering
-void greedyColoring(InterferenceNode **ordering, int vertexCount)
+// input: nodes in simplicial elimination ordering
+// assigns a color to each node; the greedy algorithm produces
+// an optimal coloring since the input is a simplicial elimination
+// ordering
+void RegAlloc::greedyColoring()
 {
     BitSet inUse(vertexCount, false); // colors in use by a neighbor
     for (int i = 0; i < vertexCount; i++)
