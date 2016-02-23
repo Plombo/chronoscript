@@ -210,6 +210,12 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
         {
             return pp_lexer_GetTokenNumber(plexer, theNextToken );
         }
+        //a decimal point followed by one or more digits is also a number
+        else if (*plexer->pcurChar == '.' &&
+                 (plexer->pcurChar[1] >= '0' && plexer->pcurChar[1] <= '9'))
+        {
+            return pp_lexer_GetTokenNumber(plexer, theNextToken );
+        }
         //string
         else if (!strncmp( plexer->pcurChar, "\"", 1))
         {
