@@ -11,7 +11,7 @@
 
 #include "depends.h"
 #include "ParserSet.h"
-#include "Stack.h"
+#include "List.h"
 #include "ssa.h"
 
 class Parser
@@ -37,6 +37,7 @@ public:
     GlobalState globalState;
     SSABuilder *bld;
     SSABuildUtil *bldUtil;
+    CList<SSABuilder> functions;
 
     Parser();
     ~Parser();

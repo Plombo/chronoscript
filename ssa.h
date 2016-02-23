@@ -349,13 +349,13 @@ public:
     CList<BasicBlock> basicBlockList;
     CList<Loop> loops; // loop-nesting forest
     CList<Temporary> temporaries; // constructed right before regalloc
+    char *functionName; // name of this function
 private:
     CList<Constant> constantList;
     int nextBBId; // init to 0
     int nextValueId; // init to 0
     char identBuf[300]; // buffer for getIdentString result
     CList<RValue> currentDef; // current definitions in each basic block, indexed by "var:block"
-    char *functionName; // name of this function
 
 public:
     void *memCtx;

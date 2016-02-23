@@ -220,7 +220,6 @@ void Parser::externalDecl2(bool variableonly)
     else if (!variableonly && ParserSet_First(&theParserSet, Productions::funcDecl, theNextToken.theType))
     {
         bld = new(memCtx) SSABuilder(memCtx, token.theSource);
-        delete bldUtil;
         bldUtil = new SSABuildUtil(bld, &globalState);
         BasicBlock *startBlock = bldUtil->createBBAfter(NULL);
         bld->sealBlock(startBlock);
@@ -231,6 +230,8 @@ void Parser::externalDecl2(bool variableonly)
         bldUtil->popScope();
         if (!bldUtil->currentBlock->endsWithJump())
             bldUtil->mkReturn(NULL);
+        delete bldUtil;
+        functions.insertAfter(bld);
     }
     else
     {

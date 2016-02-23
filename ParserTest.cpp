@@ -5,26 +5,20 @@
 #include "regalloc.h"
 #include "liveness.h"
 
-void doTest(char *scriptText, const char *filename)
+void compile(SSABuilder *func)
 {
-    pp_context ppContext;
-    Parser parser;
-
-    pp_context_init(&ppContext);
-    parser.parseText(&ppContext, scriptText, 1, filename);
-    pp_context_destroy(&ppContext);
-
+    printf("\n~~~~~ %s ~~~~~\n", func->functionName);
     printf("Instructions before processing:\n");
-    parser.bld->printInstructionList();
-    while(parser.bld->removeDeadCode());
-    parser.bld->prepareForRegAlloc();
+    func->printInstructionList();
+    while(func->removeDeadCode());
+    func->prepareForRegAlloc();
     printf("\nInstructions after processing:\n");
-    parser.bld->printInstructionList();
-    printf("\n%i temporaries\n\n", parser.bld->temporaries.size());
+    func->printInstructionList();
+    printf("\n%i temporaries\n\n", func->temporaries.size());
 
-    computeLiveSets(parser.bld);
+    computeLiveSets(func);
     printf("\nLive sets:\n");
-    foreach_list(parser.bld->basicBlockList, BasicBlock, iter)
+    foreach_list(func->basicBlockList, BasicBlock, iter)
     {
         BasicBlock *block = iter.value();
         printf("BB %i: in: ", block->id);
@@ -34,7 +28,7 @@ void doTest(char *scriptText, const char *filename)
         printf("\n");
     }
     
-    LivenessAnalyzer livenessAnalyzer(parser.bld);
+    LivenessAnalyzer livenessAnalyzer(func);
     livenessAnalyzer.computeLiveIntervals();
     livenessAnalyzer.coalesce();
     livenessAnalyzer.buildInterferenceGraph();
@@ -47,7 +41,7 @@ void doTest(char *scriptText, const char *filename)
     }
     
     // assign registers
-    foreach_list(parser.bld->temporaries, Temporary, iter)
+    foreach_list(func->temporaries, Temporary, iter)
     {
         Temporary *value = iter.value();
         value->reg = livenessAnalyzer.nodeForTemp[value->id]->color;
@@ -55,12 +49,12 @@ void doTest(char *scriptText, const char *filename)
 
     // print instruction list again
     printf("\n");
-    parser.bld->printInstructionList();
+    func->printInstructionList();
     printf("\n");
 
     // give instructions their final indices
     int nextIndex = 0;
-    foreach_list(parser.bld->instructionList, Instruction, iter)
+    foreach_list(func->instructionList, Instruction, iter)
     {
         Instruction *inst = iter.value();
         if (inst->op == OP_BB_START)
@@ -72,10 +66,25 @@ void doTest(char *scriptText, const char *filename)
         }
     }
     // print the final instruction list
-    foreach_list(parser.bld->instructionList, Instruction, iter)
+    foreach_list(func->instructionList, Instruction, iter)
     {
         Instruction *inst = iter.value();
         if (inst->seqIndex >= 0) inst->print();
+    }
+}
+
+void doTest(char *scriptText, const char *filename)
+{
+    pp_context ppContext;
+    Parser parser;
+
+    pp_context_init(&ppContext);
+    parser.parseText(&ppContext, scriptText, 1, filename);
+    pp_context_destroy(&ppContext);
+
+    foreach_list(parser.functions, SSABuilder, iter)
+    {
+        compile(iter.value());
     }
 }
 
