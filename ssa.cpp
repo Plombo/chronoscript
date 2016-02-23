@@ -612,7 +612,7 @@ void SSABuilder::prepareForRegAlloc()
             int i = 0;
             foreach_list(phi->operands, RValue, srcIter)
             {
-                Temporary *phiSrc = (Temporary*) srcIter.value();
+                RValue *phiSrc = srcIter.value();
                 BasicBlock *srcBlock = phi->sourceBlocks[i++];
                 Node *insertPoint = srcBlock->end->prev;
                 Expression *move = new(memCtx) Expression(OP_MOV, valueId(), phiSrc);
@@ -627,15 +627,13 @@ void SSABuilder::prepareForRegAlloc()
                 move->isPhiMove = true;
 
                 // replace other references if we can, to improve register allocation
-                int numBBs = basicBlockList.size();
+                if (!phiSrc->isTemporary()) continue; // no advantage to this if src isn't a temp
                 foreach_list(phiSrc->users, Instruction, refIter)
                 {
                     Instruction *inst2 = refIter.value();
                     if (inst2->isPhi() || inst2->isPhiMove) continue;
-                    // we can replace a reference if and only if the phi move dominates it
                     // if user is a jump in this block, it's at the end so the phi move dominates it
-                    if ((inst2->block == move->block && inst2->isJump()) ||
-                        (inst2->block != move->block && move->block->dominates(inst2->block, numBBs)))
+                    if (inst2->block == move->block && inst2->isJump())
                     {
                         // replace the reference
                         foreach_list(inst2->operands, RValue, srcIter2)
