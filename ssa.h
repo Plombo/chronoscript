@@ -108,6 +108,7 @@ class Instruction;
 class Expression;
 class BasicBlock;
 class Loop;
+class SSABuilder;
 
 // abstract base class for SSA values
 class RValue
@@ -133,6 +134,8 @@ public:
 
     virtual bool isConstant();
     virtual bool isTemporary();
+    virtual bool isParam();
+    virtual bool isGlobalVarRef();
     virtual bool isUndefined();
     virtual void printDst() = 0;
 };
@@ -169,6 +172,7 @@ class GlobalVarRef : public RValue
 public:
     int id; // index of the referenced global variable
     inline GlobalVarRef(int id) : RValue(), id(id) {}
+    virtual bool isGlobalVarRef();
     virtual void printDst();
 };
 
@@ -176,6 +180,7 @@ public:
 class Constant : public RValue
 {
 public:
+    int id;
     ScriptVariant constValue;
     Constant(ScriptVariant val);
     Constant(LONG intVal);
@@ -191,6 +196,7 @@ class Param : public RValue
 public:
     int index;
     inline Param(int index) : index(index) {}
+    virtual bool isParam();
     virtual void printDst();
 };
 
@@ -260,6 +266,7 @@ class FunctionCall : public Expression
 {
 public:
     char *functionName;
+    SSABuilder *functionRef;
     FunctionCall(const char *functionName, int valueId);
     virtual bool isDead();
     virtual void print();
@@ -349,9 +356,9 @@ public:
     CList<BasicBlock> basicBlockList;
     CList<Loop> loops; // loop-nesting forest
     CList<Temporary> temporaries; // constructed right before regalloc
+    CList<Constant> constantList;
     char *functionName; // name of this function
 private:
-    CList<Constant> constantList;
     int nextBBId; // init to 0
     int nextValueId; // init to 0
     char identBuf[300]; // buffer for getIdentString result

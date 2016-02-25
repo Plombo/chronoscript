@@ -4,6 +4,7 @@
 #include "List.h"
 #include "regalloc.h"
 #include "liveness.h"
+#include "ExecBuilder.h"
 
 void compile(SSABuilder *func)
 {
@@ -73,6 +74,27 @@ void compile(SSABuilder *func)
     }
 }
 
+// this is temporary; the final linking process will have to handle
+// imports and builtins
+void link(SSABuilder *func, CList<SSABuilder> *allFunctions)
+{
+    foreach_list(func->instructionList, Instruction, iter)
+    {
+        Instruction *inst = iter.value();
+        if (inst->op != OP_CALL) continue;
+        FunctionCall *call = static_cast<FunctionCall*>(inst);
+        if (allFunctions->findByName(call->functionName))
+        {
+            call->functionRef = allFunctions->retrieve();
+            printf("linked call to %s\n", call->functionName);
+        }
+        else
+        {
+            printf("error: couldn't link %s\n", call->functionName);
+        }
+    }
+}
+
 void doTest(char *scriptText, const char *filename)
 {
     pp_context ppContext;
@@ -84,8 +106,12 @@ void doTest(char *scriptText, const char *filename)
 
     foreach_list(parser.functions, SSABuilder, iter)
     {
+        link(iter.value(), &parser.functions);
         compile(iter.value());
     }
+    
+    ExecBuilder execBuilder(&parser.functions);
+    execBuilder.printInstructions();
 }
 
 bool testFile(const char *filename)

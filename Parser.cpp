@@ -231,7 +231,7 @@ void Parser::externalDecl2(bool variableonly)
         if (!bldUtil->currentBlock->endsWithJump())
             bldUtil->mkReturn(NULL);
         delete bldUtil;
-        functions.insertAfter(bld);
+        functions.insertAfter(bld, bld->functionName);
     }
     else
     {

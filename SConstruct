@@ -12,7 +12,15 @@ c_sources = [
     'script/pp_lexer',
     'script/pp_expr'
 ]
-cpp_sources = ['ssa', 'Parser', 'ParserTest', 'regalloc', 'liveness', 'RegAllocUtil']
+cpp_sources = [
+    'ssa',
+    'Parser',
+    'ParserTest',
+    'regalloc',
+    'liveness',
+    'RegAllocUtil',
+    'ExecBuilder',
+]
 objects = []
 
 for name in c_sources:

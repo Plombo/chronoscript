@@ -56,6 +56,16 @@ bool RValue::isTemporary()
     return false;
 }
 
+bool RValue::isParam()
+{
+    return false;
+}
+
+bool RValue::isGlobalVarRef()
+{
+    return false;
+}
+
 bool RValue::isUndefined()
 {
     return false;
@@ -82,6 +92,11 @@ void Temporary::printDst()
         printf("$%i", reg);
     else
         printf("%%r%i", id);
+}
+
+bool GlobalVarRef::isGlobalVarRef()
+{
+    return true;
 }
 
 void GlobalVarRef::printDst()
@@ -124,6 +139,11 @@ void Constant::printDst()
     {
         printf("const[?]");
     }
+}
+
+bool Param::isParam()
+{
+    return true;
 }
 
 void Param::printDst()
