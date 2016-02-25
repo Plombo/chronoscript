@@ -66,6 +66,7 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
         FunctionCall *ssaCall = static_cast<FunctionCall*>(ssaInst);
         ExecFunction *target = execBuilder->getFunctionNamed(ssaCall->functionRef->functionName);
         assert(target);
+        inst->callTarget = nextCallTargetIndex;
         func->callTargets[nextCallTargetIndex++] = target;
         // printf("linked call to %s from %s\n", ssaCall->functionRef->functionName, func->functionName);
 
