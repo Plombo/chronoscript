@@ -10,6 +10,7 @@ public:
     CList<SSABuilder> ssaFunctions;
     CList<ExecFunction> execFunctions;
     CList<ScriptVariant> constants;
+    GlobalState globals;
     Interpreter *interpreter;
 public:
     ExecBuilder();

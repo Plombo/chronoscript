@@ -169,7 +169,7 @@ void Parser::externalDecl2(bool variableonly)
     if (ParserSet_First(&theParserSet, Productions::initializer, theNextToken.theType))
     {
         //switch to immediate mode and allocate a variable.
-        globalState.declareGlobalVariable(token.theSource);
+        execBuilder->globals.declareGlobalVariable(token.theSource);
         // Parser_AddInstructionViaToken(pparser, IMMEDIATE, (Token *)NULL, NULL );
         // Parser_AddInstructionViaToken(pparser, DATA, &token, NULL );
 
@@ -208,13 +208,13 @@ void Parser::externalDecl2(bool variableonly)
     {
         match();
         // declare the variable
-        globalState.declareGlobalVariable(token.theSource);
+        execBuilder->globals.declareGlobalVariable(token.theSource);
     }
     // still comma? there should be another identifier so declare the variable and go for the next
     else if (check(TOKEN_COMMA))
     {
         match();
-        globalState.declareGlobalVariable(token.theSource);
+        execBuilder->globals.declareGlobalVariable(token.theSource);
         externalDecl2(true);
     }
 
@@ -222,7 +222,7 @@ void Parser::externalDecl2(bool variableonly)
     else if (!variableonly && ParserSet_First(&theParserSet, Productions::funcDecl, theNextToken.theType))
     {
         bld = new(memCtx) SSABuilder(memCtx, token.theSource);
-        bldUtil = new SSABuildUtil(bld, &globalState);
+        bldUtil = new SSABuildUtil(bld, &execBuilder->globals);
         BasicBlock *startBlock = bldUtil->createBBAfter(NULL);
         bld->sealBlock(startBlock);
         bldUtil->setCurrentBlock(startBlock);

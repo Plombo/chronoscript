@@ -35,7 +35,6 @@ public:
     BOOL isImport;
 
     void *memCtx;
-    GlobalState globalState;
     SSABuilder *bld;
     SSABuildUtil *bldUtil;
     ExecBuilder *execBuilder;

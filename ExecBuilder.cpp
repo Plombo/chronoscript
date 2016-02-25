@@ -33,6 +33,10 @@ void ExecBuilder::buildExecutable()
     {
         interpreter->constants[i++] = *iter.value();
     }
+
+    // build the globals array
+    interpreter->numGlobals = globals.globalVariables.size();
+    interpreter->globals = new ScriptVariant[interpreter->numGlobals];
 }
 
 ExecFunction *ExecBuilder::getFunctionNamed(const char *name)
@@ -106,9 +110,9 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
 
     // set dst
     if (ssaInst->isExpression())
-    {
         inst->dst = static_cast<Expression*>(ssaInst)->value()->reg;
-    }
+    else if (ssaInst->op == OP_EXPORT)
+        inst->dst = static_cast<Export*>(ssaInst)->dst->id;
 }
 
 FunctionBuilder::FunctionBuilder(SSABuilder *ssaFunc, ExecBuilder *builder)
@@ -213,6 +217,10 @@ void ExecBuilder::printInstructions()
             if (inst->opCode >= OP_MOV && inst->opCode <= OP_CALL)
             {
                 printf("gpr[%i] := ", inst->dst);
+            }
+            else if (inst->opCode == OP_EXPORT)
+            {
+                printf("global[%i] := ", inst->dst);
             }
 
             // opcode

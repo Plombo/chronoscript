@@ -409,6 +409,7 @@ public:
 // state for global variables, enums, and anything else not function-local
 class GlobalState
 {
+    friend class ExecBuilder;
 private:
     // name=var name, value=initial value (or NULL if uninitialized)
     CList<ScriptVariant> globalVariables;
