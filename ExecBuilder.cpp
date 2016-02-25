@@ -30,29 +30,31 @@ ExecFunction *ExecBuilder::getFunctionNamed(const char *name)
         return NULL;
 }
 
-static void createSrc(RValue *src, u8 *file, u8 *index)
+static u16 createSrc(RValue *src)
 {
+    u8 file, index;
     if (src->isTemporary())
     {
-        *file = FILE_GPR;
-        *index = static_cast<Temporary*>(src)->reg;
+        file = FILE_GPR;
+        index = static_cast<Temporary*>(src)->reg;
     }
     else if (src->isParam())
     {
-        *file = FILE_PARAM;
-        *index = static_cast<Param*>(src)->index;
+        file = FILE_PARAM;
+        index = static_cast<Param*>(src)->index;
     }
     else if (src->isGlobalVarRef())
     {
-        *file = FILE_GLOBAL;
-        *index = static_cast<GlobalVarRef*>(src)->id;
+        file = FILE_GLOBAL;
+        index = static_cast<GlobalVarRef*>(src)->id;
     }
     else if (src->isConstant())
     {
         int id = static_cast<Constant*>(src)->id;
-        *file = FILE_CONSTANT + (id / 256);
-        *index = id % 256;
+        file = FILE_CONSTANT + (id / 256);
+        index = id % 256;
     }
+    return (file << 8) | index;
 }
 
 void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *ssaInst)
@@ -72,14 +74,7 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
         func->callParams[nextParamIndex++] = (FILE_IMMEDIATE << 8) | ssaInst->operands.size();
         foreach_list(ssaInst->operands, RValue, iter)
         {
-#ifdef BOR_BIG_ENDIAN
-            u8 *file = (u8*) &func->callParams[nextParamIndex],
-               *index = file + 1;
-#else
-            u8 *index = (u8*) &func->callParams[nextParamIndex],
-               *file = index + 1;
-#endif
-            createSrc(iter.value(), file, index);
+            func->callParams[nextParamIndex] = createSrc(iter.value());
             ++nextParamIndex;
         }
     }
@@ -88,9 +83,9 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
         int numSrc = ssaInst->operands.size();
         assert(numSrc >= 0 && numSrc <= 2);
         if (numSrc >= 1) // src0
-            createSrc(ssaInst->src(0), &inst->src0File, &inst->src0);
+            inst->src0 = createSrc(ssaInst->src(0));
         if (numSrc >= 2) // src1
-            createSrc(ssaInst->src(1), &inst->src1File, &inst->src1);
+            inst->src1 = createSrc(ssaInst->src(1));
         if (ssaInst->isJump())
             inst->jumpTarget = static_cast<Jump*>(ssaInst)->target->startIndex;
     }
@@ -157,8 +152,9 @@ void FunctionBuilder::run()
     printf("built executable function %s\n", func->functionName);
 }
 
-static void printSrc(u8 file, u8 index)
+static void printSrc(u16 src)
 {
+    int file = src >> 8, index = src & 0xff;
     if (file == FILE_NONE) return;
     else if (file > FILE_CONSTANT)
         printf("const%i", file - FILE_CONSTANT);
@@ -200,14 +196,13 @@ void ExecBuilder::printInstructions()
                 int paramCount = paramCount16 & 0xff;
                 for (int j = 0; j < paramCount; j++)
                 {
-                    u16 param = func->callParams[inst->paramsIndex+j+1];
-                    printSrc(param >> 8, param & 0xff);
+                    printSrc(func->callParams[inst->paramsIndex+j+1]);
                 }
             }
             else
             {
-                printSrc(inst->src0File, inst->src0);
-                printSrc(inst->src1File, inst->src1);
+                printSrc(inst->src0);
+                printSrc(inst->src1);
             }
 
             // jump target

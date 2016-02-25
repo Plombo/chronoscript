@@ -33,17 +33,11 @@ struct ExecInstruction {
     u8 opCode;
     u8 dst; // index of GPR to store result in (or global if opCode == OP_EXPORT)
     union {
-        struct {
-            u8 src0; // src0 index
-            u8 src1; // src1 index
-        };
+        u16 src0; // first src
         u16 paramsIndex; // for functions
     };
     union {
-        struct {
-            u8 src0File;
-            u8 src1File;
-        };
+        u16 src1; // second src
         u16 callTarget; // for functions: index in callTargets (CALL) or builtins (CALL_BUILTIN)
     };
     u16 jumpTarget; // for jumps
