@@ -13,6 +13,7 @@
 #include "ParserSet.h"
 #include "List.h"
 #include "ssa.h"
+#include "ExecBuilder.h"
 
 class Parser
 {
@@ -37,11 +38,12 @@ public:
     GlobalState globalState;
     SSABuilder *bld;
     SSABuildUtil *bldUtil;
+    ExecBuilder *execBuilder;
     CList<SSABuilder> functions;
 
     Parser();
     ~Parser();
-    void parseText(pp_context *pcontext, LPSTR scriptText,
+    void parseText(pp_context *pcontext, ExecBuilder *builder, LPSTR scriptText,
                       ULONG startingLineNumber, LPCSTR path);
     bool check(MY_TOKEN_TYPE theType);
     void match();

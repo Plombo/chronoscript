@@ -46,10 +46,17 @@ struct ExecInstruction {
 struct ExecFunction {
     char *functionName;
     int numParams;
-    ScriptVariant *constants; // TODO move constants to Interpreter
-    int numConstants;
     ExecFunction **callTargets;
     u16 *callParams; // each "param" is actually 8 bits of src file and 8 bits of src index
     int numInstructions;
     ExecInstruction *instructions;
+};
+
+class Interpreter {
+public:
+    CList<ExecFunction> functions;
+    int numConstants;
+    ScriptVariant *constants;
+    int numGlobals;
+    ScriptVariant *globals;
 };

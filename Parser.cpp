@@ -41,9 +41,11 @@ Parser::~Parser()
 *                        line counts.
 *  Returns:
 ******************************************************************************/
-void Parser::parseText(pp_context *pcontext, LPSTR scriptText,
+void Parser::parseText(pp_context *pcontext, ExecBuilder *builder, LPSTR scriptText,
                       ULONG startingLineNumber, LPCSTR path)
 {
+    this->execBuilder = builder;
+
     //Create a new CLexer for this script text.
     TEXTPOS thePosition;
     thePosition.row = startingLineNumber;
@@ -231,7 +233,7 @@ void Parser::externalDecl2(bool variableonly)
         if (!bldUtil->currentBlock->endsWithJump())
             bldUtil->mkReturn(NULL);
         delete bldUtil;
-        functions.insertAfter(bld, bld->functionName);
+        execBuilder->ssaFunctions.insertAfter(bld, bld->functionName);
     }
     else
     {

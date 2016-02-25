@@ -6,10 +6,14 @@
 
 // builds ExecFunction/ExecInstruction from SSA IR
 class ExecBuilder {
-    CList<SSABuilder> *ssaFunctions;
-    CList<ExecFunction> execFunctions;
 public:
-    ExecBuilder(CList<SSABuilder> *ssaFunctions);
+    CList<SSABuilder> ssaFunctions;
+    CList<ExecFunction> execFunctions;
+    CList<ScriptVariant> constants;
+    Interpreter *interpreter;
+public:
+    ExecBuilder();
+    void buildExecutable();
     ExecFunction *getFunctionNamed(const char *name);
     void printInstructions(); // XXX: move to Interpreter
 };

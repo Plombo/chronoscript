@@ -3,29 +3,42 @@
 #include <stdlib.h>
 #include <assert.h>
 
-ExecBuilder::ExecBuilder(CList<SSABuilder> *ssaFunctions)
-    : ssaFunctions(ssaFunctions)
+ExecBuilder::ExecBuilder()
+{
+    interpreter = new Interpreter;
+}
+
+void ExecBuilder::buildExecutable()
 {
     // allocate an ExecFunction for each source function so that when one of
     // these functions calls another, we can properly link the call
-    foreach_plist(ssaFunctions, SSABuilder, iter)
+    foreach_list(ssaFunctions, SSABuilder, iter)
     {
         ExecFunction *execFunc = new ExecFunction;
-        execFunctions.insertAfter(execFunc, iter.name());
+        interpreter->functions.insertAfter(execFunc, iter.name());
     }
 
     // now actually build the ExecFunctions
-    foreach_plist(ssaFunctions, SSABuilder, iter)
+    foreach_list(ssaFunctions, SSABuilder, iter)
     {
         FunctionBuilder builder(iter.value(), this);
         builder.run();
+    }
+
+    // build the constants array
+    interpreter->numConstants = constants.size();
+    interpreter->constants = new ScriptVariant[interpreter->numConstants];
+    int i = 0;
+    foreach_list(constants, ScriptVariant, iter)
+    {
+        interpreter->constants[i++] = *iter.value();
     }
 }
 
 ExecFunction *ExecBuilder::getFunctionNamed(const char *name)
 {
-    if (execFunctions.findByName(name))
-        return execFunctions.retrieve();
+    if (interpreter->functions.findByName(name))
+        return interpreter->functions.retrieve();
     else
         return NULL;
 }
@@ -109,13 +122,6 @@ void FunctionBuilder::run()
 {
     func->functionName = strdup(ssaFunc->functionName);
     func->numParams = ssaFunc->paramCount;
-    func->numConstants = ssaFunc->constantList.size();
-    func->constants = new ScriptVariant[func->numConstants];
-    int i = 0;
-    foreach_list(ssaFunc->constantList, Constant, iter)
-    {
-        func->constants[i++] = iter.value()->constValue;
-    }
 
     int numInstructions = 0, numTemps = 0, numCalls = 0, numParams = 0;
     foreach_list(ssaFunc->instructionList, Instruction, iter)
@@ -166,8 +172,33 @@ static void printSrc(u16 src)
 
 void ExecBuilder::printInstructions()
 {
+    // print constants
+    printf("\nConstants: ");
+    foreach_list(constants, ScriptVariant, iter)
+    {
+        ScriptVariant *val = iter.value();
+        if (val->vt == VT_INTEGER)
+        {
+            printf("%i", val->lVal);
+        }
+        else if (val->vt == VT_DECIMAL)
+        {
+            printf("%f", val->dblVal);
+        }
+        else if (val->vt == VT_STR)
+        {
+            // FIXME: re-escape characters such as '\r' and '\n'
+            printf("\"%s\"", StrCache_Get(val->strVal));
+        }
+        else
+        {
+            printf("const[?]");
+        }
+        printf(" ");
+    }
     printf("\n");
-    foreach_list(execFunctions, ExecFunction, funcIter)
+    // print each function
+    foreach_list(interpreter->functions, ExecFunction, funcIter)
     {
         ExecFunction *func = funcIter.value();
         printf("\n~~~ Function '%s' (%i params) ~~~\n", func->functionName, func->numParams);

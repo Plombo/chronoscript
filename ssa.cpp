@@ -106,11 +106,13 @@ void GlobalVarRef::printDst()
 
 Constant::Constant(ScriptVariant val)
 {
+    id = -1;
     constValue = val;
 }
 
 Constant::Constant(LONG intVal)
 {
+    id = -1;
     constValue.vt = VT_INTEGER;
     constValue.lVal = intVal;
 }

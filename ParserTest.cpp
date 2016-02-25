@@ -95,22 +95,57 @@ void link(SSABuilder *func, CList<SSABuilder> *allFunctions)
     }
 }
 
+void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
+{
+    foreach_list(func->instructionList, Instruction, instIter)
+    {
+        Instruction *inst = instIter.value();
+        foreach_list(inst->operands, RValue, srcIter)
+        {
+            if (!srcIter.value()->isConstant()) continue;
+            Constant *c = static_cast<Constant*>(srcIter.value());
+            int i = 0;
+            // try to use an existing constant
+            foreach_plist(constants, ScriptVariant, constIter)
+            {
+                if (c->constValue.vt == constIter.value()->vt &&
+                    ScriptVariant_IsTrue(ScriptVariant_Eq(&c->constValue, constIter.value())))
+                {
+                    c->id = i;
+                    break;
+                }
+                i++;
+            }
+            // constant doesn't exist yet; add it to the list
+            if (c->id < 0)
+            {
+                assert(i == constants->size());
+                constants->gotoLast();
+                constants->insertAfter(&c->constValue);
+                c->id = i;
+            }
+        }
+    }
+}
+
 void doTest(char *scriptText, const char *filename)
 {
+    ExecBuilder execBuilder;
     pp_context ppContext;
     Parser parser;
 
     pp_context_init(&ppContext);
-    parser.parseText(&ppContext, scriptText, 1, filename);
+    parser.parseText(&ppContext, &execBuilder, scriptText, 1, filename);
     pp_context_destroy(&ppContext);
 
-    foreach_list(parser.functions, SSABuilder, iter)
+    foreach_list(execBuilder.ssaFunctions, SSABuilder, iter)
     {
-        link(iter.value(), &parser.functions);
+        link(iter.value(), &execBuilder.ssaFunctions);
         compile(iter.value());
+        linkConstants(iter.value(), &execBuilder.constants);
     }
-    
-    ExecBuilder execBuilder(&parser.functions);
+
+    execBuilder.buildExecutable();
     execBuilder.printInstructions();
 }
 
