@@ -34,8 +34,6 @@ enum OpCode
     OP_BIT_NOT,
     
     // binary ops
-    OP_BOOL_OR,
-    OP_BOOL_AND,
     OP_BIT_OR,
     OP_XOR,
     OP_BIT_AND,
@@ -80,8 +78,6 @@ static const char *opCodeNames[] = {
     "bool_not",
     "bit_not",
 
-    "bool_or",
-    "bool_and",
     "bit_or",
     "xor",
     "bit_and",

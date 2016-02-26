@@ -797,8 +797,6 @@ Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *s
     case OP_BOOL_NOT: result = ScriptVariant_Boolean_Not(src0); break;
     case OP_BIT_NOT: result = ScriptVariant_Bit_Not(src0); break;
     // binary
-    case OP_BOOL_OR: result = ScriptVariant_Or(src0, src1); break;
-    case OP_BOOL_AND: result = ScriptVariant_And(src0, src1); break;
     case OP_BIT_OR: result = ScriptVariant_Bit_Or(src0, src1); break;
     case OP_XOR: result = ScriptVariant_Xor(src0, src1); break;
     case OP_BIT_AND: result = ScriptVariant_Bit_And(src0, src1); break;
