@@ -118,7 +118,7 @@ void LivenessAnalyzer::addLiveRange(Temporary *value, BasicBlock *block, int end
     if (begin < blockStart || begin > blockEnd)
         begin = blockStart;
 
-    printf("%%%i <- live range [%i(%i), %i)\n", value->id, begin, value->expr->seqIndex, end);
+    // printf("%%%i <- live range [%i(%i), %i)\n", value->id, begin, value->expr->seqIndex, end);
 
     if (begin != end) // empty ranges are only added as hazards for dead writes
         nodeForTemp[value->id]->livei.extend(begin, end);
@@ -263,8 +263,6 @@ void LivenessAnalyzer::buildInterferenceGraph()
         printf("%%%i = node %i\n", i, nodeForTemp[i]->id);
     }
     assert(nextId == uniqueNodes);
-    // printf("Do %%0 and %%1 interfere? %i\n", nodeForTemp[0]->livei.overlaps(nodeForTemp[1]->livei));
-    // printf("Do %%3 and %%4 interfere? %i\n", nodeForTemp[3]->livei.overlaps(nodeForTemp[4]->livei));
 
     // build the interference graph
     CList<InterferenceNode> active;

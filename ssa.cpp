@@ -480,7 +480,7 @@ RValue *SSABuilder::addPhiOperands(const char *variable, BasicBlock *block, Phi 
 
 RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
 {
-    printf("tryRemoveTrivialPhi: "); phi->print(); 
+    // printf("tryRemoveTrivialPhi: "); phi->print();
     RValue *same = NULL;
     foreach_list(phi->operands, RValue, iter)
     {
@@ -488,7 +488,7 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
         if (op == same || op == phi->value())
             continue; // Unique value or self−reference
         if (same != NULL) {
-            printf("not trivial: "); same->printDst(); printf(" and "); op->printDst(); printf("\n");
+            // printf("not trivial: "); same->printDst(); printf(" and "); op->printDst(); printf("\n");
             return phi->value(); // The phi merges at least two values: not trivial
         }
         same = op;
@@ -497,7 +497,7 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
     {
         same = new(memCtx) Undef(); // The phi is unreachable or in the start block
     }
-    printf("trivial phi; replace with "); same->printDst(); printf("\n");
+    // printf("trivial phi; replace with "); same->printDst(); printf("\n");
     // remember all users except the phi itself
     CList<Phi> phiUsers;
     foreach_list(phi->value()->users, Instruction, iter)

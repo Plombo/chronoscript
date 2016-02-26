@@ -166,7 +166,6 @@ void FunctionBuilder::run()
         if (inst->seqIndex < 0) continue;
         createExecInstruction(&(func->instructions[inst->seqIndex]), inst);
     }
-    printf("built executable function %s\n", func->functionName);
 }
 
 static void printSrc(u16 src)

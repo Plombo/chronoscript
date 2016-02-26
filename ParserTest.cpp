@@ -9,8 +9,10 @@
 void compile(SSABuilder *func)
 {
     printf("\n~~~~~ %s ~~~~~\n", func->functionName);
+#if 0
     printf("Instructions before processing:\n");
     func->printInstructionList();
+#endif
     while(func->removeDeadCode());
     func->prepareForRegAlloc();
     printf("\nInstructions after processing:\n");
