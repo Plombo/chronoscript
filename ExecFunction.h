@@ -21,6 +21,8 @@ static const char *regFileNames[] = {
     "const",
 };
 
+class Interpreter;
+
 /*
 Old Instruction: 3 ints, 8 pointers
     44 bytes on 32-bit platforms
@@ -45,9 +47,11 @@ struct ExecInstruction {
 
 struct ExecFunction {
     char *functionName;
+    Interpreter *interpreter;
     int numParams;
     ExecFunction **callTargets;
     u16 *callParams; // each "param" is actually 8 bits of src file and 8 bits of src index
+    int maxCallParams; // largest number of parameters to a single call in this function
     int numInstructions;
     ExecInstruction *instructions;
 };

@@ -87,9 +87,12 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
         func->callTargets[nextCallTargetIndex++] = target;
         // printf("linked call to %s from %s\n", ssaCall->functionRef->functionName, func->functionName);
 
-        assert(ssaInst->operands.size() < 256);
+        int numParams = ssaInst->operands.size();
+        assert(numParams < 256);
+        if (numParams > func->maxCallParams)
+            func->maxCallParams = numParams;
         inst->paramsIndex = nextParamIndex;
-        func->callParams[nextParamIndex++] = (FILE_IMMEDIATE << 8) | ssaInst->operands.size();
+        func->callParams[nextParamIndex++] = numParams;
         foreach_list(ssaInst->operands, RValue, iter)
         {
             func->callParams[nextParamIndex] = createSrc(iter.value());
@@ -125,7 +128,9 @@ FunctionBuilder::FunctionBuilder(SSABuilder *ssaFunc, ExecBuilder *builder)
 void FunctionBuilder::run()
 {
     func->functionName = strdup(ssaFunc->functionName);
+    func->interpreter = execBuilder->interpreter;
     func->numParams = ssaFunc->paramCount;
+    func->maxCallParams = 0;
 
     int numInstructions = 0, numTemps = 0, numCalls = 0, numParams = 0;
     foreach_list(ssaFunc->instructionList, Instruction, iter)
@@ -232,7 +237,7 @@ void ExecBuilder::printInstructions()
                 ExecFunction *callTarget = func->callTargets[inst->callTarget];
                 printf("%s ", callTarget->functionName);
                 u16 paramCount16 = func->callParams[inst->paramsIndex];
-                assert(paramCount16 >> 8 == FILE_IMMEDIATE);
+                assert(paramCount16 >> 8 == FILE_NONE);
                 int paramCount = paramCount16 & 0xff;
                 for (int j = 0; j < paramCount; j++)
                 {
