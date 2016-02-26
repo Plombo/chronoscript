@@ -54,22 +54,6 @@ HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVarian
         }
     #define fetchDst() dst = &gprs[inst->dst];
 
-#if 0
-    struct local {
-        static inline ScriptVariant *fetchSrc(u16 src)
-        {
-            int file = src >> 8;
-            int regIndex = src & 0xff;
-            if (file > FILE_CONSTANT)
-            {
-                regIndex += 256 * (file - FILE_CONSTANT);
-                file = FILE_CONSTANT;
-            }
-            return srcFiles[file][regIndex];
-        }
-    };
-#endif
-
     while(1)
     {
         ExecInstruction *inst = &function->instructions[index];
