@@ -159,6 +159,7 @@ void FunctionBuilder::run()
     memset(func->instructions, 0, numInstructions * sizeof(ExecInstruction));
     func->callTargets = new ExecFunction*[numCalls];
     func->callParams = new u16[numParams];
+    func->numGPRs = numTemps;
     foreach_list(ssaFunc->instructionList, Instruction, iter)
     {
         Instruction *inst = iter.value();

@@ -20,6 +20,7 @@ cpp_sources = [
     'liveness',
     'RegAllocUtil',
     'ExecBuilder',
+    'Interpreter'
 ]
 objects = []
 

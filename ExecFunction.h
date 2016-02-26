@@ -7,7 +7,6 @@ enum RegFile {
     FILE_GPR,
     FILE_PARAM,
     FILE_GLOBAL,
-    FILE_IMMEDIATE,
     FILE_CONSTANT,
     // greater numbers are additional constant files
 };
@@ -17,7 +16,6 @@ static const char *regFileNames[] = {
     "gpr",
     "param",
     "global",
-    "imm",
     "const",
 };
 
@@ -49,6 +47,7 @@ struct ExecFunction {
     char *functionName;
     Interpreter *interpreter;
     int numParams;
+    int numGPRs;
     ExecFunction **callTargets;
     u16 *callParams; // each "param" is actually 8 bits of src file and 8 bits of src index
     int maxCallParams; // largest number of parameters to a single call in this function
@@ -64,3 +63,5 @@ public:
     int numGlobals;
     ScriptVariant *globals;
 };
+
+HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval);

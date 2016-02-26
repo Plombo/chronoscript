@@ -147,6 +147,15 @@ void doTest(char *scriptText, const char *filename)
 
     execBuilder.buildExecutable();
     execBuilder.printInstructions();
+    
+    if (execBuilder.interpreter->functions.findByName("main"))
+    {
+        ScriptVariant retval;
+        execFunction(execBuilder.interpreter->functions.retrieve(), NULL, &retval);
+        char buf[256];
+        ScriptVariant_ToString(&retval, buf);
+        printf("\nReturned value: %s\n", buf);
+    }
 }
 
 bool testFile(const char *filename)
