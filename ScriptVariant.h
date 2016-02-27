@@ -54,7 +54,7 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, CHAR *str);
 inline HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, LONG *pVal);
 inline HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, DOUBLE *pVal);
 BOOL ScriptVariant_IsTrue(ScriptVariant *svar);
-inline void ScriptVariant_ToString(ScriptVariant *svar, LPSTR buffer );
+void ScriptVariant_ToString(ScriptVariant *svar, LPSTR buffer );
 
 // light version, for compiled call, faster than above, but not safe in some situations
 // This function are used by compiled scripts

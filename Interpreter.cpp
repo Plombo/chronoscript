@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "ExecFunction.h"
 #include "ScriptVariant.h"
+#include "Builtins.h"
 #include "ssa.h" // for opcodes
 
 typedef ScriptVariant *(*UnaryOperation)(ScriptVariant*);
@@ -141,17 +142,28 @@ HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVarian
 
             // function call
             case OP_CALL:
+            case OP_CALL_BUILTIN:
             {
                 fetchDst();
-                ExecFunction *target = function->callTargets[inst->callTarget];
                 int numParams = function->callParams[inst->paramsIndex];
                 for (int i = 0; i < numParams; i++)
                 {
                     fetchSrc(scratch, function->callParams[inst->paramsIndex+i+1]);
                     callParams[i] = *scratch;
                 }
-                if (FAILED(execFunction(target, callParams, dst)))
-                    return E_FAIL;
+                HRESULT callResult;
+                if (inst->opCode == OP_CALL_BUILTIN)
+                {
+                    BuiltinScriptFunction target = getBuiltinByIndex(inst->callTarget);
+                    callResult = target(numParams, callParams, dst);
+                }
+                else // inst->opCode == OP_CALL
+                {
+                    ExecFunction *target = function->callTargets[inst->callTarget];
+                    callResult = execFunction(target, callParams, dst);
+                }
+                if (FAILED(callResult))
+                    return callResult;
                 break;
             }
 

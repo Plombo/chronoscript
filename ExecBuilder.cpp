@@ -77,15 +77,21 @@ static u16 createSrc(RValue *src)
 void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *ssaInst)
 {
     inst->opCode = ssaInst->op;
-    if (ssaInst->op == OP_CALL)
+    if (ssaInst->op == OP_CALL || ssaInst->op == OP_CALL_BUILTIN)
     {
         // call target
         FunctionCall *ssaCall = static_cast<FunctionCall*>(ssaInst);
-        ExecFunction *target = execBuilder->getFunctionNamed(ssaCall->functionRef->functionName);
-        assert(target);
-        inst->callTarget = nextCallTargetIndex;
-        func->callTargets[nextCallTargetIndex++] = target;
-        // printf("linked call to %s from %s\n", ssaCall->functionRef->functionName, func->functionName);
+        if (ssaInst->op == OP_CALL_BUILTIN)
+        {
+            inst->callTarget = ssaCall->builtinRef;
+        }
+        else
+        {
+            ExecFunction *target = execBuilder->getFunctionNamed(ssaCall->functionRef->functionName);
+            assert(target);
+            inst->callTarget = nextCallTargetIndex;
+            func->callTargets[nextCallTargetIndex++] = target;
+        }
 
         int numParams = ssaInst->operands.size();
         assert(numParams < 256);
@@ -138,10 +144,10 @@ void FunctionBuilder::run()
         Instruction *inst = iter.value();
         if (inst->seqIndex < 0) continue;
         ++numInstructions;
-        if (inst->op == OP_CALL)
+        if (inst->isFunctionCall())
         {
-            ++numCalls;
             numParams += inst->operands.size() + 1;
+            if (inst->op != OP_CALL_BUILTIN) ++numCalls;
         }
         foreach_list(inst->operands, RValue, srcIter)
         {
@@ -232,7 +238,7 @@ void ExecBuilder::printInstructions()
             printf("%s ", opCodeNames[inst->opCode]);
 
             // parameters/sources
-            if (inst->opCode == OP_CALL)
+            if (inst->opCode == OP_CALL || inst->opCode == OP_CALL_BUILTIN)
             {
                 ExecFunction *callTarget = func->callTargets[inst->callTarget];
                 printf("%s ", callTarget->functionName);

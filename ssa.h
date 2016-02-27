@@ -53,6 +53,7 @@ enum OpCode
 
     // function call
     OP_CALL,
+    OP_CALL_BUILTIN,
 
     // write to global variable
     OP_EXPORT,
@@ -96,6 +97,7 @@ static const char *opCodeNames[] = {
     "mod",
 
     "call",
+    "call_builtin",
 
     "export",
 };
@@ -217,6 +219,7 @@ public:
     virtual bool isExpression();
     virtual bool isJump();
     inline bool isPhi() { return op == OP_PHI; }
+    inline bool isFunctionCall() { return op == OP_CALL || op == OP_CALL_BUILTIN; }
 
     // used after register allocation
     virtual bool isTrivial();
@@ -262,7 +265,10 @@ class FunctionCall : public Expression
 {
 public:
     char *functionName;
-    SSABuilder *functionRef;
+    union { // this value set during linking
+        SSABuilder *functionRef; // op == OP_CALL
+        int builtinRef; // op == OP_CALL_BUILTIN
+    };
     FunctionCall(const char *functionName, int valueId);
     virtual bool isDead();
     virtual void print();

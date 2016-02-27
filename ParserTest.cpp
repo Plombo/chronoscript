@@ -5,6 +5,7 @@
 #include "regalloc.h"
 #include "liveness.h"
 #include "ExecBuilder.h"
+#include "Builtins.h"
 
 void compile(SSABuilder *func)
 {
@@ -92,7 +93,15 @@ void link(SSABuilder *func, CList<SSABuilder> *allFunctions)
         }
         else
         {
-            printf("error: couldn't link %s\n", call->functionName);
+            int builtin = getBuiltinIndex(call->functionName);
+            if (builtin >= 0)
+            {
+                call->op = OP_CALL_BUILTIN;
+                call->builtinRef = builtin;
+                printf("linked call to builtin %s\n", call->functionName);
+            }
+            else
+                printf("error: couldn't link %s\n", call->functionName);
         }
     }
 }
@@ -153,6 +162,7 @@ void doTest(char *scriptText, const char *filename)
     if (execBuilder.interpreter->functions.findByName("main"))
     {
         ScriptVariant retval;
+        printf("\n\nRunning function 'main'...\n");
         execFunction(execBuilder.interpreter->functions.retrieve(), NULL, &retval);
         char buf[256];
         ScriptVariant_ToString(&retval, buf);
