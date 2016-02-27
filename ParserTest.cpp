@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <errno.h>
 #include "pp_parser.h"
 #include "Parser.h"
 #include "List.h"
@@ -27,7 +28,7 @@ void compile(SSABuilder *func)
         BasicBlock *block = iter.value();
         printf("BB %i: in: ", block->id);
         block->liveIn.print();
-        printf(", out:", block->id);
+        printf(", out:");
         block->liveOut.print();
         printf("\n");
     }

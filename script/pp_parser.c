@@ -30,7 +30,7 @@
 
 #if PP_TEST // using pp_test.c to test the preprocessor functionality; OpenBOR functionality is not available
 #undef printf
-#define openpackfile(fname, pname)    ((int)fopen(fname, "rb"))
+#define openpackfile(fname, pname)    ((size_t)fopen(fname, "rb"))
 #define readpackfile(hnd, buf, len)    fread(buf, 1, len, (FILE*)hnd)
 #define seekpackfile(hnd, loc, md)    fseek((FILE*)hnd, loc, md)
 #define tellpackfile(hnd)            ftell((FILE*)hnd)
@@ -920,7 +920,7 @@ HRESULT pp_parser_include(pp_parser *self, char *filename)
     char *buffer;
     int length;
     int bytesRead;
-    int handle;
+    size_t handle;
     pp_parser *includeParser;
 
 #if PP_TEST

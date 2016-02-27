@@ -1,4 +1,7 @@
-env = Environment(tools=['mingw'], CPPPATH=['.', 'script'], CCFLAGS='-g')
+if Platform().name == 'win32':
+    env = Environment(tools=['mingw'], CPPPATH=['.', 'script'], CCFLAGS='-g')
+else:
+    env = Environment(CPPPATH=['.', 'script'], CCFLAGS='-g')
 
 c_sources = [
     'List',
