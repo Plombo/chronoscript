@@ -189,9 +189,9 @@ void ExecBuilder::printInstructions()
 {
     // print constants
     printf("\nConstants: ");
-    foreach_list(constants, ScriptVariant, iter)
+    for (int i = 0; i < interpreter->numConstants; i++)
     {
-        ScriptVariant *val = iter.value();
+        ScriptVariant *val = &interpreter->constants[i];
         if (val->vt == VT_INTEGER)
         {
             printf("%i", val->lVal);
