@@ -12,3 +12,12 @@ void useGlobals()
     }
     globalA = !globalA;
 }
+
+void main()
+{
+    globalA = 3;
+    globalB = 2.5;
+    globalC = "hello";
+    useGlobals();
+    return globalB + globalC;
+}
