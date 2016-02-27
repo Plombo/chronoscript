@@ -7,16 +7,6 @@
 typedef ScriptVariant *(*UnaryOperation)(ScriptVariant*);
 typedef ScriptVariant *(*BinaryOperation)(ScriptVariant*, ScriptVariant*);
 
-HRESULT Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
-{
-    StrCache_SetExecuting(true);
-    HRESULT result = execFunction(function, params, retval);
-    if (result == S_OK && retval->vt == VT_STR)
-        retval->strVal = StrCache_MakePersistent(retval->strVal);
-    StrCache_SetExecuting(false);
-    return result;
-}
-
 HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
     int index = 0;
@@ -186,7 +176,13 @@ HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVarian
             case OP_EXPORT:
                 dst = &function->interpreter->globals[inst->dst];
                 fetchSrc(src0, inst->src0);
+                ScriptVariant_Clear(dst);
                 *dst = *src0;
+                if (dst->vt == VT_STR)
+                {
+                    dst->strVal = StrCache_MakePersistent(dst->strVal);
+                    StrCache_Grab(dst->strVal);
+                }
                 break;
             default:
                 printf("error: unknown opcode %i\n", inst->opCode);
@@ -195,4 +191,45 @@ HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVarian
         if (!jumped) index++;
     }
     return S_OK;
+}
+
+HRESULT Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
+{
+    StrCache_SetExecuting(true);
+    HRESULT result = execFunction(function, params, retval);
+    if (result == S_OK && retval->vt == VT_STR)
+        retval->strVal = StrCache_MakePersistent(retval->strVal);
+    StrCache_SetExecuting(false);
+    return result;
+}
+
+Interpreter::~Interpreter()
+{
+    // free constants and globals
+    for (int i = 0; i < numConstants; i++)
+    {
+        // clear variant to prevent string cache leaks
+        ScriptVariant_Clear(&constants[i]);
+    }
+    for (int i = 0; i < numGlobals; i++)
+    {
+        ScriptVariant_Clear(&globals[i]);
+    }
+    delete constants;
+    delete globals;
+
+    // free functions
+    foreach_list(functions, ExecFunction, iter)
+    {
+        delete iter.value();
+    }
+    functions.clear();
+}
+
+ExecFunction::~ExecFunction()
+{
+    free(functionName);
+    delete callTargets;
+    delete callParams;
+    delete instructions;
 }

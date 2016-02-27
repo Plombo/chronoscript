@@ -37,7 +37,7 @@ typedef struct ScriptVariant
     VARTYPE vt;//variatn type
 } ScriptVariant;
 
-inline void ScriptVariant_Clear(ScriptVariant *var);
+void ScriptVariant_Clear(ScriptVariant *var);
 
 void ScriptVariant_Init(ScriptVariant *var);
 void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild ); // faster in some situations

@@ -53,6 +53,9 @@ struct ExecFunction {
     int maxCallParams; // largest number of parameters to a single call in this function
     int numInstructions;
     ExecInstruction *instructions;
+
+    // destructor to free all of the above
+    ~ExecFunction();
 };
 
 class Interpreter {
@@ -62,6 +65,9 @@ public:
     ScriptVariant *constants;
     int numGlobals;
     ScriptVariant *globals;
+
+    // destructor to free all of the above
+    ~Interpreter();
 
     HRESULT runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval);
 };

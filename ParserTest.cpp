@@ -134,8 +134,17 @@ void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
                 constants->gotoLast();
                 constants->insertAfter(&c->constValue);
                 c->id = i;
+                if (c->constValue.vt == VT_STR)
+                    StrCache_Grab(c->constValue.strVal);
             }
         }
+    }
+    // get the string cache to free unused string constants
+    foreach_list(func->constantList, Constant, constIter)
+    {
+        ScriptVariant *var = &constIter.value()->constValue;
+        if (var->vt == VT_STR)
+            StrCache_Collect(var->strVal);
     }
 }
 
@@ -157,6 +166,7 @@ void doTest(char *scriptText, const char *filename)
     }
 
     execBuilder.buildExecutable();
+    ralloc_free(parser.memCtx);
     execBuilder.printInstructions();
     
     if (execBuilder.interpreter->functions.findByName("main"))
@@ -167,7 +177,10 @@ void doTest(char *scriptText, const char *filename)
         char buf[256];
         ScriptVariant_ToString(&retval, buf);
         printf("\nReturned value: %s\n", buf);
+        ScriptVariant_Clear(&retval);
     }
+
+    delete execBuilder.interpreter;
 }
 
 bool testFile(const char *filename)
