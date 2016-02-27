@@ -215,8 +215,8 @@ Interpreter::~Interpreter()
     {
         ScriptVariant_Clear(&globals[i]);
     }
-    delete constants;
-    delete globals;
+    delete[] constants;
+    delete[] globals;
 
     // free functions
     foreach_list(functions, ExecFunction, iter)
@@ -229,7 +229,7 @@ Interpreter::~Interpreter()
 ExecFunction::~ExecFunction()
 {
     free(functionName);
-    delete callTargets;
-    delete callParams;
-    delete instructions;
+    delete[] callTargets;
+    delete[] callParams;
+    delete[] instructions;
 }
