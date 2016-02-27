@@ -7,6 +7,16 @@
 typedef ScriptVariant *(*UnaryOperation)(ScriptVariant*);
 typedef ScriptVariant *(*BinaryOperation)(ScriptVariant*, ScriptVariant*);
 
+HRESULT Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
+{
+    StrCache_SetExecuting(true);
+    HRESULT result = execFunction(function, params, retval);
+    if (result == S_OK && retval->vt == VT_STR)
+        retval->strVal = StrCache_MakePersistent(retval->strVal);
+    StrCache_SetExecuting(false);
+    return result;
+}
+
 HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
     int index = 0;
@@ -98,6 +108,11 @@ HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVarian
                 {
                     fetchSrc(src0, inst->src0);
                     *retval = *src0;
+                }
+                else
+                {
+                    retval->vt = VT_EMPTY;
+                    retval->ptrVal = NULL;
                 }
                 return S_OK;
 

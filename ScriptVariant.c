@@ -11,164 +11,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define __reallocto(p, n, s) \
-p = realloc((p), sizeof(*(p))*(s));\
-memset((p)+(n), 0, sizeof(*(p))*((s)-(n)));
-
-typedef struct
-{
-    int len;
-    int ref;
-    CHAR *str;
-} Varstr;
-
-// use string cache to cut the memory usage down, because not all variants are string, no need to give each of them an array
-#define STRCACHE_INC      64
-Varstr *strcache = NULL;
-int   strcache_size = 0;
-int   strcache_top = -1;
-int  *strcache_index = NULL;
-
-//clear the string cache
-void StrCache_Clear()
-{
-    int i;
-    if(strcache)
-    {
-        for(i = 0; i < strcache_size; i++)
-        {
-            if(strcache[i].str)
-            {
-                free(strcache[i].str);
-            }
-            strcache[i].str = NULL;
-        }
-        free(strcache);
-        strcache = NULL;
-    }
-    if(strcache_index)
-    {
-        free(strcache_index);
-        strcache_index = NULL;
-    }
-    strcache_size = 0;
-    strcache_top = -1;
-}
-
-// int the string cache
-void StrCache_Init()
-{
-    int i;
-    StrCache_Clear(); // just in case
-    strcache = calloc(STRCACHE_INC, sizeof(*strcache));
-    strcache_index = malloc(sizeof(*strcache_index) * STRCACHE_INC);
-    for(i = 0; i < STRCACHE_INC; i++)
-    {
-        strcache[i].str = malloc(sizeof(CHAR) * (MAX_STR_VAR_LEN + 1));
-        strcache[i].str[0] = 0;
-        strcache[i].len = MAX_STR_VAR_LEN;
-        strcache_index[i] = i;
-    }
-    strcache_size = STRCACHE_INC;
-    strcache_top = strcache_size - 1;
-}
-
-void StrCache_Resize(int index, int size)
-{
-    //assert(index<strcache_size);
-    //assert(size>0);
-    strcache[index].str = realloc(strcache[index].str, size + 1);
-    strcache[index].str[size] = 0;
-    strcache[index].len = size;
-}
-
-void StrCache_Collect(int index)
-{
-    strcache[index].ref--;
-    //assert(strcache[index].ref>=0);
-    if(!strcache[index].ref)
-    {
-        //if(strcache[index].len > MAX_STR_VAR_LEN)
-        //	StrCache_Resize(index, MAX_STR_VAR_LEN);
-        //assert(strcache_top+1<strcache_size);
-        strcache_index[++strcache_top] = index;
-    }
-}
-
-int StrCache_Pop()
-{
-    int i;
-    if(strcache_size == 0)
-    {
-        StrCache_Init();
-    }
-    if(strcache_top < 0) // realloc
-    {
-        __reallocto(strcache, strcache_size, strcache_size + STRCACHE_INC);
-        __reallocto(strcache_index, strcache_size, strcache_size + STRCACHE_INC);
-        for(i = 0; i < STRCACHE_INC; i++)
-        {
-            strcache_index[i] = strcache_size + i;
-            strcache[i + strcache_size].str = malloc(sizeof(CHAR) * (MAX_STR_VAR_LEN + 1));
-            strcache[i + strcache_size].str[0] = 0;
-            strcache[i + strcache_size].len = MAX_STR_VAR_LEN;
-        }
-
-        //printf("debug: dumping string cache....\n");
-        //for(i=0; i<strcache_size; i++)
-        //	printf("\t\"%s\"  %d\n", strcache[i].str, strcache[i].ref);
-
-        strcache_size += STRCACHE_INC;
-        strcache_top += STRCACHE_INC;
-
-        //printf("debug: string cache resized to %d \n", strcache_size);
-    }
-    i = strcache_index[strcache_top--];
-    strcache[i].ref = 1;
-    return i;
-}
-
-void StrCache_Copy(int index, CHAR *str)
-{
-    //assert(index<strcache_size);
-    //assert(size>0);
-    int len = strlen(str);
-    if(strcache[index].len < len)
-    {
-        StrCache_Resize(index, len);
-    }
-    strcpy(strcache[index].str, str);
-}
-
-void StrCache_NCopy(int index, CHAR *str, int n)
-{
-    //assert(index<strcache_size);
-    //assert(size>0);
-    if(strcache[index].len < n)
-    {
-        StrCache_Resize(index, n);
-    }
-    strncpy(strcache[index].str, str, n);
-    strcache[index].str[n] = 0;
-}
-
-CHAR *StrCache_Get(int index)
-{
-    //assert(index<strcache_size);
-    return strcache[index].str;
-}
-
-int StrCache_Len(int index)
-{
-    //assert(index<strcache_size);
-    return strcache[index].len;
-}
-
-void StrCache_Grab(int index)
-{
-    ++strcache[index].ref;
-}
-
 
 void ScriptVariant_Clear(ScriptVariant *var)
 {
@@ -204,18 +46,13 @@ void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt)
 // find an existing constant before copy
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, CHAR *str)
 {
-    //assert(index<strcache_size);
-    //assert(size>0);
-    int i;
-    for(i = 0; i < strcache_size; i++)
+    int index = StrCache_FindString(str);
+    if (index >= 0)
     {
-        if(strcache[i].ref && strcmp(str, strcache[i].str) == 0)
-        {
-            var->strVal = i;
-            strcache[i].ref++;
-            var->vt = VT_STR;
-            break;
-        }
+        var->vt = VT_STR;
+        var->strVal = index;
+        StrCache_Grab(index);
+        return;
     }
 
     ScriptVariant_ChangeType(var, VT_STR);

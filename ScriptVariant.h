@@ -10,6 +10,7 @@
 #define SCRIPTVARIANT_H
 
 #include "depends.h"
+#include "StrCache.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,15 +37,6 @@ typedef struct ScriptVariant
     VARTYPE vt;//variatn type
 } ScriptVariant;
 
-//clear the string cache
-void StrCache_Clear();
-// int the string cache
-//void StrCache_Init();
-void StrCache_Collect(int index);
-int StrCache_Pop();
-CHAR *StrCache_Get(int index);
-void StrCache_Copy(int index, CHAR *str);
-void StrCache_NCopy(int index, CHAR *str, int n);
 inline void ScriptVariant_Clear(ScriptVariant *var);
 
 void ScriptVariant_Init(ScriptVariant *var);

@@ -21,7 +21,8 @@ cpp_sources = [
     'RegAllocUtil',
     'ExecBuilder',
     'Interpreter',
-    'Builtins'
+    'Builtins',
+    'StrCache',
 ]
 objects = []
 

@@ -163,7 +163,7 @@ void doTest(char *scriptText, const char *filename)
     {
         ScriptVariant retval;
         printf("\n\nRunning function 'main'...\n");
-        execFunction(execBuilder.interpreter->functions.retrieve(), NULL, &retval);
+        execBuilder.interpreter->runFunction(execBuilder.interpreter->functions.retrieve(), NULL, &retval);
         char buf[256];
         ScriptVariant_ToString(&retval, buf);
         printf("\nReturned value: %s\n", buf);
