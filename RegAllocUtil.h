@@ -32,12 +32,10 @@ class Interval
 {
 public:
    Interval() : head(0), tail(0) { }
-   Interval(const Interval&);
    ~Interval();
 
    bool extend(int, int);
-   void insert(const Interval&);
-   void unify(Interval&); // clears source interval
+   void unify(Interval*); // clears source interval
    void clear();
 
    inline int begin() const { return head ? head->bgn : -1; }

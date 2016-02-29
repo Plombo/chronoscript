@@ -28,11 +28,6 @@
 #include <strings.h>
 #endif
 
-Interval::Interval(const Interval& that) : head(NULL), tail(NULL)
-{
-   this->insert(that);
-}
-
 Interval::~Interval()
 {
    clear();
@@ -126,21 +121,15 @@ bool Interval::overlaps(const Interval &that) const
    return false;
 }
 
-void Interval::insert(const Interval &that)
+void Interval::unify(Interval *that)
 {
-   for (Range *r = that.head; r; r = r->next)
-      this->extend(r->bgn, r->end);
-}
-
-void Interval::unify(Interval &that)
-{
-   assert(this != &that);
-   for (Range *next, *r = that.head; r; r = next) {
+   assert(this != that);
+   for (Range *next, *r = that->head; r; r = next) {
       next = r->next;
       this->extend(r->bgn, r->end);
       delete r;
    }
-   that.head = NULL;
+   that->head = NULL;
 }
 
 int Interval::length() const

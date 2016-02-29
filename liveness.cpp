@@ -182,7 +182,7 @@ bool InterferenceNode::mergeInto(InterferenceNode *dstNode)
 {
     if (dstNode->livei.overlaps(this->livei))
         return false;
-    dstNode->livei.unify(this->livei);
+    dstNode->livei.unify(&this->livei);
     this->parent = dstNode;
     return true;
 }
