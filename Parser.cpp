@@ -8,8 +8,6 @@
 
 #include "Parser.h"
 
-Parser *pcurParser = NULL;
-
 Parser::Parser()
 {
     memCtx = ralloc_context(NULL);
@@ -50,7 +48,6 @@ void Parser::parseText(pp_context *pcontext, ExecBuilder *builder, LPSTR scriptT
     TEXTPOS thePosition;
     thePosition.row = startingLineNumber;
     thePosition.col = 1;
-    pcurParser = this;
     if(path)
     {
         strncpy(this->currentPath, path, 255);
