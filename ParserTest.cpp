@@ -8,7 +8,7 @@
 #include "ExecBuilder.h"
 #include "Builtins.h"
 
-void compile(SSABuilder *func)
+void compile(SSAFunction *func)
 {
     printf("\n~~~~~ %s ~~~~~\n", func->functionName);
 #if 0
@@ -80,7 +80,7 @@ void compile(SSABuilder *func)
 
 // this is temporary; the final linking process will have to handle
 // imports and builtins
-void link(SSABuilder *func, CList<SSABuilder> *allFunctions)
+void link(SSAFunction *func, CList<SSAFunction> *allFunctions)
 {
     foreach_list(func->instructionList, Instruction, iter)
     {
@@ -107,7 +107,7 @@ void link(SSABuilder *func, CList<SSABuilder> *allFunctions)
     }
 }
 
-void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
+void linkConstants(SSAFunction *func, CList<ScriptVariant> *constants)
 {
     foreach_list(func->instructionList, Instruction, instIter)
     {
@@ -159,7 +159,7 @@ void doTest(char *scriptText, const char *filename)
     parser.parseText(&ppContext, &execBuilder, scriptText, 1, filename);
     pp_context_destroy(&ppContext);
 
-    foreach_list(execBuilder.ssaFunctions, SSABuilder, iter)
+    foreach_list(execBuilder.ssaFunctions, SSAFunction, iter)
     {
         link(iter.value(), &execBuilder.ssaFunctions);
         compile(iter.value());

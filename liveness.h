@@ -4,8 +4,8 @@
 #include "ssa.h"
 #include "ralloc.h"
 
-void computeLiveSets(SSABuilder *func);
-void computeLiveIntervals(SSABuilder *func);
+void computeLiveSets(SSAFunction *func);
+void computeLiveIntervals(SSAFunction *func);
 
 class InterferenceNode {
     DECLARE_RALLOC_CXX_OPERATORS(InterferenceNode);
@@ -40,7 +40,7 @@ private:
     // merge the interference nodes of two temporaries
     bool mergeNodes(Temporary *dst, Temporary *src);
 public:
-    LivenessAnalyzer(SSABuilder *func);
+    LivenessAnalyzer(SSAFunction *func);
     ~LivenessAnalyzer();
 
     void computeLiveIntervals();

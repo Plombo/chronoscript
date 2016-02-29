@@ -218,7 +218,7 @@ void Parser::externalDecl2(bool variableonly)
     // not a comma, semicolon, or initializer, so must be a function declaration
     else if (!variableonly && ParserSet_First(&theParserSet, Productions::funcDecl, theNextToken.theType))
     {
-        bld = new(memCtx) SSABuilder(memCtx, token.theSource);
+        bld = new(memCtx) SSAFunction(memCtx, token.theSource);
         bldUtil = new SSABuildUtil(bld, &execBuilder->globals);
         BasicBlock *startBlock = bldUtil->createBBAfter(NULL);
         bld->sealBlock(startBlock);

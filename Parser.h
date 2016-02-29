@@ -35,10 +35,10 @@ public:
     BOOL isImport;
 
     void *memCtx;
-    SSABuilder *bld;
+    SSAFunction *bld;
     SSABuildUtil *bldUtil;
     ExecBuilder *execBuilder;
-    CList<SSABuilder> functions;
+    CList<SSAFunction> functions;
 
     Parser();
     ~Parser();

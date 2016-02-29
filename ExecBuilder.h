@@ -7,7 +7,7 @@
 // builds ExecFunction/ExecInstruction from SSA IR
 class ExecBuilder {
 public:
-    CList<SSABuilder> ssaFunctions;
+    CList<SSAFunction> ssaFunctions;
     CList<ExecFunction> execFunctions;
     CList<ScriptVariant> constants;
     GlobalState globals;
@@ -22,14 +22,14 @@ public:
 class FunctionBuilder {
 private:
     ExecBuilder *execBuilder;
-    SSABuilder *ssaFunc;
+    SSAFunction *ssaFunc;
     ExecFunction *func;
     int nextParamIndex;
     int nextCallTargetIndex;
 
     void createExecInstruction(ExecInstruction *inst, Instruction *ssaInst);
 public:
-    FunctionBuilder(SSABuilder *ssaFunc, ExecBuilder *builder);
+    FunctionBuilder(SSAFunction *ssaFunc, ExecBuilder *builder);
     void run();
 };
 

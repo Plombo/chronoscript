@@ -76,7 +76,7 @@ void loopTreeDFS(Loop *loop)
     }
 }
 
-void computeLiveSets(SSABuilder *func)
+void computeLiveSets(SSAFunction *func)
 {
     // run dagDFS on the root node of the CFG, i.e. the entry basic block
     func->basicBlockList.gotoFirst();
@@ -89,7 +89,7 @@ void computeLiveSets(SSABuilder *func)
 }
 
 // new computeLiveIntervals
-LivenessAnalyzer::LivenessAnalyzer(SSABuilder *func)
+LivenessAnalyzer::LivenessAnalyzer(SSAFunction *func)
     : temporaries(&func->temporaries),
       basicBlocks(&func->basicBlockList),
       instructions(&func->instructionList),

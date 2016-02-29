@@ -106,7 +106,7 @@ class Instruction;
 class Expression;
 class BasicBlock;
 class Loop;
-class SSABuilder;
+class SSAFunction;
 
 // abstract base class for SSA values
 class RValue
@@ -266,7 +266,7 @@ class FunctionCall : public Expression
 public:
     char *functionName;
     union { // this value set during linking
-        SSABuilder *functionRef; // op == OP_CALL
+        SSAFunction *functionRef; // op == OP_CALL
         int builtinRef; // op == OP_CALL_BUILTIN
     };
     FunctionCall(const char *functionName, int valueId);
@@ -303,7 +303,7 @@ public:
     CList<BasicBlock> preds; // predecessors
     CList<Phi> incompletePhis;
     
-    // these point to nodes in SSABuilder->instructionList
+    // these point to nodes in SSAFunction->instructionList
     Node *start;
     Node *end;
     
@@ -350,9 +350,9 @@ public:
     Loop(BasicBlock *header, Loop *parent = NULL);
 };
 
-class SSABuilder // SSA form of a script function, rename to SSAFunction?
+class SSAFunction // SSA form of a script function
 {
-    DECLARE_RALLOC_CXX_OPERATORS(SSABuilder);
+    DECLARE_RALLOC_CXX_OPERATORS(SSAFunction);
 public:
     CList<Instruction> instructionList;
     CList<BasicBlock> basicBlockList;
@@ -372,7 +372,7 @@ public:
 
     // constructor
     // TODO (void *memCtx, char *name)
-    inline SSABuilder(void *memCtx, const char *name = NULL)
+    inline SSAFunction(void *memCtx, const char *name = NULL)
         : memCtx(memCtx), nextBBId(0), nextValueId(0), paramCount(0)
     {
         functionName = name ? ralloc_strdup(memCtx, name) : NULL;
@@ -426,7 +426,7 @@ public:
 class SSABuildUtil
 {
 private:
-    SSABuilder *builder;
+    SSAFunction *builder;
     StackedSymbolTable symbolTable;
     Loop *currentLoop;
     GlobalState *globalState;
@@ -437,7 +437,7 @@ public:
     CStack<BasicBlock> breakTargets;
     CStack<BasicBlock> continueTargets;
     
-    SSABuildUtil(SSABuilder *builder, GlobalState *globalState);
+    SSABuildUtil(SSAFunction *builder, GlobalState *globalState);
     ~SSABuildUtil();
     inline void setCurrentBlock(BasicBlock *block) { currentBlock = block; }
     
