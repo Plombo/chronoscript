@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "ExecFunction.h"
+#include "Interpreter.h"
 #include "ScriptVariant.h"
 #include "Builtins.h"
 #include "ssa.h" // for opcodes

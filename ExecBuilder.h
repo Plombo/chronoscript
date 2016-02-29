@@ -1,7 +1,7 @@
 #ifndef EXEC_BUILDER_H
 #define EXEC_BUILDER_H
 
-#include "ExecFunction.h"
+#include "Interpreter.h"
 #include "ssa.h"
 
 // builds ExecFunction/ExecInstruction from SSA IR

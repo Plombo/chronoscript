@@ -1,3 +1,6 @@
+#ifndef INTERPRETER_H
+#define INTERPRETER_H
+
 #include "depends.h"
 #include "List.h"
 #include "ScriptVariant.h"
@@ -73,3 +76,5 @@ public:
 };
 
 HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval);
+
+#endif
