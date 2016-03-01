@@ -12,7 +12,7 @@
 #include <string.h>
 
 //Constructor
-void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, ULONG charOffset)
+void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, u32 charOffset)
 {
     ptoken->theType = theType;
     ptoken->theTextPosition = theTextPosition;

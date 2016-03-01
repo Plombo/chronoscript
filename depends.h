@@ -26,8 +26,6 @@ typedef const char *LPCSTR;
 typedef char *LPSTR;
 typedef s32 HRESULT;
 typedef u32 DWORD;
-typedef u32 ULONG;
-typedef s32 LONG;
 typedef float FLOAT;
 typedef double DOUBLE;
 

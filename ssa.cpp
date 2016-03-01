@@ -110,7 +110,7 @@ Constant::Constant(ScriptVariant val)
     constValue = val;
 }
 
-Constant::Constant(LONG intVal)
+Constant::Constant(s32 intVal)
 {
     id = -1;
     constValue.vt = VT_INTEGER;
@@ -858,7 +858,7 @@ RValue *SSABuildUtil::mkBinaryOp(OpCode op, RValue *src0, RValue *src1)
     return result;
 }
 
-Constant *SSABuildUtil::mkConstInt(LONG val)
+Constant *SSABuildUtil::mkConstInt(s32 val)
 {
     ScriptVariant var = {{.lVal = val}, VT_INTEGER};
     return builder->addConstant(var);

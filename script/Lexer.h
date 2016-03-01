@@ -50,7 +50,7 @@ typedef struct Token
     MY_TOKEN_TYPE theType;
     char theSource[MAX_TOKEN_LENGTH + 1];
     TEXTPOS theTextPosition;
-    ULONG charOffset;
+    u32 charOffset;
 } Token;
 
 /******************************************************************************
@@ -70,7 +70,7 @@ typedef struct Lexer
 
 
 //Constructor
-void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, ULONG charOffset);
+void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, u32 charOffset);
 void Lexer_Init(Lexer *plexer, pp_context *pcontext, LPCSTR thePath, LPSTR theSource, TEXTPOS theStartingPosition);
 void Lexer_Clear(Lexer *plexer);
 HRESULT Lexer_GetNextToken(Lexer *plexer, Token *theNextToken);

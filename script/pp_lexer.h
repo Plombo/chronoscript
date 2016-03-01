@@ -76,7 +76,7 @@ typedef struct pp_token
     PP_TOKEN_TYPE theType;
     char theSource[MAX_TOKEN_LENGTH + 1];
     TEXTPOS theTextPosition;
-    ULONG charOffset;
+    u32 charOffset;
 } pp_token;
 
 //Enumerate the comment types for use in CLexer
@@ -96,18 +96,18 @@ typedef struct pp_lexer
 {
     LPCSTR ptheSource;
     TEXTPOS theTextPosition;
-    ULONG offset;
-    ULONG tokOffset;
+    u32 offset;
+    u32 tokOffset;
     char *pcurChar;
     //Character buffer for the tokens
     char theTokenSource [MAX_TOKEN_LENGTH + 1];
-    ULONG theTokenLen;
+    u32 theTokenLen;
     TEXTPOS theTokenPosition;
 } pp_lexer;
 
 
 //Constructor
-void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, ULONG charOffset);
+void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, u32 charOffset);
 void pp_lexer_Init(pp_lexer *plexer, LPCSTR theSource, TEXTPOS theStartingPosition);
 void pp_lexer_Clear(pp_lexer *plexer);
 HRESULT pp_lexer_GetNextToken(pp_lexer *plexer, pp_token *theNextToken);

@@ -39,7 +39,7 @@ Parser::~Parser()
 *  Returns:
 ******************************************************************************/
 void Parser::parseText(pp_context *pcontext, ExecBuilder *builder, LPSTR scriptText,
-                      ULONG startingLineNumber, LPCSTR path)
+                      int startingLineNumber, LPCSTR path)
 {
     this->execBuilder = builder;
 

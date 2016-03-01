@@ -41,7 +41,7 @@ public:
     Parser();
     ~Parser();
     void parseText(pp_context *pcontext, ExecBuilder *builder, LPSTR scriptText,
-                      ULONG startingLineNumber, LPCSTR path);
+                      int startingLineNumber, LPCSTR path);
     bool check(MY_TOKEN_TYPE theType);
     void match();
     void rewind(Token *token);
