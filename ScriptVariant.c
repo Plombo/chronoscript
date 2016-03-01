@@ -77,11 +77,11 @@ HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, s32 *pVal)
     return S_OK;
 }
 
-HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, DOUBLE *pVal)
+HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal)
 {
     if(var->vt == VT_INTEGER)
     {
-        *pVal = (DOUBLE)var->lVal;
+        *pVal = (double)var->lVal;
     }
     else if(var->vt == VT_DECIMAL)
     {
@@ -285,7 +285,7 @@ ScriptVariant *ScriptVariant_Bit_And( ScriptVariant *svar, ScriptVariant *rightC
 
 ScriptVariant *ScriptVariant_Eq( ScriptVariant *svar, ScriptVariant *rightChild )
 {
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
 
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
@@ -316,7 +316,7 @@ ScriptVariant *ScriptVariant_Eq( ScriptVariant *svar, ScriptVariant *rightChild 
 
 ScriptVariant *ScriptVariant_Ne( ScriptVariant *svar, ScriptVariant *rightChild )
 {
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
 
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
@@ -347,7 +347,7 @@ ScriptVariant *ScriptVariant_Ne( ScriptVariant *svar, ScriptVariant *rightChild 
 
 ScriptVariant *ScriptVariant_Lt( ScriptVariant *svar, ScriptVariant *rightChild )
 {
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
 
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
@@ -379,7 +379,7 @@ ScriptVariant *ScriptVariant_Lt( ScriptVariant *svar, ScriptVariant *rightChild 
 
 ScriptVariant *ScriptVariant_Gt( ScriptVariant *svar, ScriptVariant *rightChild )
 {
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
 
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
@@ -411,7 +411,7 @@ ScriptVariant *ScriptVariant_Gt( ScriptVariant *svar, ScriptVariant *rightChild 
 
 ScriptVariant *ScriptVariant_Ge( ScriptVariant *svar, ScriptVariant *rightChild )
 {
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
 
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
@@ -442,7 +442,7 @@ ScriptVariant *ScriptVariant_Ge( ScriptVariant *svar, ScriptVariant *rightChild 
 
 ScriptVariant *ScriptVariant_Le( ScriptVariant *svar, ScriptVariant *rightChild )
 {
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
 
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
@@ -512,7 +512,7 @@ ScriptVariant *ScriptVariant_Shr( ScriptVariant *svar, ScriptVariant *rightChild
 ScriptVariant *ScriptVariant_Add( ScriptVariant *svar, ScriptVariant *rightChild )
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     char buf[MAX_STR_VAR_LEN + 1];
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
@@ -547,7 +547,7 @@ ScriptVariant *ScriptVariant_Add( ScriptVariant *svar, ScriptVariant *rightChild
 ScriptVariant *ScriptVariant_Sub( ScriptVariant *svar, ScriptVariant *rightChild )
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
@@ -574,7 +574,7 @@ ScriptVariant *ScriptVariant_Sub( ScriptVariant *svar, ScriptVariant *rightChild
 ScriptVariant *ScriptVariant_Mul( ScriptVariant *svar, ScriptVariant *rightChild )
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
@@ -601,7 +601,7 @@ ScriptVariant *ScriptVariant_Mul( ScriptVariant *svar, ScriptVariant *rightChild
 ScriptVariant *ScriptVariant_Div( ScriptVariant *svar, ScriptVariant *rightChild )
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    DOUBLE dbl1, dbl2;
+    double dbl1, dbl2;
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {

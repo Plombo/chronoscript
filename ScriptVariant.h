@@ -30,8 +30,8 @@ typedef struct ScriptVariant
     union//value
     {
         s32           lVal;
-        VOID         *ptrVal;
-        DOUBLE        dblVal;
+        void         *ptrVal;
+        double        dblVal;
         int           strVal;
     };
     VARTYPE vt;//variatn type
@@ -44,7 +44,7 @@ void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild ); // fas
 void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt);
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
 inline HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, s32 *pVal);
-inline HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, DOUBLE *pVal);
+inline HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal);
 BOOL ScriptVariant_IsTrue(ScriptVariant *svar);
 void ScriptVariant_ToString(ScriptVariant *svar, LPSTR buffer );
 

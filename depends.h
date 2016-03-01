@@ -25,18 +25,10 @@ typedef uint64_t u64;
 typedef const char *LPCSTR;
 typedef char *LPSTR;
 typedef s32 HRESULT;
-typedef u32 DWORD;
-typedef float FLOAT;
-typedef double DOUBLE;
 
 #ifndef WII
 typedef int BOOL;
 #endif
-
-#ifdef VOID
-#undef VOID
-#endif
-typedef void VOID;
 
 #ifndef NULL
 #define NULL 0
