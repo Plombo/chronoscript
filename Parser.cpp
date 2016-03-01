@@ -789,15 +789,11 @@ void Parser::iterStmt()
         header = bldUtil->createBBAfter(before);
         loop = new(memCtx) Loop(header);
         header->addPred(before);
-        bldUtil->pushLoop(loop);
         // can't seal header yet
         bodyStart = bldUtil->createBBAfter(header, loop);
-        bodyStart->addPred(header);
-        bld->sealBlock(bodyStart);
         after = bldUtil->createBBAfter(bodyStart, NULL);
-        after->addPred(header);
-        // can't seal after yet either
-        
+        bldUtil->pushLoop(loop);
+
         // loop header (condition)
         bldUtil->setCurrentBlock(header);
         match();
@@ -807,6 +803,11 @@ void Parser::iterStmt()
         check(TOKEN_RPAREN);
         match();
         bldUtil->mkJump(OP_BRANCH_FALSE, after, condition);
+
+        // note that bldUtil->currentBlock might not be the same as header
+        bodyStart->addPred(bldUtil->currentBlock);
+        bld->sealBlock(bodyStart);
+        after->addPred(bldUtil->currentBlock);
         
         // push after to break stack and header to continue stack
         bldUtil->breakTargets.push(after);
@@ -820,7 +821,6 @@ void Parser::iterStmt()
         {
             bldUtil->mkJump(OP_JMP, header, NULL);
             header->addPred(bodyEnd);
-            after->addPred(bodyEnd);
         }
         // now we can finally seal these two blocks
         bld->sealBlock(header);
@@ -839,7 +839,6 @@ void Parser::iterStmt()
         footer = bldUtil->createBBAfter(bodyStart, loop);
         // can't seal footer yet (continue target, plus end of body)
         after = bldUtil->createBBAfter(footer, NULL);
-        after->addPred(footer);
         // can't seal after yet (break target)
         
         // push after to break stack and footer to continue stack
@@ -870,7 +869,8 @@ void Parser::iterStmt()
         match();
         
         // now we can finally seal these blocks
-        bodyStart->addPred(footer);
+        after->addPred(bldUtil->currentBlock);
+        bodyStart->addPred(bldUtil->currentBlock);
         bld->sealBlock(bodyStart);
         bld->sealBlock(footer);
         bld->sealBlock(after);
@@ -904,9 +904,9 @@ void Parser::iterStmt()
             bldUtil->mkJump(OP_BRANCH_FALSE, after, condition);
         check(TOKEN_SEMICOLON);
         match();
-        bodyStart->addPred(header);
+        bodyStart->addPred(bldUtil->currentBlock);
         bld->sealBlock(bodyStart);
-        after->addPred(header);
+        after->addPred(bldUtil->currentBlock);
 
         // The last parameter goes in the footer
         bldUtil->currentBlock = footer;
@@ -920,7 +920,7 @@ void Parser::iterStmt()
             Parser_Error(this, defer_expr_stmt);
         }
         bldUtil->mkJump(OP_JMP, header, NULL);
-        header->addPred(footer);
+        header->addPred(bldUtil->currentBlock);
         bld->sealBlock(header);
         check(TOKEN_RPAREN);
         match();
