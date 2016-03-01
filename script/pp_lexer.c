@@ -55,7 +55,7 @@
 
 
 //Constructor
-void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, u32 charOffset)
+void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, u32 charOffset)
 {
     ptoken->theType = theType;
     ptoken->theTextPosition = theTextPosition;
@@ -64,7 +64,7 @@ void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, LPCSTR theSource, TE
 }
 
 
-void pp_lexer_Init(pp_lexer *plexer, LPCSTR theSource, TEXTPOS theStartingPosition)
+void pp_lexer_Init(pp_lexer *plexer, const char *theSource, TEXTPOS theStartingPosition)
 {
     plexer->ptheSource = theSource;
     plexer->theTextPosition = theStartingPosition;

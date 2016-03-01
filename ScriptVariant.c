@@ -113,7 +113,7 @@ BOOL ScriptVariant_IsTrue(ScriptVariant *svar)
     }
 }
 
-void ScriptVariant_ToString(ScriptVariant *svar, LPSTR buffer )
+void ScriptVariant_ToString(ScriptVariant *svar, char *buffer)
 {
     switch( svar->vt )
     {

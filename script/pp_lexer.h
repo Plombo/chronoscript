@@ -94,7 +94,7 @@ typedef enum COMMENT_TYPE
 ******************************************************************************/
 typedef struct pp_lexer
 {
-    LPCSTR ptheSource;
+    const char *ptheSource;
     TEXTPOS theTextPosition;
     u32 offset;
     u32 tokOffset;
@@ -107,8 +107,8 @@ typedef struct pp_lexer
 
 
 //Constructor
-void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, u32 charOffset);
-void pp_lexer_Init(pp_lexer *plexer, LPCSTR theSource, TEXTPOS theStartingPosition);
+void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, u32 charOffset);
+void pp_lexer_Init(pp_lexer *plexer, const char *theSource, TEXTPOS theStartingPosition);
 void pp_lexer_Clear(pp_lexer *plexer);
 HRESULT pp_lexer_GetNextToken(pp_lexer *plexer, pp_token *theNextToken);
 HRESULT pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken);

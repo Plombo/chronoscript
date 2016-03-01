@@ -12,7 +12,7 @@
 #include <string.h>
 
 //Constructor
-void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, LPCSTR theSource, TEXTPOS theTextPosition, u32 charOffset)
+void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, u32 charOffset)
 {
     ptoken->theType = theType;
     ptoken->theTextPosition = theTextPosition;
@@ -377,7 +377,7 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
     return S_OK;
 }
 
-void Lexer_Init(Lexer *plexer, pp_context *pcontext, LPCSTR thePath, LPSTR theSource, TEXTPOS theStartingPosition)
+void Lexer_Init(Lexer *plexer, pp_context *pcontext, const char *thePath, char *theSource, TEXTPOS theStartingPosition)
 {
     plexer->thePath = thePath;
     plexer->ptheSource = theSource;

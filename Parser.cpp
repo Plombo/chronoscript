@@ -32,14 +32,14 @@ Parser::~Parser()
 *  Parameters: pcontext -- Preprocessor context for the script to be parsed.
 *              pIList -- pointer to a TList<CInstruction> which takes the
 *                        stream of CInstructions representing the parsed text
-*              scriptText -- LPCSTR which contains ths script to be parsed.
+*              scriptText -- string which contains the script to be parsed.
 *              startingLineNumber -- Line on which this script starts.  The
 *                        lexer needs this information to maintain accurate
 *                        line counts.
 *  Returns:
 ******************************************************************************/
-void Parser::parseText(pp_context *pcontext, ExecBuilder *builder, LPSTR scriptText,
-                      int startingLineNumber, LPCSTR path)
+void Parser::parseText(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
+                      int startingLineNumber, const char *path)
 {
     this->execBuilder = builder;
 

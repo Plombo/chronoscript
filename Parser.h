@@ -40,8 +40,8 @@ public:
 
     Parser();
     ~Parser();
-    void parseText(pp_context *pcontext, ExecBuilder *builder, LPSTR scriptText,
-                      int startingLineNumber, LPCSTR path);
+    void parseText(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
+                      int startingLineNumber, const char *path);
     bool check(MY_TOKEN_TYPE theType);
     void match();
     void rewind(Token *token);
