@@ -11,8 +11,7 @@
 Parser::Parser()
 {
     memCtx = ralloc_context(NULL);
-    
-    Stack_Init(&LabelStack);
+
     ParserSet_Buildup(&theParserSet);
     labelCount = 0;
     theFieldToken.theType = END_OF_TOKENS;
@@ -448,7 +447,7 @@ void Parser::paramList()
 void Parser::paramList2()
 {
     int i;
-    CHAR buf[4];
+    char buf[4];
     if (check(TOKEN_COMMA))
     {
         match();

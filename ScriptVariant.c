@@ -44,7 +44,7 @@ void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt)
 }
 
 // find an existing constant before copy
-void ScriptVariant_ParseStringConstant(ScriptVariant *var, CHAR *str)
+void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
 {
     int index = StrCache_FindString(str);
     if (index >= 0)
@@ -513,7 +513,7 @@ ScriptVariant *ScriptVariant_Add( ScriptVariant *svar, ScriptVariant *rightChild
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     DOUBLE dbl1, dbl2;
-    CHAR buf[MAX_STR_VAR_LEN + 1];
+    char buf[MAX_STR_VAR_LEN + 1];
     if(ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {

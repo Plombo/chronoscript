@@ -42,7 +42,7 @@ void ScriptVariant_Clear(ScriptVariant *var);
 void ScriptVariant_Init(ScriptVariant *var);
 void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild ); // faster in some situations
 void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt);
-void ScriptVariant_ParseStringConstant(ScriptVariant *var, CHAR *str);
+void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
 inline HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, LONG *pVal);
 inline HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, DOUBLE *pVal);
 BOOL ScriptVariant_IsTrue(ScriptVariant *svar);

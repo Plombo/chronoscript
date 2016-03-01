@@ -74,7 +74,7 @@ typedef struct TEXTPOS
 typedef struct pp_token
 {
     PP_TOKEN_TYPE theType;
-    CHAR theSource[MAX_TOKEN_LENGTH + 1];
+    char theSource[MAX_TOKEN_LENGTH + 1];
     TEXTPOS theTextPosition;
     ULONG charOffset;
 } pp_token;
@@ -98,9 +98,9 @@ typedef struct pp_lexer
     TEXTPOS theTextPosition;
     ULONG offset;
     ULONG tokOffset;
-    CHAR *pcurChar;
+    char *pcurChar;
     //Character buffer for the tokens
-    CHAR theTokenSource [MAX_TOKEN_LENGTH + 1];
+    char theTokenSource [MAX_TOKEN_LENGTH + 1];
     ULONG theTokenLen;
     TEXTPOS theTokenPosition;
 } pp_lexer;

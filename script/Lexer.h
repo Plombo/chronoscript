@@ -48,7 +48,7 @@ typedef enum MY_TOKEN_TYPE
 typedef struct Token
 {
     MY_TOKEN_TYPE theType;
-    CHAR theSource[MAX_TOKEN_LENGTH + 1];
+    char theSource[MAX_TOKEN_LENGTH + 1];
     TEXTPOS theTextPosition;
     ULONG charOffset;
 } Token;
@@ -64,7 +64,7 @@ typedef struct Lexer
     LPCSTR thePath;
     LPCSTR ptheSource;
     pp_parser preprocessor;
-    CHAR *pcurChar;
+    char *pcurChar;
     TEXTPOS theTokenPosition;
 } Lexer;
 

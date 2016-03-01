@@ -28,7 +28,6 @@ typedef s32 HRESULT;
 typedef u32 DWORD;
 typedef u32 ULONG;
 typedef s32 LONG;
-typedef char CHAR;
 typedef float FLOAT;
 typedef double DOUBLE;
 

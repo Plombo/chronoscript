@@ -68,7 +68,7 @@ void pp_lexer_Init(pp_lexer *plexer, LPCSTR theSource, TEXTPOS theStartingPositi
 {
     plexer->ptheSource = theSource;
     plexer->theTextPosition = theStartingPosition;
-    plexer->pcurChar = (CHAR *)plexer->ptheSource;
+    plexer->pcurChar = (char *)plexer->ptheSource;
     plexer->offset = 0;
     plexer->tokOffset = 0;
 }

@@ -17,7 +17,7 @@ typedef struct
 {
     int len;
     int ref;
-    CHAR *str;
+    char *str;
 } Varstr;
 
 // use string cache to cut the memory usage down, because not all variants are string, no need to give each of them an array
@@ -52,15 +52,15 @@ public:
     int pop();
 
     // get the string with this index
-    CHAR *get(int index);
+    char *get(int index);
 
     // get the length of the string at this index
     int len(int index);
 
-    void copy(int index, CHAR *str);
-    void ncopy(int index, CHAR *str, int n);
+    void copy(int index, char *str);
+    void ncopy(int index, char *str, int n);
     
-    int findString(CHAR *str);
+    int findString(char *str);
 };
 
 StrCache::StrCache()
@@ -80,7 +80,7 @@ void StrCache::init()
     strcache_index = (int*) malloc(sizeof(*strcache_index) * STRCACHE_INC);
     for(i = 0; i < STRCACHE_INC; i++)
     {
-        strcache[i].str = (CHAR*) malloc(sizeof(CHAR) * (MAX_STR_VAR_LEN + 1));
+        strcache[i].str = (char*) malloc(sizeof(char) * (MAX_STR_VAR_LEN + 1));
         strcache[i].str[0] = 0;
         strcache[i].len = MAX_STR_VAR_LEN;
         strcache_index[i] = i;
@@ -120,7 +120,7 @@ void StrCache::resize(int index, int size)
 {
     //assert(index<strcache_size);
     //assert(size>0);
-    strcache[index].str = (CHAR*) realloc(strcache[index].str, size + 1);
+    strcache[index].str = (char*) realloc(strcache[index].str, size + 1);
     strcache[index].str[size] = 0;
     strcache[index].len = size;
 }
@@ -160,7 +160,7 @@ int StrCache::pop()
         for(i = 0; i < STRCACHE_INC; i++)
         {
             strcache_index[i] = strcache_size + i;
-            strcache[i + strcache_size].str = (CHAR*) malloc(sizeof(CHAR) * (MAX_STR_VAR_LEN + 1));
+            strcache[i + strcache_size].str = (char*) malloc(sizeof(char) * (MAX_STR_VAR_LEN + 1));
             strcache[i + strcache_size].str[0] = 0;
             strcache[i + strcache_size].len = MAX_STR_VAR_LEN;
         }
@@ -180,7 +180,7 @@ int StrCache::pop()
 }
 
 // get the string with this index
-CHAR *StrCache::get(int index)
+char *StrCache::get(int index)
 {
     //assert(index<strcache_size);
     return strcache[index].str;
@@ -192,7 +192,7 @@ int StrCache::len(int index)
     return strcache[index].len;
 }
 
-void StrCache::copy(int index, CHAR *str)
+void StrCache::copy(int index, char *str)
 {
     //assert(index<strcache_size);
     //assert(size>0);
@@ -204,7 +204,7 @@ void StrCache::copy(int index, CHAR *str)
     strcpy(strcache[index].str, str);
 }
 
-void StrCache::ncopy(int index, CHAR *str, int n)
+void StrCache::ncopy(int index, char *str, int n)
 {
     //assert(index<strcache_size);
     //assert(size>0);
@@ -218,7 +218,7 @@ void StrCache::ncopy(int index, CHAR *str, int n)
 
 // see if a string is already in the cache
 // return its index if it is, or -1 if it isn't
-int StrCache::findString(CHAR *str)
+int StrCache::findString(char *str)
 {
     int i;
     for(i = 0; i < strcache_size; i++)
@@ -272,7 +272,7 @@ int StrCache_Pop()
         return constantCache.pop();
 }
 
-void StrCache_Copy(int index, CHAR *str)
+void StrCache_Copy(int index, char *str)
 {
     if (index < 0)
         executionCache.copy(~index, str);
@@ -280,7 +280,7 @@ void StrCache_Copy(int index, CHAR *str)
         constantCache.copy(index, str);
 }
 
-void StrCache_NCopy(int index, CHAR *str, int n)
+void StrCache_NCopy(int index, char *str, int n)
 {
     if (index < 0)
         executionCache.ncopy(~index, str, n);
@@ -288,7 +288,7 @@ void StrCache_NCopy(int index, CHAR *str, int n)
         constantCache.ncopy(index, str, n);
 }
 
-CHAR *StrCache_Get(int index)
+char *StrCache_Get(int index)
 {
     return index < 0 ? executionCache.get(~index) : constantCache.get(index);
 }
@@ -317,7 +317,7 @@ int StrCache_MakePersistent(int index)
 
 // see if a string is already in the cache
 // return its index if it is, or -1 if it isn't
-int StrCache_FindString(CHAR *str)
+int StrCache_FindString(char *str)
 {
     return constantCache.findString(str);
 }
