@@ -12,4 +12,7 @@ int getBuiltinIndex(const char *functionName);
 // returns the function with the given index
 BuiltinScriptFunction getBuiltinByIndex(int index);
 
+// returns the name of the function with the given index
+const char *getBuiltinName(int index);
+
 #endif

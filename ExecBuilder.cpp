@@ -1,4 +1,5 @@
 #include "ExecBuilder.h"
+#include "Builtins.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -225,7 +226,7 @@ void ExecBuilder::printInstructions()
             printf("%i: ", i);
 
             // destination
-            if (inst->opCode >= OP_MOV && inst->opCode <= OP_CALL)
+            if (inst->opCode >= OP_MOV && inst->opCode <= OP_CALL_BUILTIN)
             {
                 printf("gpr[%i] := ", inst->dst);
             }
@@ -240,8 +241,10 @@ void ExecBuilder::printInstructions()
             // parameters/sources
             if (inst->opCode == OP_CALL || inst->opCode == OP_CALL_BUILTIN)
             {
-                ExecFunction *callTarget = func->callTargets[inst->callTarget];
-                printf("%s ", callTarget->functionName);
+                const char *functionName = (inst->opCode == OP_CALL_BUILTIN)
+                    ? getBuiltinName(inst->callTarget)
+                    : func->callTargets[inst->callTarget]->functionName;
+                printf("%s ", functionName);
                 u16 paramCount16 = func->callParams[inst->paramsIndex];
                 assert(paramCount16 >> 8 == FILE_NONE);
                 int paramCount = paramCount16 & 0xff;

@@ -63,3 +63,8 @@ BuiltinScriptFunction getBuiltinByIndex(int index)
     return builtinsArray[index].function;
 }
 
+const char *getBuiltinName(int index)
+{
+    return builtinsArray[index].name;
+}
+
