@@ -32,6 +32,7 @@ enum OpCode
     OP_NEG,
     OP_BOOL_NOT,
     OP_BIT_NOT,
+    OP_BOOL,
     
     // binary ops
     OP_BIT_OR,
@@ -78,6 +79,7 @@ static const char *opCodeNames[] = {
     "neg",
     "bool_not",
     "bit_not",
+    "bool",
 
     "bit_or",
     "xor",
@@ -135,6 +137,7 @@ public:
     virtual bool isParam();
     virtual bool isGlobalVarRef();
     virtual bool isUndefined();
+    virtual bool isBoolValue();
     virtual void printDst() = 0;
 };
 
@@ -156,6 +159,7 @@ public:
     inline Temporary(int id, Expression *expr) : RValue(), id(id), expr(expr), reg(-1) {}
     virtual bool isTemporary();
     virtual void printDst();
+    virtual bool isBoolValue();
     
     // for register allocation
     // Interval livei;
@@ -186,6 +190,7 @@ public:
     // Constant(const char *strVal);
     virtual bool isConstant();
     virtual void printDst();
+    virtual bool isBoolValue();
 };
 
 // a parameter (input value) to the function
@@ -453,6 +458,7 @@ public:
     Constant *mkNull();
     Jump *mkJump(OpCode op, BasicBlock *target, RValue *src0, RValue *src1 = NULL);
     Instruction *mkReturn(RValue *src0);
+    RValue *mkBool(RValue *src);
     RValue *mkMove(RValue *val);
     Export *mkExport(GlobalVarRef *dst, RValue *src);
     

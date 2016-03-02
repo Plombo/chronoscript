@@ -22,7 +22,8 @@ HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVarian
     UnaryOperation unaryOps[] = {
         ScriptVariant_Neg,
         ScriptVariant_Boolean_Not,
-        ScriptVariant_Bit_Not
+        ScriptVariant_Bit_Not,
+        ScriptVariant_ToBoolean
     };
     BinaryOperation binaryOps[] = {
         ScriptVariant_Bit_Or,
@@ -117,6 +118,7 @@ HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVarian
             case OP_NEG:
             case OP_BOOL_NOT:
             case OP_BIT_NOT:
+            case OP_BOOL:
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 *dst = *(unaryOps[inst->opCode - OP_NEG](src0));

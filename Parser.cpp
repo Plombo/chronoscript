@@ -1221,6 +1221,7 @@ RValue *Parser::logOrExpr2(RValue *lhs)
         bld->sealBlock(afterBlock);
         bldUtil->currentBlock = afterBlock;
         RValue *result = bldUtil->readVariable(varName);
+        result = bldUtil->mkUnaryOp(OP_BOOL, result);
         return logOrExpr2(result);
     }
     else if (ParserSet_Follow(&theParserSet, Productions::log_or_expr2, theNextToken.theType))
@@ -1272,6 +1273,7 @@ RValue *Parser::logAndExpr2(RValue *lhs)
         bld->sealBlock(afterBlock);
         bldUtil->currentBlock = afterBlock;
         RValue *result = bldUtil->readVariable(varName);
+        result = bldUtil->mkUnaryOp(OP_BOOL, result);
         return logAndExpr2(result);
     }
     else if (ParserSet_Follow(&theParserSet, Productions::log_and_expr2, theNextToken.theType))

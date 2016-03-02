@@ -153,6 +153,44 @@ void Param::printDst()
     printf("param[%i]", index);
 }
 
+// isBoolValue: true if this value is guaranteed to be int 0 or int 1
+bool RValue::isBoolValue()
+{
+    return false;
+}
+
+bool Constant::isBoolValue()
+{
+    return (constValue.vt == VT_INTEGER && (constValue.lVal == 0 || constValue.lVal == 1));
+}
+
+bool Temporary::isBoolValue()
+{
+    switch(expr->op)
+    {
+        // these operations will always have an integer result of 0 or 1
+        case OP_BOOL:
+        case OP_BOOL_NOT:
+        case OP_EQ:
+        case OP_NE:
+        case OP_LT:
+        case OP_GT:
+        case OP_GE:
+        case OP_LE:
+            return true;
+        case OP_PHI:
+            if (!expr->block->isSealed) return false;
+            foreach_list(expr->operands, RValue, iter)
+            {
+                if (!iter.value()->isBoolValue())
+                    return false;
+            }
+            return true;
+        default:
+            return false;
+    }
+}
+
 void Instruction::appendOperand(RValue *value)
 {
     operands.gotoLast();
@@ -796,6 +834,7 @@ Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *s
     case OP_NEG: result = ScriptVariant_Neg(src0); break;
     case OP_BOOL_NOT: result = ScriptVariant_Boolean_Not(src0); break;
     case OP_BIT_NOT: result = ScriptVariant_Bit_Not(src0); break;
+    case OP_BOOL: result = ScriptVariant_ToBoolean(src0); break;
     // binary
     case OP_BIT_OR: result = ScriptVariant_Bit_Or(src0, src1); break;
     case OP_XOR: result = ScriptVariant_Xor(src0, src1); break;
@@ -825,6 +864,11 @@ Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *s
 RValue *SSABuildUtil::mkUnaryOp(OpCode op, RValue *src)
 {
     RValue *result = NULL;
+    if (op == OP_BOOL && src->isBoolValue())
+    {
+        // no-op if src is guaranteed to be integer 0 or 1
+        return src;
+    }
     if (src->isConstant()) // pre-evaluate expression
     {
         result = applyOp(op, &static_cast<Constant*>(src)->constValue, NULL);
@@ -885,6 +929,14 @@ Constant *SSABuildUtil::mkNull()
 
 Jump *SSABuildUtil::mkJump(OpCode op, BasicBlock *target, RValue *src0, RValue *src1)
 {
+    // if the condition is the result of an OP_BOOL instruction, we can use
+    // the source of that instruction as the condition instead
+    if ((op == OP_BRANCH_TRUE || op == OP_BRANCH_FALSE) && src0 && src0->isTemporary())
+    {
+        Temporary *temp = static_cast<Temporary*>(src0);
+        if (temp->expr->op == OP_BOOL)
+            src0 = temp->expr->src(0);
+    }
     Jump *inst = new(builder->memCtx) Jump(op, target, src0, src1);
     builder->insertInstruction(inst, currentBlock);
     return inst;

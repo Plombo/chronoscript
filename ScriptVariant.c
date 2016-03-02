@@ -801,6 +801,13 @@ ScriptVariant *ScriptVariant_Bit_Not(ScriptVariant *svar )
     return &retvar;
 }
 
+ScriptVariant *ScriptVariant_ToBoolean(ScriptVariant *svar)
+{
+    static ScriptVariant retvar = {{.lVal=0}, VT_INTEGER};
+    retvar.lVal = ScriptVariant_IsTrue(svar);
+    return &retvar;
+}
+
 
 
 

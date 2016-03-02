@@ -84,6 +84,7 @@ ScriptVariant *ScriptVariant_Dec_Op2(ScriptVariant *svar );
 ScriptVariant *ScriptVariant_Neg( ScriptVariant *svar);
 ScriptVariant *ScriptVariant_Boolean_Not(ScriptVariant *svar );
 ScriptVariant *ScriptVariant_Bit_Not(ScriptVariant *svar );
+ScriptVariant *ScriptVariant_ToBoolean(ScriptVariant *svar);
 
 #ifdef __cplusplus
 };
