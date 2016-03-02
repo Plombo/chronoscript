@@ -869,6 +869,13 @@ RValue *SSABuildUtil::mkUnaryOp(OpCode op, RValue *src)
         // no-op if src is guaranteed to be integer 0 or 1
         return src;
     }
+    else if (op == OP_BOOL_NOT && src->isTemporary() &&
+             src->asTemporary()->expr->op == OP_BOOL)
+    {
+        // replace bool_not(bool(x)) with bool_not(x) since conversion to
+        // a boolean is implicit in the bool_not operation
+        src = src->asTemporary()->expr->src(0);
+    }
     if (src->isConstant()) // pre-evaluate expression
     {
         result = applyOp(op, &src->asConstant()->constValue, NULL);
