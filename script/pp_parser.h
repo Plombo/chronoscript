@@ -117,8 +117,8 @@ bool pp_is_builtin_macro(const char *name);
 void pp_parser_insert_builtin_macro(pp_parser *self, const char *name);
 bool pp_parser_is_defined(pp_parser *self, const char *name);
 
-HRESULT pp_error(pp_parser *self, char *format, ...);
-void pp_warning(pp_parser *self, char *format, ...);
+HRESULT pp_error(pp_parser *self, const char *format, ...);
+void pp_warning(pp_parser *self, const char *format, ...);
 
 #ifdef __cplusplus
 }; // extern "C"

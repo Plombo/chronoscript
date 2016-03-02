@@ -250,7 +250,7 @@ void pp_message(pp_parser *self, char *messageType, char *message)
  * Writes an error message to the log.
  * @return E_FAIL
  */
-HRESULT pp_error(pp_parser *self, char *format, ...)
+HRESULT pp_error(pp_parser *self, const char *format, ...)
 {
     char buf[1024] = {""};
     va_list arglist;
@@ -266,7 +266,7 @@ HRESULT pp_error(pp_parser *self, char *format, ...)
 /**
  * Writes a warning message to the log.
  */
-void pp_warning(pp_parser *self, char *format, ...)
+void pp_warning(pp_parser *self, const char *format, ...)
 {
     char buf[1024] = {""};
     va_list arglist;
