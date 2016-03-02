@@ -97,11 +97,12 @@ LivenessAnalyzer::LivenessAnalyzer(SSAFunction *func)
 {
     memCtx = ralloc_context(NULL);
     nodeForTemp = ralloc_array(memCtx, InterferenceNode*, temporaries->size());
-    for (int i = 0; i < temporaries->size(); i++)
+    int numTemps = temporaries->size();
+    for (int i = 0; i < numTemps; i++)
     {
         nodeForTemp[i] = new(memCtx) InterferenceNode();
     }
-    uniqueNodes = temporaries->size();
+    uniqueNodes = numTemps;
 }
 
 LivenessAnalyzer::~LivenessAnalyzer()
@@ -255,12 +256,13 @@ void LivenessAnalyzer::buildInterferenceGraph()
     int nextId = 0;
     for (int i = 0; i < temporaries->size(); i++)
     {
-        if (nodeForTemp[i]->id < 0)
+        InterferenceNode *node = nodeForTemp[i]->root();
+        if (node->id < 0)
         {
-            nodeForTemp[i]->id = nextId++;
-            values[nodeForTemp[i]->id] = nodeForTemp[i];
+            node->id = nextId++;
+            values[node->id] = node;
         }
-        printf("%%%i = node %i\n", i, nodeForTemp[i]->id);
+        printf("%%%i = node %i\n", i, node->id);
     }
     assert(nextId == uniqueNodes);
 

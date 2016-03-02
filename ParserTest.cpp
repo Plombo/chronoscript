@@ -49,7 +49,7 @@ void compile(SSAFunction *func)
     foreach_list(func->temporaries, Temporary, iter)
     {
         Temporary *value = iter.value();
-        value->reg = livenessAnalyzer.nodeForTemp[value->id]->color;
+        value->reg = livenessAnalyzer.nodeForTemp[value->id]->root()->color;
     }
 
     // print instruction list again
