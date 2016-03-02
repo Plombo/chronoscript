@@ -104,8 +104,22 @@ static const char *opCodeNames[] = {
     "export",
 };
 
+// RValue and its subclasses
+class RValue;
+class Temporary;
+class Constant;
+class GlobalVarRef;
+class Param;
+
+// Instruction and its subclasses
 class Instruction;
 class Expression;
+class BlockDecl;
+class Phi;
+class FunctionCall;
+class Jump;
+class Export;
+
 class BasicBlock;
 class Loop;
 class SSAFunction;
@@ -138,6 +152,12 @@ public:
     virtual bool isGlobalVarRef();
     virtual bool isUndefined();
     virtual bool isBoolValue();
+
+    inline Constant *asConstant();
+    inline Temporary *asTemporary();
+    inline Param *asParam();
+    inline GlobalVarRef *asGlobalVarRef();
+
     virtual void printDst() = 0;
 };
 
@@ -203,6 +223,11 @@ public:
     virtual void printDst();
 };
 
+Constant *RValue::asConstant() { return static_cast<Constant*>(this); }
+Temporary *RValue::asTemporary() { return static_cast<Temporary*>(this); }
+Param *RValue::asParam() { return static_cast<Param*>(this); }
+GlobalVarRef *RValue::asGlobalVarRef() { return static_cast<GlobalVarRef*>(this); }
+
 class Instruction
 {
     DECLARE_RALLOC_CXX_OPERATORS(Instruction);
@@ -225,6 +250,12 @@ public:
     virtual bool isJump();
     inline bool isPhi() { return op == OP_PHI; }
     inline bool isFunctionCall() { return op == OP_CALL || op == OP_CALL_BUILTIN; }
+
+    inline Expression *asExpression();
+    inline Phi *asPhi();
+    inline FunctionCall *asFunctionCall();
+    inline Jump *asJump();
+    inline Export *asExport();
 
     // used after register allocation
     virtual bool isTrivial();
@@ -298,6 +329,12 @@ public:
     }
     void print();
 };
+
+Expression *Instruction::asExpression() { return static_cast<Expression*>(this); }
+Phi *Instruction::asPhi() { return static_cast<Phi*>(this); }
+FunctionCall *Instruction::asFunctionCall() { return static_cast<FunctionCall*>(this); }
+Jump *Instruction::asJump() { return static_cast<Jump*>(this); }
+Export *Instruction::asExport() { return static_cast<Export*>(this); }
 
 class BasicBlock
 {

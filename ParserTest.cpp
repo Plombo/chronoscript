@@ -86,7 +86,7 @@ void link(SSAFunction *func, CList<SSAFunction> *allFunctions)
     {
         Instruction *inst = iter.value();
         if (inst->op != OP_CALL) continue;
-        FunctionCall *call = static_cast<FunctionCall*>(inst);
+        FunctionCall *call = inst->asFunctionCall();
         if (allFunctions->findByName(call->functionName))
         {
             call->functionRef = allFunctions->retrieve();
@@ -115,7 +115,7 @@ void linkConstants(SSAFunction *func, CList<ScriptVariant> *constants)
         foreach_list(inst->operands, RValue, srcIter)
         {
             if (!srcIter.value()->isConstant()) continue;
-            Constant *c = static_cast<Constant*>(srcIter.value());
+            Constant *c = srcIter.value()->asConstant();
             int i = 0;
             // try to use an existing constant
             foreach_plist(constants, ScriptVariant, constIter)

@@ -54,21 +54,21 @@ static u16 createSrc(RValue *src)
     if (src->isTemporary())
     {
         file = FILE_GPR;
-        index = static_cast<Temporary*>(src)->reg;
+        index = src->asTemporary()->reg;
     }
     else if (src->isParam())
     {
         file = FILE_PARAM;
-        index = static_cast<Param*>(src)->index;
+        index = src->asParam()->index;
     }
     else if (src->isGlobalVarRef())
     {
         file = FILE_GLOBAL;
-        index = static_cast<GlobalVarRef*>(src)->id;
+        index = src->asGlobalVarRef()->id;
     }
     else if (src->isConstant())
     {
-        int id = static_cast<Constant*>(src)->id;
+        int id = src->asConstant()->id;
         file = FILE_CONSTANT + (id / 256);
         index = id % 256;
     }
@@ -78,10 +78,10 @@ static u16 createSrc(RValue *src)
 void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *ssaInst)
 {
     inst->opCode = ssaInst->op;
-    if (ssaInst->op == OP_CALL || ssaInst->op == OP_CALL_BUILTIN)
+    if (ssaInst->isFunctionCall())
     {
         // call target
-        FunctionCall *ssaCall = static_cast<FunctionCall*>(ssaInst);
+        FunctionCall *ssaCall = ssaInst->asFunctionCall();
         if (ssaInst->op == OP_CALL_BUILTIN)
         {
             inst->callTarget = ssaCall->builtinRef;
@@ -115,14 +115,14 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
         if (numSrc >= 2) // src1
             inst->src1 = createSrc(ssaInst->src(1));
         if (ssaInst->isJump())
-            inst->jumpTarget = static_cast<Jump*>(ssaInst)->target->startIndex;
+            inst->jumpTarget = ssaInst->asJump()->target->startIndex;
     }
 
     // set dst
     if (ssaInst->isExpression())
-        inst->dst = static_cast<Expression*>(ssaInst)->value()->reg;
+        inst->dst = ssaInst->asExpression()->value()->reg;
     else if (ssaInst->op == OP_EXPORT)
-        inst->dst = static_cast<Export*>(ssaInst)->dst->id;
+        inst->dst = ssaInst->asExport()->dst->id;
 }
 
 FunctionBuilder::FunctionBuilder(SSAFunction *ssaFunc, ExecBuilder *builder)
@@ -154,7 +154,7 @@ void FunctionBuilder::run()
         {
             if (srcIter.value()->isTemporary())
             {
-                int index = static_cast<Temporary*>(srcIter.value())->reg;
+                int index = srcIter.value()->asTemporary()->reg;
                 if (index >= numTemps)
                     numTemps = index + 1;
             }

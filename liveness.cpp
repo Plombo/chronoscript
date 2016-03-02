@@ -37,15 +37,14 @@ void dagDFS(BasicBlock *block)
         // remove variables defined at p from Live
         if (inst->isExpression())
         {
-            Temporary *dst = static_cast<Expression*>(inst)->value();
-            live.clr(dst->id);
+            live.clr(inst->asExpression()->value()->id);
         }
 
         // add uses at p in Live
         foreach_list(inst->operands, RValue, iter)
         {
             if (!iter.value()->isTemporary()) break;
-            live.set(static_cast<Temporary*>(iter.value())->id);
+            live.set(iter.value()->asTemporary()->id);
         }
         last = last->prev;
     }
@@ -152,7 +151,7 @@ void LivenessAnalyzer::computeLiveIntervals()
             if (inst->isExpression())
             {
                 // clear dst from live set
-                Temporary *dst = static_cast<Expression*>(inst)->value();
+                Temporary *dst = inst->asExpression()->value();
                 if (liveSet.test(dst->id))
                     liveSet.clr(dst->id);
                 else // add empty range to dead write as a hazard
@@ -163,7 +162,7 @@ void LivenessAnalyzer::computeLiveIntervals()
             {
                 if (!srcIter.value()->isTemporary()) // filter out non-temporaries
                     continue;
-                Temporary *src = static_cast<Temporary*>(srcIter.value());
+                Temporary *src = srcIter.value()->asTemporary();
                 if (!liveSet.test(src->id))
                 {
                     liveSet.set(src->id);
@@ -219,14 +218,14 @@ void LivenessAnalyzer::coalesce()
         Instruction *inst = (Instruction*) instNode->value;
         while (inst->op == OP_PHI)
         {
-            Phi *phi = static_cast<Phi*>(inst);
+            Phi *phi = inst->asPhi();
             assert(phi->value()->isTemporary());
-            Temporary *dst = static_cast<Temporary*>(phi->value());
+            Temporary *dst = phi->value()->asTemporary();
             foreach_list(inst->operands, RValue, srcIter)
             {
                 // merge phi dst with phi src (i.e. phi move)
                 assert(srcIter.value()->isTemporary());
-                Temporary *src = static_cast<Temporary*>(srcIter.value());
+                Temporary *src = srcIter.value()->asTemporary();
                 bool success = mergeNodes(dst, src);
                 assert(success); // must always succeed for phi!
                 
@@ -235,7 +234,7 @@ void LivenessAnalyzer::coalesce()
                 assert(srcExpr->op == OP_MOV);
                 RValue *movSrc = srcExpr->operands.retrieve();
                 if (movSrc->isTemporary())
-                    mergeNodes(src, static_cast<Temporary*>(movSrc));
+                    mergeNodes(src, movSrc->asTemporary());
             }
             
             instNode = instNode->next;

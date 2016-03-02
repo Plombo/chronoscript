@@ -290,7 +290,7 @@ bool Expression::isTrivial()
 {
     if (op == OP_MOV && dst->isTemporary() && operands.retrieve()->isTemporary())
     {
-        if (static_cast<Temporary*>(dst)->reg == static_cast<Temporary*>(operands.retrieve())->reg)
+        if (dst->asTemporary()->reg == operands.retrieve()->asTemporary()->reg)
             return true;
     }
     return false;
@@ -543,7 +543,7 @@ RValue *SSAFunction::tryRemoveTrivialPhi(Phi *phi)
         Instruction *use = iter.value();
         if (use->isPhi() && use != phi)
         {
-            phiUsers.insertAfter(static_cast<Phi*>(use), NULL);
+            phiUsers.insertAfter(use->asPhi(), NULL);
         }
     }
     phi->value()->replaceBy(same); // Reroute all uses of phi to same and remove phi
@@ -634,7 +634,7 @@ bool SSAFunction::removeDeadCode()
         Instruction *inst = instructionList.retrieve();
         if (inst->isExpression())
         {
-            Expression *expr = static_cast<Expression*>(inst);
+            Expression *expr = inst->asExpression();
             if (expr->isDead())
             {
                 // RValue *undefined = new(memCtx) Undef();
@@ -725,9 +725,9 @@ void SSAFunction::prepareForRegAlloc()
     {
         iter.value()->seqIndex = instCount++;
         if (!iter.value()->isExpression()) continue;
-        Expression *expr = static_cast<Expression*>(iter.value());
+        Expression *expr = iter.value()->asExpression();
         if (!expr->value()->isTemporary()) continue;
-        Temporary *temp = static_cast<Temporary*>(expr->value());
+        Temporary *temp = expr->value()->asTemporary();
         temp->id = tempCount++; // renumber temporaries
         temporaries.insertAfter(temp);
     }
@@ -754,11 +754,11 @@ void SSAFunction::prepareForRegAlloc()
             if (inst->op != OP_PHI) break; // only process phis, which are always at start of block
             Phi *phi = (Phi*) inst;
             // update phiDefs with phi definition
-            block->phiDefs.set(static_cast<Temporary*>(phi->value())->id);
+            block->phiDefs.set(phi->value()->asTemporary()->id);
             foreach_list(phi->operands, RValue, srcIter)
             {
                 // update phiUses for each phi operand
-                Temporary *phiSrc = static_cast<Temporary*>(srcIter.value());
+                Temporary *phiSrc = srcIter.value()->asTemporary();
                 phiSrc->expr->block->phiUses.set(phiSrc->id);
             }
         }
@@ -871,7 +871,7 @@ RValue *SSABuildUtil::mkUnaryOp(OpCode op, RValue *src)
     }
     if (src->isConstant()) // pre-evaluate expression
     {
-        result = applyOp(op, &static_cast<Constant*>(src)->constValue, NULL);
+        result = applyOp(op, &src->asConstant()->constValue, NULL);
     }
     if (result == NULL) // non-constant operands
     {
@@ -889,8 +889,8 @@ RValue *SSABuildUtil::mkBinaryOp(OpCode op, RValue *src0, RValue *src1)
     if (src0->isConstant() && src1->isConstant()) // pre-evaluate expression
     {
         result = applyOp(op,
-                         &static_cast<Constant*>(src0)->constValue,
-                         &static_cast<Constant*>(src1)->constValue);
+                         &src0->asConstant()->constValue,
+                         &src1->asConstant()->constValue);
     }
     if (result == NULL) // non-constant operands
     {
@@ -933,7 +933,7 @@ Jump *SSABuildUtil::mkJump(OpCode op, BasicBlock *target, RValue *src0, RValue *
     // the source of that instruction as the condition instead
     if ((op == OP_BRANCH_TRUE || op == OP_BRANCH_FALSE) && src0 && src0->isTemporary())
     {
-        Temporary *temp = static_cast<Temporary*>(src0);
+        Temporary *temp = src0->asTemporary();
         if (temp->expr->op == OP_BOOL)
             src0 = temp->expr->src(0);
     }
