@@ -563,7 +563,7 @@ pp_token *pp_parser_emit_token(pp_parser *self)
                     }
 
                     if(self->token.theType == PP_TOKEN_IDENTIFIER &&
-                            List_FindByName(&self->ctx->macros, self->token.theSource))
+                            List_FindByName(self->params, self->token.theSource))
                     {
                         if(FAILED(pp_parser_stringify(self)))
                         {
@@ -694,7 +694,7 @@ HRESULT pp_parser_readline(pp_parser *self, char *buf, int bufsize)
 HRESULT pp_parser_stringify(pp_parser *self)
 {
     TEXTPOS lexerPosition = {1, 0};
-    char *contents = (char *)List_Retrieve(&self->ctx->macros);
+    char *contents = (char*) List_Retrieve(self->params);
     pp_parser parser;
     pp_token *token;
 
