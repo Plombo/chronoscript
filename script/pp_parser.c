@@ -693,42 +693,39 @@ HRESULT pp_parser_readline(pp_parser *self, char *buf, int bufsize)
  */
 HRESULT pp_parser_stringify(pp_parser *self)
 {
-    TEXTPOS lexerPosition = {1, 0};
-    char *contents = (char*) List_Retrieve(self->params);
-    pp_parser parser;
-    pp_token *token;
-
+    const char *source = (const char*) List_Retrieve(self->params);
+    bool in_string = false;
     pp_token_Init(&self->token, PP_TOKEN_STRING_LITERAL, "\"",
                   self->token.theTextPosition, 0);
-    pp_parser_init(&parser, self->ctx, self->filename, contents, lexerPosition);
 
-    while((token = pp_parser_emit_token(&parser)) && token->theType != PP_TOKEN_EOF)
+    while(*source)
     {
-        char *source = token->theSource;
-        bool in_string = false;
-        while(*source)
+        if(*source == '"')
         {
-            if(*source == '"')
-            {
-                strncat(self->token.theSource, "\\\"", 2);
-                in_string = !in_string;
-            }
-            else if(*source == '\\' && in_string)
-            {
-                strncat(self->token.theSource, "\\\\", 2);
-            }
-            else
-            {
-                strncat(self->token.theSource, source, 1);
-            }
-
-            if(strlen(self->token.theSource) + 2 > MAX_TOKEN_LENGTH)
-            {
-                return pp_error(self, "sequence is too long to stringify");
-            }
-
-            source++;
+            strcat(self->token.theSource, "\\\"");
+            in_string = !in_string;
         }
+        else if(*source == '\\' && in_string)
+        {
+            strcat(self->token.theSource, "\\\\");
+            // handle escaped quotation mark
+            if (source[1] == '"')
+            {
+                strcat(self->token.theSource, "\\\"");
+                source++;
+            }
+        }
+        else
+        {
+            strncat(self->token.theSource, source, 1);
+        }
+
+        if(strlen(self->token.theSource) + 2 > MAX_TOKEN_LENGTH)
+        {
+            return pp_error(self, "sequence is too long to stringify");
+        }
+
+        source++;
     }
 
     strncat(self->token.theSource, "\"", 1);
