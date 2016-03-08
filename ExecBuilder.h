@@ -14,6 +14,7 @@ public:
     Interpreter *interpreter;
 public:
     ExecBuilder();
+    void allocateExecFunctions();
     void buildExecutable();
     ExecFunction *getFunctionNamed(const char *name);
     void printInstructions(); // XXX: move to Interpreter

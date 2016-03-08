@@ -26,6 +26,7 @@ cpp_sources = [
     'Interpreter',
     'Builtins',
     'StrCache',
+    'ImportCache',
 ]
 objects = []
 

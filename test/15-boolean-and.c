@@ -1,3 +1,5 @@
+#include "test/expect.h"
+
 // should short-circuit
 // shouldn't emit a 'bool' instruction
 int shortc(int a, int b)
@@ -40,11 +42,11 @@ int loopsAnd(int a, int b)
 
 void main()
 {
-    log("Expect: 1 0 7 3 2 0");
-    log(evalAnd(3, 4)); // expect 1
-    log(evalAnd(3, 0)); // expect 0
-    log(ifAnd(1, 2)); // expect 7
-    log(ifAnd(2, 0)); // expect 3
-    log(loopsAnd(2, 0)); // expect 2
-    log(loopsAnd(2, 1)); // expect 0
+    // log("Expect: 1 0 7 3 2 0");
+    expect(evalAnd(3, 4), 1); // expect 1
+    expect(evalAnd(3, 0), 0); // expect 0
+    expect(ifAnd(1, 2), 7); // expect 7
+    expect(ifAnd(2, 0), 3); // expect 3
+    expect(loopsAnd(2, 0), 2); // expect 2
+    expect(loopsAnd(2, 1), 0); // expect 0
 }

@@ -9,17 +9,21 @@ ExecBuilder::ExecBuilder()
     interpreter = new Interpreter;
 }
 
-void ExecBuilder::buildExecutable()
+void ExecBuilder::allocateExecFunctions()
 {
     // allocate an ExecFunction for each source function so that when one of
     // these functions calls another, we can properly link the call
     foreach_list(ssaFunctions, SSAFunction, iter)
     {
         ExecFunction *execFunc = new ExecFunction;
+        execFunc->numParams = iter.value()->paramCount;
         interpreter->functions.insertAfter(execFunc, iter.name());
     }
+}
 
-    // now actually build the ExecFunctions
+void ExecBuilder::buildExecutable()
+{
+    // actually build the ExecFunctions
     foreach_list(ssaFunctions, SSAFunction, iter)
     {
         FunctionBuilder builder(iter.value(), this);
@@ -88,7 +92,7 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
         }
         else
         {
-            ExecFunction *target = execBuilder->getFunctionNamed(ssaCall->functionRef->functionName);
+            ExecFunction *target = ssaCall->functionRef;
             assert(target);
             inst->callTarget = nextCallTargetIndex;
             func->callTargets[nextCallTargetIndex++] = target;
@@ -139,12 +143,10 @@ void FunctionBuilder::run()
     func->numParams = ssaFunc->paramCount;
     func->maxCallParams = 0;
 
-    int numInstructions = 0, numTemps = 0, numCalls = 0, numParams = 0;
+    int numTemps = 0, numCalls = 0, numParams = 0;
     foreach_list(ssaFunc->instructionList, Instruction, iter)
     {
         Instruction *inst = iter.value();
-        if (inst->seqIndex < 0) continue;
-        ++numInstructions;
         if (inst->isFunctionCall())
         {
             numParams += inst->operands.size() + 1;
@@ -161,9 +163,9 @@ void FunctionBuilder::run()
         }
     }
 
-    func->numInstructions = numInstructions;
-    func->instructions = new ExecInstruction[numInstructions];
-    memset(func->instructions, 0, numInstructions * sizeof(ExecInstruction));
+    func->numInstructions = ssaFunc->instructionList.size();
+    func->instructions = new ExecInstruction[func->numInstructions];
+    memset(func->instructions, 0, func->numInstructions * sizeof(ExecInstruction));
     func->callTargets = new ExecFunction*[numCalls];
     func->callParams = new u16[numParams];
     func->numGPRs = numTemps;

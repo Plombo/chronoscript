@@ -72,6 +72,7 @@ public:
     // destructor to free all of the above
     ~Interpreter();
 
+    ExecFunction *getFunctionNamed(const char *name);
     HRESULT runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval);
 };
 

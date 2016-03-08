@@ -195,6 +195,11 @@ HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVarian
     return S_OK;
 }
 
+ExecFunction *Interpreter::getFunctionNamed(const char *name)
+{
+    return functions.findByName(name) ? functions.retrieve() : NULL;
+}
+
 HRESULT Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
     StrCache_SetExecuting(true);

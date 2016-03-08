@@ -1799,6 +1799,7 @@ RValue *Parser::postfixExpr2(RValue *lhs)
     }
     else
     {
+        fprintf(stderr, "error token '%s'\n", this->theNextToken.theSource);
         Parser_Error(this, postfix_expr2);
         return bldUtil->undef();
     }

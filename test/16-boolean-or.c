@@ -1,3 +1,5 @@
+#include "test/expect.h"
+
 // should not use a 'bool' instruction
 int shortcOr(int a, int b)
 {
@@ -39,11 +41,11 @@ int loopsOr(int a, int b)
 
 void main()
 {
-    log("Expect: 1 0 7 3 2 3");
-    log(evalOr(3, 4)); // expect 1
-    log(evalOr(0, 0)); // expect 0
-    log(ifOr(1, 2)); // expect 7
-    log(ifOr(0, 0)); // expect 3
-    log(loopsOr(2, 0)); // expect 2
-    log(loopsOr(0, 0)); // expect 3
+    // log("Expect: 1 0 7 3 2 3");
+    expect(evalOr(3, 4), 1);
+    expect(evalOr(0, 0), 0);
+    expect(ifOr(1, 2), 7);
+    expect(ifOr(0, 0), 3);
+    expect(loopsOr(2, 0), 2);
+    expect(loopsOr(0, 0), 3);
 }

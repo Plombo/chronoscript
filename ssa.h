@@ -297,12 +297,13 @@ public:
     BasicBlock **sourceBlocks;
 };
 
+struct ExecFunction;
 class FunctionCall : public Expression
 {
 public:
     char *functionName;
     union { // this value set during linking
-        SSAFunction *functionRef; // op == OP_CALL
+        ExecFunction *functionRef; // op == OP_CALL
         int builtinRef; // op == OP_CALL_BUILTIN
     };
     FunctionCall(const char *functionName, int valueId);
