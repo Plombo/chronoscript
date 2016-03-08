@@ -393,7 +393,6 @@ pp_token *pp_parser_emit_token(pp_parser *self)
     pp_token token2;
     pp_token *child_token;
     int i;
-    char *param1, *param2;
 
     while(success && !emitme)
     {
@@ -469,6 +468,7 @@ pp_token *pp_parser_emit_token(pp_parser *self)
                 pp_parser* p;
                 pp_lexer tmpLexer;
                 pp_token tokenA, tokenB;
+                char *param1, *param2;
                 char buf1[1024] = {""}, buf2[1024] = {""};
                 TEXTPOS start = {0,0};
 
@@ -496,6 +496,7 @@ pp_token *pp_parser_emit_token(pp_parser *self)
                     // expand the token on the left side of the ##
                     param1 = token2.theSource;
                     p = self;
+                    buf1[0] = 0;
                     while(1)
                     {
                         if(p->type == PP_FUNCTION_MACRO && List_FindByName(p->params, param1))
@@ -503,8 +504,6 @@ pp_token *pp_parser_emit_token(pp_parser *self)
                             param1 = (char*)List_Retrieve(p->params);
                             p = p->parent;
                         }
-                        else if(List_FindByName(&self->ctx->macros, param1))
-                            param1 = (char*)List_Retrieve(&self->ctx->macros);
                         else break;
 
                         // if the expanded form has >1 token, the concatenation is only
@@ -513,10 +512,12 @@ pp_token *pp_parser_emit_token(pp_parser *self)
                         tokenB.theSource[0] = '\0';
                         do
                         {
+                            pp_lexer_GetNextToken(&tmpLexer, &tokenA);
+                            if (tokenA.theType == PP_TOKEN_EOF) break;
+                            // printf("cat '%s' to buf1\n", tokenB.theSource);
                             strcat(buf1, tokenB.theSource);
                             memcpy(&tokenB, &tokenA, sizeof(pp_token));
-                            pp_lexer_GetNextToken(&tmpLexer, &tokenA);
-                        } while(tokenA.theType != PP_TOKEN_EOF);
+                        } while(1);
                         param1 = param1 + strlen(param1) - strlen(tokenB.theSource);
                         assert(strcmp(param1, tokenB.theSource) == 0);
                     }
@@ -531,8 +532,6 @@ pp_token *pp_parser_emit_token(pp_parser *self)
                             param2 = (char*)List_Retrieve(p->params);
                             p = p->parent;
                         }
-                        else if(List_FindByName(&self->ctx->macros, param2))
-                            param2 = (char*)List_Retrieve(&self->ctx->macros);
                         else break;
 
                         // this is ugly but works as long as buf2 doesn't overflow
@@ -545,6 +544,7 @@ pp_token *pp_parser_emit_token(pp_parser *self)
                     memmove(buf2+strlen(param2), buf2, strlen(buf2)+1);
                     memcpy(buf2, param2, strlen(param2));
 
+                    // printf("buf1='%s' buf2='%s'\n", buf1, buf2);
                     pp_parser_concatenate(self, buf1, buf2);
                     emitme = false;
                     continue;
