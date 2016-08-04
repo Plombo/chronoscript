@@ -14,7 +14,7 @@ void ExecBuilder::allocateExecFunctions()
 {
     // allocate an ExecFunction for each source function so that when one of
     // these functions calls another, we can properly link the call
-    foreach_list(ssaFunctions, SSAFunction, iter)
+    foreach_list(ssaFunctions, SSABuilder, iter)
     {
         ExecFunction *execFunc = new ExecFunction;
         execFunc->numParams = iter.value()->paramCount;
@@ -25,7 +25,7 @@ void ExecBuilder::allocateExecFunctions()
 void ExecBuilder::buildExecutable()
 {
     // actually build the ExecFunctions
-    foreach_list(ssaFunctions, SSAFunction, iter)
+    foreach_list(ssaFunctions, SSABuilder, iter)
     {
         FunctionBuilder builder(iter.value(), this);
         builder.run();
@@ -130,7 +130,7 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
         inst->dst = ssaInst->asExport()->dst->id;
 }
 
-FunctionBuilder::FunctionBuilder(SSAFunction *ssaFunc, ExecBuilder *builder)
+FunctionBuilder::FunctionBuilder(SSABuilder *ssaFunc, ExecBuilder *builder)
     : execBuilder(builder), ssaFunc(ssaFunc), nextParamIndex(0), nextCallTargetIndex(0)
 {
     this->func = execBuilder->getFunctionNamed(ssaFunc->functionName);

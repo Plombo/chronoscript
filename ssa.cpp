@@ -64,13 +64,13 @@ bool BasicBlock::dominates(BasicBlock *b, BasicBlock *without, BitSet *tested)
     return true;
 }
 
-const char *SSAFunction::getIdentString(const char *variable, BasicBlock *block)
+const char *SSABuilder::getIdentString(const char *variable, BasicBlock *block)
 {
     snprintf(identBuf, sizeof(identBuf), "%s:%i", variable, block->id);
     return identBuf;
 }
 
-void SSAFunction::writeVariable(const char *variable, BasicBlock *block, RValue *value)
+void SSABuilder::writeVariable(const char *variable, BasicBlock *block, RValue *value)
 {
     // currentDef[variable][block] ← value
     const char *ident = getIdentString(variable, block);
@@ -85,7 +85,7 @@ void SSAFunction::writeVariable(const char *variable, BasicBlock *block, RValue 
     }
 }
 
-RValue *SSAFunction::readVariable(const char *variable, BasicBlock *block)
+RValue *SSABuilder::readVariable(const char *variable, BasicBlock *block)
 {
     const char *ident = getIdentString(variable, block);
     if (currentDef.findByName(ident)) // currentDef[variable] contains block
@@ -97,7 +97,7 @@ RValue *SSAFunction::readVariable(const char *variable, BasicBlock *block)
     return readVariableRecursive(variable, block);
 }
 
-RValue *SSAFunction::readVariableRecursive(const char *variable, BasicBlock *block)
+RValue *SSABuilder::readVariableRecursive(const char *variable, BasicBlock *block)
 {
     RValue *val;
     if (!block->isSealed)
@@ -134,7 +134,7 @@ RValue *SSAFunction::readVariableRecursive(const char *variable, BasicBlock *blo
     return val;
 }
 
-RValue *SSAFunction::addPhiOperands(const char *variable, BasicBlock *block, Phi *phi)
+RValue *SSABuilder::addPhiOperands(const char *variable, BasicBlock *block, Phi *phi)
 {
     // Determine operands from predecessors
     phi->sourceBlocks = ralloc_array(memCtx, BasicBlock*, block->preds.size());
@@ -149,7 +149,7 @@ RValue *SSAFunction::addPhiOperands(const char *variable, BasicBlock *block, Phi
     return tryRemoveTrivialPhi(phi);
 }
 
-RValue *SSAFunction::tryRemoveTrivialPhi(Phi *phi)
+RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
 {
     // printf("tryRemoveTrivialPhi: "); phi->print();
     RValue *same = NULL;
@@ -195,7 +195,7 @@ RValue *SSAFunction::tryRemoveTrivialPhi(Phi *phi)
     return same;
 }
 
-void SSAFunction::sealBlock(BasicBlock *block)
+void SSABuilder::sealBlock(BasicBlock *block)
 {
     foreach_list(block->incompletePhis, Phi, iter)
     {
@@ -205,7 +205,7 @@ void SSAFunction::sealBlock(BasicBlock *block)
 }
 
 // create BB and insert after the given block
-BasicBlock *SSAFunction::createBBAfter(BasicBlock *existingBB)
+BasicBlock *SSABuilder::createBBAfter(BasicBlock *existingBB)
 {
     BasicBlock *newBB = new(memCtx) BasicBlock(nextBBId++);
     basicBlockList.gotoLast();
@@ -222,7 +222,7 @@ BasicBlock *SSAFunction::createBBAfter(BasicBlock *existingBB)
 }
 
 // insert instruction at end of basic block
-void SSAFunction::insertInstruction(Instruction *inst, BasicBlock *bb)
+void SSABuilder::insertInstruction(Instruction *inst, BasicBlock *bb)
 {
     instructionList.setCurrent(bb->end);
     instructionList.insertBefore(inst, NULL);
@@ -230,7 +230,7 @@ void SSAFunction::insertInstruction(Instruction *inst, BasicBlock *bb)
 }
 
 // insert instruction at start of basic block
-void SSAFunction::insertInstructionAtStart(Instruction *inst, BasicBlock *bb)
+void SSABuilder::insertInstructionAtStart(Instruction *inst, BasicBlock *bb)
 {
     instructionList.setCurrent(bb->start);
     instructionList.insertAfter(inst, NULL);
@@ -238,7 +238,7 @@ void SSAFunction::insertInstructionAtStart(Instruction *inst, BasicBlock *bb)
 }
 
 // insert instruction at end of basic block
-Constant *SSAFunction::addConstant(ScriptVariant sv)
+Constant *SSABuilder::addConstant(ScriptVariant sv)
 {
     // TODO: prevent duplicates
     constantList.gotoLast();
@@ -247,7 +247,7 @@ Constant *SSAFunction::addConstant(ScriptVariant sv)
     return c;
 }
 
-void SSAFunction::printInstructionList()
+void SSABuilder::printInstructionList()
 {
     foreach_list(instructionList, Instruction, iter)
     {
@@ -257,7 +257,7 @@ void SSAFunction::printInstructionList()
 
 // returns true if dead code was removed
 // XXX: this would be more efficient with an iterator that lets us delete members
-bool SSAFunction::removeDeadCode()
+bool SSABuilder::removeDeadCode()
 {
     bool codeRemoved = false;
     instructionList.gotoFirst();
@@ -285,7 +285,7 @@ bool SSAFunction::removeDeadCode()
     return codeRemoved;
 }
 
-void SSAFunction::prepareForRegAlloc()
+void SSABuilder::prepareForRegAlloc()
 {
     // insert phi moves
     foreach_list(basicBlockList, BasicBlock, iter)
@@ -435,7 +435,7 @@ GlobalVarRef *GlobalState::readGlobalVariable(const char *varName, void *memCtx)
         return NULL;
 }
 
-SSABuildUtil::SSABuildUtil(SSAFunction *builder, GlobalState *globalState)
+SSABuildUtil::SSABuildUtil(SSABuilder *builder, GlobalState *globalState)
     : builder(builder), globalState(globalState), currentBlock(NULL)
 {
     StackedSymbolTable_Init(&symbolTable);

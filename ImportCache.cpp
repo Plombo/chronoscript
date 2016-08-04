@@ -107,7 +107,7 @@ error:
 #endif
 }
 
-void compile(SSAFunction *func)
+void compile(SSABuilder *func)
 {
     printf("\n~~~~~ %s ~~~~~\n", func->functionName);
 #if 0
@@ -175,7 +175,7 @@ void compile(SSAFunction *func)
     }
 }
 
-void link(SSAFunction *func, CList<ExecFunction> *localFunctions, CList<Interpreter> *imports)
+void link(SSABuilder *func, CList<ExecFunction> *localFunctions, CList<Interpreter> *imports)
 {
     foreach_list(func->instructionList, Instruction, iter)
     {
@@ -204,7 +204,7 @@ void link(SSAFunction *func, CList<ExecFunction> *localFunctions, CList<Interpre
     }
 }
 
-void linkConstants(SSAFunction *func, CList<ScriptVariant> *constants)
+void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
 {
     foreach_list(func->instructionList, Instruction, instIter)
     {
@@ -278,9 +278,9 @@ Interpreter *compileFile(const char *filename)
     }
     pp_context_destroy(&ppContext);
 
-    foreach_list(execBuilder.ssaFunctions, SSAFunction, iter)
+    foreach_list(execBuilder.ssaFunctions, SSABuilder, iter)
     {
-        SSAFunction *func = iter.value();
+        SSABuilder *func = iter.value();
         link(func, &execBuilder.interpreter->functions, &imports);
         compile(func);
         linkConstants(func, &execBuilder.constants);

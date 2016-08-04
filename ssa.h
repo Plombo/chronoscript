@@ -122,7 +122,7 @@ class Export;
 
 class BasicBlock;
 class Loop;
-class SSAFunction;
+class SSABuilder;
 
 // abstract base class for SSA values
 class RValue
@@ -346,7 +346,7 @@ public:
     CList<BasicBlock> preds; // predecessors
     CList<Phi> incompletePhis;
     
-    // these point to nodes in SSAFunction->instructionList
+    // these point to nodes in SSABuilder->instructionList
     Node *start;
     Node *end;
     
@@ -393,9 +393,9 @@ public:
     Loop(BasicBlock *header, Loop *parent = NULL);
 };
 
-class SSAFunction // SSA form of a script function
+class SSABuilder // SSA form of a script function
 {
-    DECLARE_RALLOC_CXX_OPERATORS(SSAFunction);
+    DECLARE_RALLOC_CXX_OPERATORS(SSABuilder);
 public:
     CList<Instruction> instructionList;
     CList<BasicBlock> basicBlockList;
@@ -415,7 +415,7 @@ public:
 
     // constructor
     // TODO (void *memCtx, char *name)
-    inline SSAFunction(void *memCtx, const char *name = NULL)
+    inline SSABuilder(void *memCtx, const char *name = NULL)
         : memCtx(memCtx), nextBBId(0), nextValueId(0), paramCount(0)
     {
         functionName = name ? ralloc_strdup(memCtx, name) : NULL;
@@ -469,7 +469,7 @@ public:
 class SSABuildUtil
 {
 private:
-    SSAFunction *builder;
+    SSABuilder *builder;
     StackedSymbolTable symbolTable;
     Loop *currentLoop;
     GlobalState *globalState;
@@ -480,7 +480,7 @@ public:
     CStack<BasicBlock> breakTargets;
     CStack<BasicBlock> continueTargets;
     
-    SSABuildUtil(SSAFunction *builder, GlobalState *globalState);
+    SSABuildUtil(SSABuilder *builder, GlobalState *globalState);
     ~SSABuildUtil();
     inline void setCurrentBlock(BasicBlock *block) { currentBlock = block; }
     
