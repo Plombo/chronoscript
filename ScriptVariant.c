@@ -14,14 +14,12 @@
 void ScriptVariant_Clear(ScriptVariant *var)
 {
     ScriptVariant_ChangeType(var, VT_EMPTY);
-    var->ptrVal = NULL; // not sure, maybe this is the longest member in the union
+    memset(var, 0, sizeof(*var));
 }
 
 void ScriptVariant_Init(ScriptVariant *var)
 {
-    //memset(var, 0, 8);
-    var->ptrVal = NULL; // not sure, maybe this is the longest member in the union
-    var->vt = VT_EMPTY;
+    memset(var, 0, sizeof(*var));
 }
 
 void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt)
