@@ -1,7 +1,7 @@
 #include "Builtins.h"
 #include "List.h"
 
-bool builtinsInited = false;
+static bool builtinsInited = false;
 static CList<void> builtinIndices;
 
 // log([a, [b, [...]]])
@@ -29,13 +29,13 @@ struct Builtin {
     const char *name;
 };
 // define each builtin IN ALPHABETICAL ORDER or binary search won't work
-Builtin builtinsArray[] = {
+static Builtin builtinsArray[] = {
     DEF_BUILTIN(log),
 };
 #undef DEF_BUILTIN
 
 // initialize builtin lists for public use
-void initBuiltins()
+static void initBuiltins()
 {
     if (builtinsInited) return;
     int numBuiltins = sizeof(builtinsArray) / sizeof(Builtin);
