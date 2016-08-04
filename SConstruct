@@ -18,6 +18,7 @@ c_sources = [
 ]
 cpp_sources = [
     'ssa',
+    'Instruction',
     'Parser',
     'ParserTest',
     'regalloc',
