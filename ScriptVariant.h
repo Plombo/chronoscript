@@ -43,19 +43,11 @@ void ScriptVariant_Init(ScriptVariant *var);
 void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild ); // faster in some situations
 void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt);
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
-inline HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, s32 *pVal);
-inline HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal);
+HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, s32 *pVal);
+HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal);
 BOOL ScriptVariant_IsTrue(ScriptVariant *svar);
 void ScriptVariant_ToString(ScriptVariant *svar, char *buffer);
 
-// light version, for compiled call, faster than above, but not safe in some situations
-// This function are used by compiled scripts
-inline ScriptVariant *ScriptVariant_Assign(ScriptVariant *svar, ScriptVariant *rightChild );
-inline ScriptVariant *ScriptVariant_MulAssign(ScriptVariant *svar, ScriptVariant *rightChild );
-inline ScriptVariant *ScriptVariant_DivAssign(ScriptVariant *svar, ScriptVariant *rightChild );
-inline ScriptVariant *ScriptVariant_AddAssign(ScriptVariant *svar, ScriptVariant *rightChild );
-inline ScriptVariant *ScriptVariant_SubAssign(ScriptVariant *svar, ScriptVariant *rightChild );
-inline ScriptVariant *ScriptVariant_ModAssign(ScriptVariant *svar, ScriptVariant *rightChild );
 ScriptVariant *ScriptVariant_Or( ScriptVariant *svar, ScriptVariant *rightChild );
 ScriptVariant *ScriptVariant_And( ScriptVariant *svar, ScriptVariant *rightChild );
 ScriptVariant *ScriptVariant_Bit_Or( ScriptVariant *svar, ScriptVariant *rightChild );
@@ -74,11 +66,6 @@ ScriptVariant *ScriptVariant_Shr( ScriptVariant *svar, ScriptVariant *rightChild
 ScriptVariant *ScriptVariant_Mul( ScriptVariant *svar, ScriptVariant *rightChild );
 ScriptVariant *ScriptVariant_Div( ScriptVariant *svar, ScriptVariant *rightChild );
 ScriptVariant *ScriptVariant_Mod( ScriptVariant *svar, ScriptVariant *rightChild );
-inline void ScriptVariant_Inc_Op(ScriptVariant *svar );
-ScriptVariant *ScriptVariant_Inc_Op2(ScriptVariant *svar );
-inline void ScriptVariant_Dec_Op(ScriptVariant *svar );
-ScriptVariant *ScriptVariant_Dec_Op2(ScriptVariant *svar );
-//inline ScriptVariant *ScriptVariant_Pos( ScriptVariant *svar);
 
 // note that these are changed from OpenBOR - they now return new value instead of modifying in place
 ScriptVariant *ScriptVariant_Neg( ScriptVariant *svar);
