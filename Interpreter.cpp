@@ -7,7 +7,8 @@
 typedef ScriptVariant *(*UnaryOperation)(ScriptVariant*);
 typedef ScriptVariant *(*BinaryOperation)(ScriptVariant*, ScriptVariant*);
 
-HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
+// does the actual work of executing the script
+static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
     int index = 0;
     ScriptVariant gprs[function->numGPRs];
@@ -240,3 +241,4 @@ ExecFunction::~ExecFunction()
     delete[] callParams;
     delete[] instructions;
 }
+

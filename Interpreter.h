@@ -76,6 +76,6 @@ public:
     HRESULT runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval);
 };
 
-HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval);
 
 #endif
+
