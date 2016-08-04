@@ -1,11 +1,13 @@
-#include "ralloc.h"
-#include "List.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "ScriptUtils.h"
 #include "ssa.h"
 #include "regalloc.h"
+#include "ralloc.h"
+#include "List.h"
+#include "ScriptUtils.h"
 
 // referenced by another instruction
 void RValue::ref(Instruction *inst)

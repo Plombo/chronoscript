@@ -6,11 +6,10 @@
  * Copyright (c) 2004 - 2014 OpenBOR Team
  */
 
-#include "ScriptVariant.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include "ScriptVariant.h"
 
 void ScriptVariant_Clear(ScriptVariant *var)
 {
