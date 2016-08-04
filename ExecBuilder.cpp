@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "ScriptUtils.h"
 
 ExecBuilder::ExecBuilder()
 {
@@ -205,8 +206,7 @@ void ExecBuilder::printInstructions()
         }
         else if (val->vt == VT_STR)
         {
-            // FIXME: re-escape characters such as '\r' and '\n'
-            printf("\"%s\"", StrCache_Get(val->strVal));
+            printEscapedString(StrCache_Get(val->strVal));
         }
         else
         {

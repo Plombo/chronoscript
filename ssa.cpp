@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "ScriptUtils.h"
 #include "ssa.h"
 #include "regalloc.h"
 
@@ -134,8 +135,7 @@ void Constant::printDst()
     }
     else if (constValue.vt == VT_STR)
     {
-        // FIXME: re-escape characters such as '\r' and '\n'
-        printf("\"%s\"", StrCache_Get(constValue.strVal));
+        printEscapedString(StrCache_Get(constValue.strVal));
     }
     else
     {
