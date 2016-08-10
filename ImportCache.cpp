@@ -46,6 +46,7 @@ static char *readScript(const char *path)
     if (fseek(fp, 0, SEEK_SET) < 0) goto error;
     if (fread(scriptText, 1, fileSize, fp) != fileSize) goto error;
     scriptText[fileSize] = 0;
+    fclose(fp);
     return scriptText;
 
 error:

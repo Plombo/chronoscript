@@ -9,6 +9,7 @@
 #include "Builtins.h"
 
 #include "ImportCache.h"
+#include "StrCache.h"
 
 void doTest(const char *filename)
 {
@@ -62,6 +63,9 @@ int main(int argc, char **argv)
     
     doTest(argv[1]);
     // testFile(argv[1]);
+
+    ImportCache_Clear();
+    StrCache_Clear();
     return 0;
 }
 
