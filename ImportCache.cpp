@@ -108,7 +108,7 @@ error:
 #endif
 }
 
-void compile(SSABuilder *func)
+bool compile(SSABuilder *func)
 {
     printf("\n~~~~~ %s ~~~~~\n", func->functionName);
 #if 0
@@ -184,6 +184,21 @@ void compile(SSABuilder *func)
         iter.value()->print();
     }
     printf("\n");
+
+    // check for uses of undefined values
+    foreach_list(func->instructionList, Instruction, iter)
+    {
+        foreach_list(iter.value()->operands, RValue, rvalue_iter)
+        {
+            if (rvalue_iter.value()->isUndefined())
+            {
+                printf("Error: possible use of undefined value\n");
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 void link(SSABuilder *func, CList<ExecFunction> *localFunctions, CList<Interpreter> *imports)
@@ -262,6 +277,7 @@ void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
  */
 Interpreter *compileFile(const char *filename)
 {
+    bool success = true;
     char *scriptText = readScript(filename);
     if (!scriptText) return NULL;
 
@@ -283,6 +299,11 @@ Interpreter *compileFile(const char *filename)
     for (int i = 0; i < numImports; i++)
     {
         Interpreter *importedScript = ImportCache_ImportFile(List_GetName(&ppContext.imports));
+        if (importedScript == NULL)
+        {
+            pp_context_destroy(&ppContext);
+            goto error;
+        }
         printf("imported script %s => %p\n", List_GetName(&ppContext.imports), importedScript);
         imports.insertAfter(importedScript);
         List_GotoNext(&ppContext.imports);
@@ -293,7 +314,7 @@ Interpreter *compileFile(const char *filename)
     {
         SSABuilder *func = iter.value();
         link(func, &execBuilder.interpreter->functions, &imports);
-        compile(func);
+        if (!compile(func)) goto error;
         linkConstants(func, &execBuilder.constants);
     }
 
@@ -302,6 +323,16 @@ Interpreter *compileFile(const char *filename)
     free(scriptText);
     execBuilder.printInstructions();
     return execBuilder.interpreter;
+
+error:
+    printf("An error occurred when compiling %s\n", filename);
+    if (compiledScripts.findByName(filename))
+    {
+        compiledScripts.remove();
+    }
+    ralloc_free(parser.memCtx);
+    free(scriptText);
+    return NULL;
 }
 
 /**

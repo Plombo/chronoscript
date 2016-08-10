@@ -14,7 +14,7 @@
 void doTest(const char *filename)
 {
     Interpreter *interpreter = ImportCache_ImportFile(filename);
-    if (interpreter->functions.findByName("main"))
+    if (interpreter && interpreter->functions.findByName("main"))
     {
         ScriptVariant retval;
         printf("\n\nRunning function 'main'...\n");
