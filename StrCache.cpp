@@ -1,26 +1,27 @@
-#include "StrCache.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "StrCache.h"
 
 /*
+The string cache is intended to reduce memory usage; since not all variants are
+strings, there's no need to give all of them an array.
+
 We actually keep two string caches: one for persistent strings like constants,
 and one for temporary strings created while execting a script. We clear the
 temporary cache every time a script is done executing.
 */
 
 #define __reallocto(p, t, n, s) \
-p = (t)realloc((p), sizeof(*(p))*(s));\
-memset((p)+(n), 0, sizeof(*(p))*((s)-(n)));
+    p = (t)realloc((p), sizeof(*(p))*(s));\
+    memset((p)+(n), 0, sizeof(*(p))*((s)-(n)));
 
-typedef struct
-{
+typedef struct {
     int len;
     int ref;
     char *str;
 } Varstr;
 
-// use string cache to cut the memory usage down, because not all variants are string, no need to give each of them an array
 #define STRCACHE_INC      64
 
 class StrCache {
@@ -77,11 +78,10 @@ void StrCache::init()
     int i;
     this->clear(); // just in case
     strcache = (Varstr*) calloc(STRCACHE_INC, sizeof(*strcache));
-    strcache_index = (int*) malloc(sizeof(*strcache_index) * STRCACHE_INC);
-    for(i = 0; i < STRCACHE_INC; i++)
+    strcache_index = (int*) calloc(STRCACHE_INC, sizeof(*strcache_index));
+    for (i = 0; i < STRCACHE_INC; i++)
     {
-        strcache[i].str = (char*) malloc(sizeof(char) * (MAX_STR_VAR_LEN + 1));
-        strcache[i].str[0] = 0;
+        strcache[i].str = (char*) calloc(1, MAX_STR_VAR_LEN + 1);
         strcache[i].len = MAX_STR_VAR_LEN;
         strcache_index[i] = i;
     }
@@ -93,11 +93,11 @@ void StrCache::init()
 void StrCache::clear()
 {
     int i;
-    if(strcache)
+    if (strcache)
     {
-        for(i = 0; i < strcache_size; i++)
+        for (i = 0; i < strcache_size; i++)
         {
-            if(strcache[i].str)
+            if (strcache[i].str)
             {
                 free(strcache[i].str);
             }
@@ -106,7 +106,7 @@ void StrCache::clear()
         free(strcache);
         strcache = NULL;
     }
-    if(strcache_index)
+    if (strcache_index)
     {
         free(strcache_index);
         strcache_index = NULL;
@@ -136,9 +136,9 @@ void StrCache::collect(int index)
 {
     strcache[index].ref--;
     //assert(strcache[index].ref>=0);
-    if(!strcache[index].ref)
+    if (!strcache[index].ref)
     {
-        //if(strcache[index].len > MAX_STR_VAR_LEN)
+        //if (strcache[index].len > MAX_STR_VAR_LEN)
         //	this->resize(index, MAX_STR_VAR_LEN);
         //assert(strcache_top+1<strcache_size);
         strcache_index[++strcache_top] = index;
@@ -149,24 +149,23 @@ void StrCache::collect(int index)
 int StrCache::pop()
 {
     int i;
-    if(strcache_size == 0)
+    if (strcache_size == 0)
     {
         init();
     }
-    if(strcache_top < 0) // realloc
+    if (strcache_top < 0) // realloc
     {
         __reallocto(strcache, Varstr*, strcache_size, strcache_size + STRCACHE_INC);
         __reallocto(strcache_index, int*, strcache_size, strcache_size + STRCACHE_INC);
-        for(i = 0; i < STRCACHE_INC; i++)
+        for (i = 0; i < STRCACHE_INC; i++)
         {
             strcache_index[i] = strcache_size + i;
-            strcache[i + strcache_size].str = (char*) malloc(sizeof(char) * (MAX_STR_VAR_LEN + 1));
-            strcache[i + strcache_size].str[0] = 0;
+            strcache[i + strcache_size].str = (char*) calloc(1, MAX_STR_VAR_LEN + 1);
             strcache[i + strcache_size].len = MAX_STR_VAR_LEN;
         }
 
         //printf("debug: dumping string cache....\n");
-        //for(i=0; i<strcache_size; i++)
+        //for (i=0; i<strcache_size; i++)
         //	printf("\t\"%s\"  %d\n", strcache[i].str, strcache[i].ref);
 
         strcache_size += STRCACHE_INC;
@@ -197,7 +196,7 @@ void StrCache::copy(int index, char *str)
     //assert(index<strcache_size);
     //assert(size>0);
     int len = strlen(str);
-    if(strcache[index].len < len)
+    if (strcache[index].len < len)
     {
         this->resize(index, len);
     }
@@ -208,7 +207,7 @@ void StrCache::ncopy(int index, char *str, int n)
 {
     //assert(index<strcache_size);
     //assert(size>0);
-    if(strcache[index].len < n)
+    if (strcache[index].len < n)
     {
         this->resize(index, n);
     }
@@ -221,9 +220,9 @@ void StrCache::ncopy(int index, char *str, int n)
 int StrCache::findString(char *str)
 {
     int i;
-    for(i = 0; i < strcache_size; i++)
+    for (i = 0; i < strcache_size; i++)
     {
-        if(strcache[i].ref && strcmp(str, strcache[i].str) == 0)
+        if (strcache[i].ref && strcmp(str, strcache[i].str) == 0)
         {
             return i;
         }
@@ -233,9 +232,9 @@ int StrCache::findString(char *str)
 
 extern "C" {
 
-StrCache constantCache; // global index = index (global index positive)
-StrCache executionCache; // global index = ~index (global index negative)
-bool isExecuting = false;
+static StrCache constantCache; // global index = index (global index positive)
+static StrCache executionCache; // global index = ~index (global index negative)
+static bool isExecuting = false;
 
 void StrCache_SetExecuting(int executing)
 {
@@ -266,10 +265,7 @@ void StrCache_Collect(int index)
 
 int StrCache_Pop()
 {
-    if (isExecuting)
-        return ~executionCache.pop();
-    else
-        return constantCache.pop();
+    return isExecuting ? ~(executionCache.pop()) : constantCache.pop();
 }
 
 void StrCache_Copy(int index, char *str)
@@ -323,3 +319,4 @@ int StrCache_FindString(char *str)
 }
 
 }; // extern "C"
+
