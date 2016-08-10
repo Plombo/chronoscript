@@ -119,9 +119,12 @@ void compile(SSABuilder *func)
     func->prepareForRegAlloc();
     printf("\nInstructions after processing:\n");
     func->printInstructionList();
+#if DEBUG_RA
     printf("\n%i temporaries\n\n", func->temporaries.size());
+#endif
 
     computeLiveSets(func);
+#if DEBUG_RA
     printf("\nLive sets:\n");
     foreach_list(func->basicBlockList, BasicBlock, iter)
     {
@@ -132,6 +135,7 @@ void compile(SSABuilder *func)
         block->liveOut.print();
         printf("\n");
     }
+#endif
     
     LivenessAnalyzer livenessAnalyzer(func);
     livenessAnalyzer.computeLiveIntervals();
@@ -140,10 +144,12 @@ void compile(SSABuilder *func)
     
     RegAlloc registerAllocator(livenessAnalyzer.values, livenessAnalyzer.uniqueNodes);
     registerAllocator.run();
+#if DEBUG_RA
     for (int i = 0; i < livenessAnalyzer.uniqueNodes; i++)
     {
         printf("node %i -> $%i\n", livenessAnalyzer.values[i]->id, livenessAnalyzer.values[i]->color);
     }
+#endif
     
     // assign registers
     foreach_list(func->temporaries, Temporary, iter)
@@ -152,10 +158,11 @@ void compile(SSABuilder *func)
         value->reg = livenessAnalyzer.nodeForTemp[value->id]->root()->color;
     }
 
+#if DEBUG_RA
     // print instruction list again
     printf("\n");
     func->printInstructionList();
-    printf("\n");
+#endif
 
     // give instructions their final indices
     int nextIndex = 0;
@@ -169,11 +176,14 @@ void compile(SSABuilder *func)
         else
             inst->seqIndex = nextIndex++;
     }
+
     // print the final instruction list
+    printf("\nFinal instruction list:\n");
     foreach_list(func->instructionList, Instruction, iter)
     {
         iter.value()->print();
     }
+    printf("\n");
 }
 
 void link(SSABuilder *func, CList<ExecFunction> *localFunctions, CList<Interpreter> *imports)

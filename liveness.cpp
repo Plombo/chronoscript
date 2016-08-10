@@ -2,6 +2,12 @@
 #include "ssa.h"
 #include "liveness.h"
 
+#if DEBUG_RA
+#define debug_printf(...) printf(__VA_ARGS__)
+#else
+#define debug_printf(...)
+#endif
+
 // depth-first search on control flow graph
 void dagDFS(BasicBlock *block)
 {
@@ -198,7 +204,9 @@ bool LivenessAnalyzer::mergeNodes(Temporary *dst, Temporary *src)
     InterferenceNode *dstNode = nodeForTemp[dst->id]->root();
     InterferenceNode *srcNode = nodeForTemp[src->id]->root();
     bool result = srcNode->mergeInto(dstNode);
+#if DEBUG_RA
     printf("Merging %i into %i: %s\n", src->id, dst->id, result ? "success" : "failure");
+#endif
     if (result)
     {
         nodeForTemp[src->id] = dstNode;
@@ -251,7 +259,7 @@ void LivenessAnalyzer::buildInterferenceGraph()
 
     // number the interference nodes, ordered by start of live range
     // (lower numbered nodes are live first)
-    printf("Interference node for each temporary:\n");
+    debug_printf("Interference node for each temporary:\n");
     int nextId = 0;
     for (int i = 0; i < temporaries->size(); i++)
     {
@@ -261,7 +269,7 @@ void LivenessAnalyzer::buildInterferenceGraph()
             node->id = nextId++;
             values[node->id] = node;
         }
-        printf("%%%i = node %i\n", i, node->id);
+        debug_printf("%%%i = node %i\n", i, node->id);
     }
     assert(nextId == uniqueNodes);
 
@@ -270,21 +278,21 @@ void LivenessAnalyzer::buildInterferenceGraph()
     for(int i = 0; i < uniqueNodes; i++)
     {
         InterferenceNode *cur = values[i];
-        // printf("node %i begins at %i\n", cur->id, cur->livei.begin());
+        // debug_printf("node %i begins at %i\n", cur->id, cur->livei.begin());
         // test for interference with active nodes
         foreach_list(active, InterferenceNode, iter)
         {
             InterferenceNode *n = iter.value();
             if (n->livei.end() <= cur->livei.begin())
             {
-                // printf("node %i ended at %i\n", n->id, n->livei.end());
+                // debug_printf("node %i ended at %i\n", n->id, n->livei.end());
                 iter.remove();
             }
             else
             {
                 if (n->livei.overlaps(cur->livei))
                 {
-                    printf("nodes %i and %i interfere\n", n->id, cur->id);
+                    debug_printf("nodes %i and %i interfere\n", n->id, cur->id);
                     cur->addInterference(n);
                     n->addInterference(cur);
                 }
