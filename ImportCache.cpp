@@ -201,7 +201,7 @@ bool compile(SSABuilder *func)
     return true;
 }
 
-void link(SSABuilder *func, CList<ExecFunction> *localFunctions, CList<Interpreter> *imports)
+bool link(SSABuilder *func, CList<ExecFunction> *localFunctions, CList<Interpreter> *imports)
 {
     foreach_list(func->instructionList, Instruction, iter)
     {
@@ -225,9 +225,13 @@ void link(SSABuilder *func, CList<ExecFunction> *localFunctions, CList<Interpret
                 printf("linked call to builtin %s\n", call->functionName);
             }
             else
-                printf("error: couldn't link %s\n", call->functionName);
+            {
+                printf("Error: couldn't link %s\n", call->functionName);
+                return false;
+            }
         }
     }
+    return true;
 }
 
 void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
@@ -313,7 +317,7 @@ Interpreter *compileFile(const char *filename)
     foreach_list(execBuilder.ssaFunctions, SSABuilder, iter)
     {
         SSABuilder *func = iter.value();
-        link(func, &execBuilder.interpreter->functions, &imports);
+        if (!link(func, &execBuilder.interpreter->functions, &imports)) goto error;
         if (!compile(func)) goto error;
         linkConstants(func, &execBuilder.constants);
     }
