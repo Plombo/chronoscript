@@ -14,7 +14,6 @@ c_sources = [
     'script/Lexer',
     'script/pp_parser',
     'script/pp_lexer',
-    'script/pp_expr'
 ]
 cpp_sources = [
     'ssa',
@@ -29,6 +28,7 @@ cpp_sources = [
     'Builtins',
     'StrCache',
     'ImportCache',
+    'script/pp_expr',
 ]
 objects = []
 
