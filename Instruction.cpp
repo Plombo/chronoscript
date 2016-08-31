@@ -6,7 +6,7 @@
 // referenced by another instruction
 void RValue::ref(Instruction *inst)
 {
-    // if (isTemporary()) { printDst(); printf(" ref'd by %s\n", opCodeNames[inst->op]); }
+    // if (isTemporary()) { printDst(); printf(" ref'd by %s\n", getOpCodeName(inst->op)); }
     users.gotoLast();
     users.insertAfter(inst, NULL);
 }
@@ -19,7 +19,7 @@ void RValue::unref(Instruction *inst)
     if (users.includes(inst))
     {
         users.remove();
-        // if (isTemporary()) { printDst(); printf(" unref'd by %s\n", opCodeNames[inst->op]); }
+        // if (isTemporary()) { printDst(); printf(" unref'd by %s\n", getOpCodeName(inst->op)); }
     }
 }
 
@@ -230,7 +230,7 @@ void Instruction::printOperands()
 void Instruction::print()
 {
     if (seqIndex >= 0) printf("%i: ", seqIndex);
-    printf("%s ", opCodeNames[op]);
+    printf("%s ", getOpCodeName(op));
     printOperands();
     printf("\n");
 }
@@ -272,7 +272,7 @@ void Expression::print()
     if (seqIndex >= 0) printf("%i: ", seqIndex);
     dst->printDst();
     printf(" := ");
-    printf("%s ", opCodeNames[op]);
+    printf("%s ", getOpCodeName(op));
     printOperands();
     printf("\n");
 }
@@ -313,7 +313,7 @@ void FunctionCall::print()
     if (seqIndex >= 0) printf("%i: ", seqIndex);
     dst->printDst();
     printf(" := ");
-    printf("%s %s ", opCodeNames[op], functionName);
+    printf("%s %s ", getOpCodeName(op), functionName);
     foreach_list(operands, RValue, iter)
     {
         iter.value()->printDst();
@@ -334,7 +334,7 @@ Jump::Jump(OpCode opCode, BasicBlock *target, RValue *src0, RValue *src1)
 void Jump::print()
 {
     if (seqIndex >= 0) printf("%i: ", seqIndex);
-    printf("%s ", opCodeNames[op]);
+    printf("%s ", getOpCodeName(op));
     printOperands();
     if (!operands.isEmpty()) printf(" ");
     printf("=> ");
@@ -358,7 +358,7 @@ bool NoOp::isTrivial()
 void BlockDecl::print()
 {
     if (seqIndex >= 0) printf("%i: ", seqIndex);
-    printf("%s ", opCodeNames[op]);
+    printf("%s ", getOpCodeName(op));
     block->print();
     printf("\n");
 }
@@ -367,8 +367,54 @@ void Export::print()
 {
     if (seqIndex >= 0) printf("%i: ", seqIndex);
     dst->printDst();
-    printf(" := %s ", opCodeNames[op]);
+    printf(" := %s ", getOpCodeName(op));
     operands.retrieve()->printDst();
     printf("\n");
 }
+
+const char *getOpCodeName(OpCode op)
+{
+    const char *opCodeNames[] = {
+        "noop",
+        "bb_start",
+        "phi",
+
+        "jmp",
+        "branch_false",
+        "branch_true",
+        "branch_equal",
+        "return",
+        
+        "mov",
+
+        "neg",
+        "bool_not",
+        "bit_not",
+        "bool",
+
+        "bit_or",
+        "xor",
+        "bit_and",
+        "eq",
+        "ne",
+        "lt",
+        "gt",
+        "ge",
+        "le",
+        "shl",
+        "shr",
+        "add",
+        "sub",
+        "mul",
+        "div",
+        "mod",
+
+        "call",
+        "call_builtin",
+
+        "export",
+    };
+    return opCodeNames[op];
+}
+
 

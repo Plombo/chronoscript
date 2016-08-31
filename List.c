@@ -1031,6 +1031,7 @@ int List_GotoIndex(List *list, int index)
     {
         List_GotoNext(list);
     }
+    return 1;
 }
 
 

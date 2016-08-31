@@ -44,7 +44,7 @@ static char *readScript(const char *path)
     fileSize = ftell(fp);
     scriptText = (char*) malloc(fileSize + 1);
     if (fseek(fp, 0, SEEK_SET) < 0) goto error;
-    if (fread(scriptText, 1, fileSize, fp) != fileSize) goto error;
+    if ((int)fread(scriptText, 1, fileSize, fp) != fileSize) goto error;
     scriptText[fileSize] = 0;
     fclose(fp);
     return scriptText;
@@ -281,7 +281,6 @@ void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
  */
 Interpreter *compileFile(const char *filename)
 {
-    bool success = true;
     char *scriptText = readScript(filename);
     if (!scriptText) return NULL;
 

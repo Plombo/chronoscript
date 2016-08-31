@@ -303,7 +303,6 @@ int BitSet::findFreeRange(unsigned int count) const
 
 void BitSet::print() const
 {
-   unsigned int n = 0;
    for (unsigned int i = 0; i < (size + 31) / 32; ++i) {
       uint32_t bits = data[i];
       while (bits) {

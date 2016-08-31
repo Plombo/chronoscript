@@ -14,13 +14,17 @@ enum RegFile {
     // greater numbers are additional constant files
 };
 
-static const char *regFileNames[] = {
-    "(NONE)",
-    "gpr",
-    "param",
-    "global",
-    "const",
-};
+inline const char *getRegisterFileName(RegFile f)
+{
+    const char *regFileNames[] = {
+        "(NONE)",
+        "gpr",
+        "param",
+        "global",
+        "const",
+    };
+    return regFileNames[f];
+}
 
 class Interpreter;
 

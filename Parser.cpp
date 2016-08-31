@@ -446,8 +446,6 @@ void Parser::paramList()
 
 void Parser::paramList2()
 {
-    int i;
-    char buf[4];
     if (check(TOKEN_COMMA))
     {
         match();
@@ -973,7 +971,7 @@ void Parser::optExprStmt() // used in for loop
 
 void Parser::jumpStmt()
 {
-    BasicBlock *jumpTarget, *nextBlock;
+    BasicBlock *jumpTarget;
     if (check(TOKEN_BREAK))
     {
         match();
@@ -1807,7 +1805,6 @@ RValue *Parser::postfixExpr2(RValue *lhs)
 
 void Parser::argExprList(FunctionCall *call)
 {
-    int argRange, i;
     if (ParserSet_First(&theParserSet, Productions::assignment_expr, theNextToken.theType))
     {
         RValue *arg = assignmentExpr();

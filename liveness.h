@@ -21,7 +21,7 @@ public:
     bool ordered;
     int color;
     
-    inline InterferenceNode() : id(-1), parent(NULL), livei()
+    inline InterferenceNode() : id(-1), livei(), parent(NULL)
     {}
     inline InterferenceNode *root() {
         return parent ? parent->root() : this;

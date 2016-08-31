@@ -11,7 +11,7 @@ public:
     // vertices: the interference graph to color
     // vertexCount: number of vertices in the interference graph
     inline RegAlloc(InterferenceNode **vertices, int vertexCount)
-        : vertices(vertices), vertexCount(vertexCount), ordering(NULL) {}
+        : vertices(vertices), ordering(NULL), vertexCount(vertexCount) {}
     ~RegAlloc();
     void run(); // run the register allocator
 private:

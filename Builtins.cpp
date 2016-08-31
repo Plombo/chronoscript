@@ -38,7 +38,7 @@ static Builtin builtinsArray[] = {
 static void initBuiltins()
 {
     if (builtinsInited) return;
-    int numBuiltins = sizeof(builtinsArray) / sizeof(Builtin);
+    size_t numBuiltins = sizeof(builtinsArray) / sizeof(Builtin);
 
     for (size_t i = 0; i < numBuiltins; i++)
     {

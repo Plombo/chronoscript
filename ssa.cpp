@@ -292,7 +292,7 @@ void SSABuilder::prepareForRegAlloc()
     {
         BasicBlock *block = iter.value();
         Node *instNode = block->start;
-        while (instNode = instNode->next)
+        while ((instNode = instNode->next))
         {
             Instruction *inst = (Instruction*) instNode->value;
             if (inst->op != OP_PHI) break; // only process phis, which are always at start of block
@@ -381,7 +381,7 @@ void SSABuilder::prepareForRegAlloc()
     {
         BasicBlock *block = iter.value();
         Node *instNode = block->start;
-        while (instNode = instNode->next)
+        while ((instNode = instNode->next))
         {
             Instruction *inst = (Instruction*) instNode->value;
             if (inst->op != OP_PHI) break; // only process phis, which are always at start of block

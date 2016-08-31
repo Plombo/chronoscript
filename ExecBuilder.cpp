@@ -185,7 +185,7 @@ static void printSrc(u16 src)
     else if (file > FILE_CONSTANT)
         printf("const%i", file - FILE_CONSTANT);
     else
-        printf("%s", regFileNames[file]);
+        printf("%s", getRegisterFileName((RegFile) file));
     printf("[%i] ", index);
 }
 
@@ -238,7 +238,7 @@ void ExecBuilder::printInstructions()
             }
 
             // opcode
-            printf("%s ", opCodeNames[inst->opCode]);
+            printf("%s ", getOpCodeName((OpCode)inst->opCode));
 
             // parameters/sources
             if (inst->opCode == OP_CALL || inst->opCode == OP_CALL_BUILTIN)

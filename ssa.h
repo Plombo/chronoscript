@@ -12,6 +12,7 @@
 #error C++ header included from C source file
 #endif
 
+// be sure to update getOpCodeName() in Instruction.cpp if you change this enum!!
 enum OpCode
 {
     OP_NOOP,
@@ -63,46 +64,7 @@ enum OpCode
     OP_ERR,
 };
 
-static const char *opCodeNames[] = {
-    "noop",
-    "bb_start",
-    "phi",
-
-    "jmp",
-    "branch_false",
-    "branch_true",
-    "branch_equal",
-    "return",
-    
-    "mov",
-
-    "neg",
-    "bool_not",
-    "bit_not",
-    "bool",
-
-    "bit_or",
-    "xor",
-    "bit_and",
-    "eq",
-    "ne",
-    "lt",
-    "gt",
-    "ge",
-    "le",
-    "shl",
-    "shr",
-    "add",
-    "sub",
-    "mul",
-    "div",
-    "mod",
-
-    "call",
-    "call_builtin",
-
-    "export",
-};
+const char *getOpCodeName(OpCode op);
 
 // RValue and its subclasses
 class RValue;
@@ -403,6 +365,7 @@ public:
     CList<Temporary> temporaries; // constructed right before regalloc
     CList<Constant> constantList;
     char *functionName; // name of this function
+    void *memCtx;
 private:
     int nextBBId; // init to 0
     int nextValueId; // init to 0
@@ -410,7 +373,6 @@ private:
     CList<RValue> currentDef; // current definitions in each basic block, indexed by "var:block"
 
 public:
-    void *memCtx;
     int paramCount;
 
     // constructor

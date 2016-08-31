@@ -780,7 +780,6 @@ HRESULT pp_parser_parse_directive(pp_parser *self)
     if (!strcmp(directiveName, "include") || !strcmp(directiveName, "import"))
     {
         char filename[128] = {""};
-        int type = self->token.theType;
         bool isImport = !strcmp(directiveName, "import");
 
         if(FAILED(pp_parser_lex_token(self, true)))
