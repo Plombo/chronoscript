@@ -6,10 +6,81 @@
  * Copyright (c) 2004 - 2014 OpenBOR Team
  */
 
-#include "Lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "Lexer.h"
+#include "ScriptUtils.h"
+
+static const char *keywords[] = {
+    "auto",
+    "break",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "int",
+    "long",
+    "register",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+};
+
+static const int keyword_tokens[] = {
+    TOKEN_AUTO,
+    TOKEN_BREAK,
+    TOKEN_CASE,
+    TOKEN_CHAR,
+    TOKEN_CONST,
+    TOKEN_CONTINUE,
+    TOKEN_DEFAULT,
+    TOKEN_DO,
+    TOKEN_DOUBLE,
+    TOKEN_ELSE,
+    TOKEN_ENUM,
+    TOKEN_EXTERN,
+    TOKEN_FLOAT,
+    TOKEN_FOR,
+    TOKEN_GOTO,
+    TOKEN_IF,
+    TOKEN_INT,
+    TOKEN_LONG,
+    TOKEN_REGISTER,
+    TOKEN_RETURN,
+    TOKEN_SHORT,
+    TOKEN_SIGNED,
+    TOKEN_SIZEOF,
+    TOKEN_STATIC,
+    TOKEN_STRUCT,
+    TOKEN_SWITCH,
+    TOKEN_TYPEDEF,
+    TOKEN_UNION,
+    TOKEN_UNSIGNED,
+    TOKEN_VOID,
+    TOKEN_VOLATILE,
+    TOKEN_WHILE,
+};
 
 //Constructor
 void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, u32 charOffset)
@@ -30,20 +101,15 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
     switch (ppToken->theType)
     {
     case PP_TOKEN_IDENTIFIER:
-    case PP_TOKEN_INCLUDE:
-    case PP_TOKEN_IMPORT:
-    case PP_TOKEN_DEFINE:
-    case PP_TOKEN_UNDEF:
-    case PP_TOKEN_PRAGMA:
-    case PP_TOKEN_ELIF:
-    case PP_TOKEN_IFDEF:
-    case PP_TOKEN_IFNDEF:
-    case PP_TOKEN_ENDIF:
-    case PP_TOKEN_DEFINED:
-    case PP_TOKEN_WARNING:
-    case PP_TOKEN_ERROR_TEXT:
-        ptoken->theType = TOKEN_IDENTIFIER;
+    {
+        int tokenType = searchList(keywords, ppToken->theSource, sizeof(keywords) / sizeof(keywords[0]));
+        // searchList is case-insensitive, we want case-sensitive
+        if (tokenType >= 0 && !strcmp(ppToken->theSource, keywords[tokenType]))
+            ptoken->theType = keyword_tokens[tokenType];
+        else
+            ptoken->theType = TOKEN_IDENTIFIER;
         break;
+    }
     case PP_TOKEN_HEXCONSTANT:
         ptoken->theType = TOKEN_HEXCONSTANT;
         break;
@@ -84,7 +150,7 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
                     *dest++ = '\t';
                     src++;
                     break;
-                case '0':
+                case '0': // FIXME: properly handle octal and hex escapes
                     *dest++ = '\0';
                     src++;
                     break;
@@ -114,9 +180,6 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
         *dest = '\0';
         break;
     }
-    case PP_TOKEN_SIZEOF:
-        ptoken->theType = TOKEN_SIZEOF;
-        break;
     case PP_TOKEN_PTR_OP:
         ptoken->theType = TOKEN_PTR_OP;
         break;
@@ -183,104 +246,8 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
     case PP_TOKEN_OR_ASSIGN:
         ptoken->theType = TOKEN_OR_ASSIGN;
         break;
-    case PP_TOKEN_TYPE_NAME:
-        ptoken->theType = TOKEN_TYPE_NAME;
-        break;
-    case PP_TOKEN_TYPEDEF:
-        ptoken->theType = TOKEN_TYPEDEF;
-        break;
-    case PP_TOKEN_EXTERN:
-        ptoken->theType = TOKEN_EXTERN;
-        break;
-    case PP_TOKEN_STATIC:
-        ptoken->theType = TOKEN_STATIC;
-        break;
-    case PP_TOKEN_AUTO:
-        ptoken->theType = TOKEN_AUTO;
-        break;
-    case PP_TOKEN_REGISTER:
-        ptoken->theType = TOKEN_REGISTER;
-        break;
-    case PP_TOKEN_CHAR:
-        ptoken->theType = TOKEN_CHAR;
-        break;
-    case PP_TOKEN_SHORT:
-        ptoken->theType = TOKEN_SHORT;
-        break;
-    case PP_TOKEN_INT:
-        ptoken->theType = TOKEN_INT;
-        break;
-    case PP_TOKEN_LONG:
-        ptoken->theType = TOKEN_LONG;
-        break;
-    case PP_TOKEN_SIGNED:
-        ptoken->theType = TOKEN_SIGNED;
-        break;
-    case PP_TOKEN_UNSIGNED:
-        ptoken->theType = TOKEN_UNSIGNED;
-        break;
-    case PP_TOKEN_FLOAT:
-        ptoken->theType = TOKEN_FLOAT;
-        break;
-    case PP_TOKEN_DOUBLE:
-        ptoken->theType = TOKEN_DOUBLE;
-        break;
-    case PP_TOKEN_CONST:
-        ptoken->theType = TOKEN_CONST;
-        break;
-    case PP_TOKEN_VOLATILE:
-        ptoken->theType = TOKEN_VOLATILE;
-        break;
-    case PP_TOKEN_VOID:
-        ptoken->theType = TOKEN_VOID;
-        break;
-    case PP_TOKEN_STRUCT:
-        ptoken->theType = TOKEN_STRUCT;
-        break;
-    case PP_TOKEN_UNION:
-        ptoken->theType = TOKEN_UNION;
-        break;
-    case PP_TOKEN_ENUM:
-        ptoken->theType = TOKEN_ENUM;
-        break;
     case PP_TOKEN_ELLIPSIS:
         ptoken->theType = TOKEN_ELLIPSIS;
-        break;
-    case PP_TOKEN_CASE:
-        ptoken->theType = TOKEN_CASE;
-        break;
-    case PP_TOKEN_DEFAULT:
-        ptoken->theType = TOKEN_DEFAULT;
-        break;
-    case PP_TOKEN_IF:
-        ptoken->theType = TOKEN_IF;
-        break;
-    case PP_TOKEN_ELSE:
-        ptoken->theType = TOKEN_ELSE;
-        break;
-    case PP_TOKEN_SWITCH:
-        ptoken->theType = TOKEN_SWITCH;
-        break;
-    case PP_TOKEN_WHILE:
-        ptoken->theType = TOKEN_WHILE;
-        break;
-    case PP_TOKEN_DO:
-        ptoken->theType = TOKEN_DO;
-        break;
-    case PP_TOKEN_FOR:
-        ptoken->theType = TOKEN_FOR;
-        break;
-    case PP_TOKEN_GOTO:
-        ptoken->theType = TOKEN_GOTO;
-        break;
-    case PP_TOKEN_CONTINUE:
-        ptoken->theType = TOKEN_CONTINUE;
-        break;
-    case PP_TOKEN_BREAK:
-        ptoken->theType = TOKEN_BREAK;
-        break;
-    case PP_TOKEN_RETURN:
-        ptoken->theType = TOKEN_RETURN;
         break;
     case PP_TOKEN_SEMICOLON:
         ptoken->theType = TOKEN_SEMICOLON;
@@ -350,11 +317,6 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
         break;
     case PP_TOKEN_BITWISE_OR:
         ptoken->theType = TOKEN_BITWISE_OR;
-        break;
-    case PP_TOKEN_COMMENT_SLASH:
-    case PP_TOKEN_COMMENT_STAR_BEGIN:
-    case PP_TOKEN_COMMENT_STAR_END:
-        ptoken->theType = TOKEN_COMMENT;
         break;
     case PP_TOKEN_EOF:
         ptoken->theType = TOKEN_EOF;

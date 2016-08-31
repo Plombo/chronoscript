@@ -209,7 +209,7 @@ HRESULT pp_expr::unary_expr(int *result)
 
 HRESULT pp_expr::primary_expr(int *result)
 {
-    if (check(PP_TOKEN_DEFINED))
+    if (check(PP_TOKEN_IDENTIFIER) && !strcmp(parser->token.theSource, "defined"))
     {
         pp_parser_lex_token(parser, true);
         if (parser->token.theType == PP_TOKEN_LPAREN)

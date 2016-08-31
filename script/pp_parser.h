@@ -108,8 +108,8 @@ void pp_parser_concatenate(pp_parser *self, const char *token1, const char *toke
 HRESULT pp_parser_parse_directive(pp_parser *self);
 HRESULT pp_parser_include(pp_parser *self, char *filename);
 HRESULT pp_parser_define(pp_parser *self, char *name);
-HRESULT pp_parser_conditional(pp_parser *self, PP_TOKEN_TYPE directive);
-HRESULT pp_parser_eval_conditional(pp_parser *self, PP_TOKEN_TYPE directive, int *result);
+HRESULT pp_parser_conditional(pp_parser *self, const char *directive);
+HRESULT pp_parser_eval_conditional(pp_parser *self, const char *directive, int *result);
 void pp_parser_insert_param(pp_parser* self, char* name);
 void pp_parser_insert_macro(pp_parser *self, char *name);
 HRESULT pp_parser_insert_function_macro(pp_parser *self, char *name);

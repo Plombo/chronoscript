@@ -8,6 +8,9 @@ extern "C" {
 // prints a string with quotes added around it and characters like '\n' escaped
 void printEscapedString(const char *string);
 
+// optimized search in an arranged string table, return the index
+int searchList(const char *list[], const char *value, int length);
+
 #ifdef __cplusplus
 };
 #endif

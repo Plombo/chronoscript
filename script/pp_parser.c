@@ -754,32 +754,34 @@ void pp_parser_concatenate(pp_parser *self, const char *token1, const char *toke
  */
 HRESULT pp_parser_parse_directive(pp_parser *self)
 {
+    char directiveName[MAX_TOKEN_LENGTH + 1] = {""};
+
     if(FAILED(pp_parser_lex_token(self, true)))
     {
         return E_FAIL;
     }
 
+    strcpy(directiveName, self->token.theSource);
+
     // most directives shouldn't be parsed if we're in the middle of a conditional false
     if(self->ctx->conditionals.all > (self->ctx->conditionals.all & 0x5555555555555555ll))
     {
-        if(self->token.theType != PP_TOKEN_IFDEF &&
-                self->token.theType != PP_TOKEN_IFNDEF &&
-                self->token.theType != PP_TOKEN_IF &&
-                self->token.theType != PP_TOKEN_ELIF &&
-                self->token.theType != PP_TOKEN_ELSE &&
-                self->token.theType != PP_TOKEN_ENDIF)
+        if(!(!strcmp(directiveName, "if") ||
+             !strcmp(directiveName, "ifdef") ||
+             !strcmp(directiveName, "ifndef") ||
+             !strcmp(directiveName, "elif") ||
+             !strcmp(directiveName, "else") ||
+             !strcmp(directiveName, "endif")))
         {
             return S_OK;
         }
     }
 
-    switch(self->token.theType)
-    {
-    case PP_TOKEN_INCLUDE:
-    case PP_TOKEN_IMPORT:
+    if (!strcmp(directiveName, "include") || !strcmp(directiveName, "import"))
     {
         char filename[128] = {""};
         int type = self->token.theType;
+        bool isImport = !strcmp(directiveName, "import");
 
         if(FAILED(pp_parser_lex_token(self, true)))
         {
@@ -813,17 +815,17 @@ HRESULT pp_parser_parse_directive(pp_parser *self)
                 return pp_error(self, "#include not followed by a path string");
             }
 
-        if(type == PP_TOKEN_INCLUDE)
-        {
-            return pp_parser_include(self, filename);
-        }
-        else // PP_TOKEN_IMPORT
+        if (isImport)
         {
             List_InsertAfter(&self->ctx->imports, NULL, filename);
             return S_OK;
         }
+        else
+        {
+            return pp_parser_include(self, filename);
+        }
     }
-    case PP_TOKEN_DEFINE:
+    else if (!strcmp(directiveName, "define"))
     {
         char name[MAX_TOKEN_LENGTH];
 
@@ -841,7 +843,8 @@ HRESULT pp_parser_parse_directive(pp_parser *self)
         strcpy(name, self->token.theSource);
         return pp_parser_define(self, name);
     }
-    case PP_TOKEN_UNDEF:
+    else if (!strcmp(directiveName, "undef"))
+    {
         if(FAILED(pp_parser_lex_token(self, true)))
         {
             return E_FAIL;
@@ -868,27 +871,28 @@ HRESULT pp_parser_parse_directive(pp_parser *self)
             List_Remove(&self->ctx->func_macros);
         }
 
-        break;
-    case PP_TOKEN_IF:
-    case PP_TOKEN_IFDEF:
-    case PP_TOKEN_IFNDEF:
-    case PP_TOKEN_ELIF:
-    case PP_TOKEN_ELSE:
-    case PP_TOKEN_ENDIF:
-        return pp_parser_conditional(self, self->token.theType);
-    case PP_TOKEN_WARNING:
-    case PP_TOKEN_ERROR_TEXT:
+        return S_OK;
+    }
+    else if (!strcmp(directiveName, "if") ||
+             !strcmp(directiveName, "ifdef") ||
+             !strcmp(directiveName, "ifndef") ||
+             !strcmp(directiveName, "elif") ||
+             !strcmp(directiveName, "else") ||
+             !strcmp(directiveName, "endif"))
+    {
+        return pp_parser_conditional(self, directiveName);
+    }
+    else if (!strcmp(directiveName, "warning") || !strcmp(directiveName, "error"))
     {
         char text[256] = {""};
 
         // "self->token" is about to be clobbered, so save whether this is a warning or error
-        PP_TOKEN_TYPE msgType = self->token.theType;
         if(FAILED(pp_parser_readline(self, text, sizeof(text))))
         {
             return E_FAIL;
         }
 
-        if(msgType == PP_TOKEN_WARNING)
+        if (!strcmp(directiveName, "warning"))
         {
             pp_warning(self, "#warning %s", text);
         }
@@ -896,13 +900,15 @@ HRESULT pp_parser_parse_directive(pp_parser *self)
         {
             return pp_error(self, "#error %s", text);
         }
-        break;
     }
-    case PP_TOKEN_NEWLINE:
+    else if (self->token.theType == PP_TOKEN_NEWLINE)
+    {
         // null directive - do nothing
         return S_OK;
-    default:
-        return pp_error(self, "unknown directive '#%s'", self->token.theSource);
+    }
+    else
+    {
+        return pp_error(self, "unknown directive '#%s'", directiveName);
     }
 
     return S_OK;
@@ -1030,17 +1036,6 @@ HRESULT pp_parser_define(pp_parser *self, char *name)
             {
                 // All of the below types are technically valid macro names
             case PP_TOKEN_IDENTIFIER:
-            case PP_TOKEN_INCLUDE:
-            case PP_TOKEN_DEFINE:
-            case PP_TOKEN_UNDEF:
-            case PP_TOKEN_IFDEF:
-            case PP_TOKEN_IFNDEF:
-            case PP_TOKEN_ELIF:
-            case PP_TOKEN_ENDIF:
-            case PP_TOKEN_PRAGMA:
-            case PP_TOKEN_DEFINED:
-            case PP_TOKEN_WARNING:
-            case PP_TOKEN_ERROR_TEXT:
                 List_InsertAfter(params, NULL, self->token.theSource);
                 if(FAILED(pp_parser_lex_token(self, true)))
                 {
@@ -1106,14 +1101,11 @@ error:
  * Handles conditional directives.
  * @param directive the type of conditional directive
  */
-HRESULT pp_parser_conditional(pp_parser *self, PP_TOKEN_TYPE directive)
+HRESULT pp_parser_conditional(pp_parser *self, const char *directive)
 {
     int result;
-    switch(directive)
+    if (!strcmp(directive, "if") || !strcmp(directive, "ifdef") || !strcmp(directive, "ifndef"))
     {
-    case PP_TOKEN_IF:
-    case PP_TOKEN_IFDEF:
-    case PP_TOKEN_IFNDEF:
         if(self->ctx->num_conditionals++ > 32)
         {
             return pp_error(self, "too many levels of nested conditional directives");
@@ -1122,15 +1114,16 @@ HRESULT pp_parser_conditional(pp_parser *self, PP_TOKEN_TYPE directive)
         if(self->ctx->conditionals.others > (self->ctx->conditionals.others & 0x5555555555555555ll))
         {
             self->ctx->conditionals.top = cs_false;
-            break;
+            return S_OK;
         }
         if(FAILED(pp_parser_eval_conditional(self, directive, &result)))
         {
             return E_FAIL;
         }
         self->ctx->conditionals.top = result ? cs_true : cs_false;
-        break;
-    case PP_TOKEN_ELIF:
+    }
+    else if (!strcmp(directive, "elif"))
+    {
         if(self->ctx->conditionals.top == cs_none)
         {
             return pp_error(self, "stray #elif");
@@ -1149,46 +1142,47 @@ HRESULT pp_parser_conditional(pp_parser *self, PP_TOKEN_TYPE directive)
             }
             self->ctx->conditionals.top = result ? cs_true : cs_false;
         }
-        break;
-    case PP_TOKEN_ELSE:
+    }
+    else if (!strcmp(directive, "else"))
+    {
         if(self->ctx->conditionals.top == cs_none)
         {
             return pp_error(self, "stray #else");
         }
         self->ctx->conditionals.top = (self->ctx->conditionals.top == cs_false) ? cs_true : cs_done;
-        break;
-    case PP_TOKEN_ENDIF:
+    }
+    else if (!strcmp(directive, "endif"))
+    {
         if(self->ctx->conditionals.top == cs_none || self->ctx->num_conditionals-- < 0)
         {
             return pp_error(self, "stray #endif");
         }
         self->ctx->conditionals.all >>= 2; // pop a conditional state from the stack
-        break;
-    default:
-        return pp_error(self, "unknown conditional directive type (ID=%d)", directive);
+    }
+    else
+    {
+        return pp_error(self, "unknown conditional directive type '%s'", directive);
     }
 
     return S_OK;
 }
 
-HRESULT pp_parser_eval_conditional(pp_parser *self, PP_TOKEN_TYPE directive, int *result)
+HRESULT pp_parser_eval_conditional(pp_parser *self, const char *directive, int *result)
 {
-    switch(directive)
+    if (!strcmp(directive, "ifdef") || !strcmp(directive, "ifndef"))
     {
-    case PP_TOKEN_IFDEF:
-    case PP_TOKEN_IFNDEF:
-        if(FAILED(pp_parser_lex_token(self, true)))
+        if (FAILED(pp_parser_lex_token(self, true)))
         {
             return E_FAIL;
         }
         *result = List_FindByName(&self->ctx->macros, self->token.theSource);
-        if(directive == PP_TOKEN_IFNDEF)
+        if (!strcmp(directive, "ifndef"))
         {
             *result = !(*result);
         }
-        break;
-    case PP_TOKEN_IF:
-    case PP_TOKEN_ELIF:
+        return S_OK;
+    }
+    if (!strcmp(directive, "if") || !strcmp(directive, "elif"))
     {
         pp_parser *subparser;
         char buf[1024];
@@ -1208,12 +1202,12 @@ HRESULT pp_parser_eval_conditional(pp_parser *self, PP_TOKEN_TYPE directive, int
         {
             return E_FAIL;
         }
-        break;
+        return S_OK;
     }
-    default:
-        pp_warning(self, "unknown conditional directive (this is a bug; please report it)");
+    else
+    {
+        return pp_error(self, "unknown conditional directive '%s' (this is a bug; please report it)", directive);
     }
-    return S_OK;
 }
 
 /**
