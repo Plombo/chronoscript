@@ -244,10 +244,9 @@ ScriptVariant *ScriptVariant_Eq(ScriptVariant *svar, ScriptVariant *rightChild)
     double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
 
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
-        retvar.lVal = (dbl1 == dbl2);
+        retvar.lVal = (svar->lVal == rightChild->lVal);
     }
     else if (svar->vt == VT_STR && rightChild->vt == VT_STR)
     {
@@ -260,6 +259,11 @@ ScriptVariant *ScriptVariant_Eq(ScriptVariant *svar, ScriptVariant *rightChild)
     else if (svar->vt == VT_EMPTY && rightChild->vt == VT_EMPTY)
     {
         retvar.lVal = 1;
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    {
+        retvar.lVal = (dbl1 == dbl2);
     }
     else
     {
@@ -370,10 +374,9 @@ ScriptVariant *ScriptVariant_Ge(ScriptVariant *svar, ScriptVariant *rightChild)
     double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
 
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
-        retvar.lVal = (dbl1 >= dbl2);
+        retvar.lVal = (svar->lVal >= rightChild->lVal);
     }
     else if (svar->vt == VT_STR && rightChild->vt == VT_STR)
     {
@@ -386,6 +389,11 @@ ScriptVariant *ScriptVariant_Ge(ScriptVariant *svar, ScriptVariant *rightChild)
     else if (svar->vt == VT_EMPTY || rightChild->vt == VT_EMPTY)
     {
         retvar.lVal = 0;
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    {
+        retvar.lVal = (dbl1 >= dbl2);
     }
     else
     {
@@ -504,7 +512,24 @@ ScriptVariant *ScriptVariant_Sub(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+    if (svar->vt == rightChild->vt)
+    {
+        if (svar->vt == VT_INTEGER)
+        {
+            retvar.vt = VT_INTEGER;
+            retvar.lVal = svar->lVal - rightChild->lVal;
+        }
+        else if (svar->vt == VT_DECIMAL)
+        {
+            retvar.vt = VT_DECIMAL;
+            retvar.dblVal = svar->dblVal - rightChild->dblVal;
+        }
+        else
+        {
+            ScriptVariant_Clear(&retvar);
+        }
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
         if (svar->vt == VT_DECIMAL || rightChild->vt == VT_DECIMAL)
@@ -531,7 +556,17 @@ ScriptVariant *ScriptVariant_Mul(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+    if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
+    {
+        retvar.vt = VT_INTEGER;
+        retvar.lVal = svar->lVal * rightChild->lVal;
+    }
+    else if (svar->vt == VT_DECIMAL && rightChild->vt == VT_DECIMAL)
+    {
+        retvar.vt = VT_DECIMAL;
+        retvar.dblVal = svar->dblVal * rightChild->dblVal;
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
         if (svar->vt == VT_DECIMAL || rightChild->vt == VT_DECIMAL)
@@ -558,7 +593,25 @@ ScriptVariant *ScriptVariant_Div(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+    if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
+    {
+        if (rightChild->lVal == 0)
+        {
+            printf("Divide by 0 error!\n");
+            ScriptVariant_Clear(&retvar);
+        }
+        else
+        {
+            retvar.vt = VT_INTEGER;
+            retvar.lVal = svar->lVal / rightChild->lVal;
+        }
+    }
+    else if (svar->vt == VT_DECIMAL && rightChild->vt == VT_DECIMAL)
+    {
+        retvar.vt = VT_DECIMAL;
+        retvar.dblVal = svar->dblVal / rightChild->dblVal;
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
         if (dbl2 == 0)
