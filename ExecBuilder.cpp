@@ -55,7 +55,7 @@ ExecFunction *ExecBuilder::getFunctionNamed(const char *name)
 
 static u16 createSrc(RValue *src)
 {
-    u8 file, index;
+    u8 file = FILE_NONE, index = 0;
     if (src->isTemporary())
     {
         file = FILE_GPR;
