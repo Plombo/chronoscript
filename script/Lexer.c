@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include "Lexer.h"
 #include "ScriptUtils.h"
@@ -82,6 +83,23 @@ static const int keyword_tokens[] = {
     TOKEN_WHILE,
 };
 
+// returns true if the character c is a valid hex digit
+static inline bool is_hex_digit(int c)
+{
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+// precondition: the character c must be a valid hex digit
+static inline int hex_digit_value(int c)
+{
+    if (c >= 'a')
+        return c - 'a' + 10;
+    else if (c >= 'A')
+        return c - 'A' + 10;
+    else
+        return c - '0';
+}
+
 //Constructor
 void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, u32 charOffset)
 {
@@ -150,10 +168,6 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
                     *dest++ = '\t';
                     src++;
                     break;
-                case '0': // FIXME: properly handle octal and hex escapes
-                    *dest++ = '\0';
-                    src++;
-                    break;
                 case '\"':
                     *dest++ = '\"';
                     src++;
@@ -166,6 +180,58 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
                     *dest++ = '\\';
                     src++;
                     break;
+                // Octal escape
+                // Just like in C, 3 digits max.
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                {
+                    int value = 0, i;
+                    for (i = 0; i < 3; i++)
+                    {
+                        value *= 8;
+                        value += *src - '0';
+                        src++;
+                        if (*src < '0' || *src > '9') break;
+                    }
+                    if (value > 255)
+                    {
+                        printf("Error: Invalid octal escape: %03o > %i > 255\n", value, value);
+                        ptoken->theType = TOKEN_ERROR;
+                        return E_FAIL;
+                    }
+                    *dest++ = value;
+                    break;
+                }
+                // Hex escape
+                // Unlike C, 2 digits max. It works the way you want, not the C way which is useless.
+                case 'x':
+                {
+                    src++;
+                    if (!is_hex_digit(*src))
+                    {
+                        printf("Error: Invalid hex escape\n");
+                        ptoken->theType = TOKEN_ERROR;
+                        return E_FAIL;
+                    }
+                    int value = hex_digit_value(*src);
+                    src++;
+                    if (is_hex_digit(*src))
+                    {
+                        value *= 16;
+                        value += hex_digit_value(*src);
+                        src++;
+                    }
+                    *dest++ = value;
+                    break;
+                }
                 default: // invalid escape sequence
                     // TODO: emit a warning here
                     *dest++ = '\\';
