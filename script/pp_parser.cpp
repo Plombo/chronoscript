@@ -49,7 +49,7 @@ char *get_full_path(char *filename) { return filename; };
 pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char *sourceCode, pp_parser_type type);
 pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, List* params, pp_parser_type type);
 
-HRESULT pp_parser_readline(pp_parser *self, char *buf, int bufsize);
+HRESULT pp_parser_readline(pp_parser *self, char *buf, size_t bufsize);
 HRESULT pp_parser_stringify(pp_parser *self);
 void pp_parser_concatenate(pp_parser *self, const char *token1, const char *token2);
 HRESULT pp_parser_parse_directive(pp_parser *self);
@@ -211,11 +211,12 @@ pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, List* p
  * @param messageType the type of message ("error" or "warning")
  * @param message the actual message to display
  */
-void pp_message(pp_parser *self, char *messageType, char *message)
+void pp_message(pp_parser *self, const char *messageType, const char *message)
 {
     pp_parser *parser = self;
     char buf[1024] = {""}, *linePtr;
-    int bufPos, i;
+    int i;
+    size_t bufPos;
 
     printf("\n\n");
 
@@ -665,7 +666,7 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
 }
 
 // self->token contains the first token of the macro/message if self->overread == true
-HRESULT pp_parser_readline(pp_parser *self, char *buf, int bufsize)
+HRESULT pp_parser_readline(pp_parser *self, char *buf, size_t bufsize)
 {
     int total_length = 1;
 
