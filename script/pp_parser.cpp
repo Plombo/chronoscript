@@ -75,7 +75,7 @@ extern "C" void pp_context_init(pp_context *self)
 
     // initialize the macro lists
     List_Init(&self->macros);
-    List_Init(&self->func_macros);
+    List_Init(&self->func_macros.list);
 
     // initialize the import list
     List_Init(&self->imports);
@@ -121,10 +121,10 @@ extern "C" void pp_context_destroy(pp_context *self)
     List_Clear(&self->macros);
 
     // undefine and free all function-style macros
-    List_Reset(&self->func_macros);
-    while(self->func_macros.size > 0)
+    self->func_macros.gotoFirst();
+    while(self->func_macros.size() > 0)
     {
-        List *params = (List*) List_Retrieve(&self->func_macros);
+        List *params = self->func_macros.retrieve();
         while(params->size > 0)
         {
             free(List_Retrieve(params));
@@ -132,9 +132,9 @@ extern "C" void pp_context_destroy(pp_context *self)
         }
         List_Clear(params);
         free(params);
-        List_Remove(&self->func_macros);
+        self->func_macros.remove();
     }
-    List_Clear(&self->func_macros);
+    self->func_macros.clear();
 
     // free the import list
     List_Reset(&self->imports);
@@ -632,7 +632,7 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                     pp_parser_insert_builtin_macro(self, token2.theSource);
                 }
                 else if(pp_parser_peek_token(self) == PP_TOKEN_LPAREN &&
-                        List_FindByName(&self->ctx->func_macros, token2.theSource))
+                        self->ctx->func_macros.findByName(token2.theSource))
                 {
                     success = SUCCEEDED(pp_parser_lex_token(self, true));
                     assert(self->token.theType == PP_TOKEN_LPAREN);
@@ -874,9 +874,9 @@ HRESULT pp_parser_parse_directive(pp_parser *self)
             free(List_Retrieve(&self->ctx->macros));
             List_Remove(&self->ctx->macros);
         }
-        if(List_FindByName(&self->ctx->func_macros, self->token.theSource))
+        if(self->ctx->func_macros.findByName(self->token.theSource))
         {
-            List *params = (List*) List_Retrieve(&self->ctx->func_macros);
+            List *params = self->ctx->func_macros.retrieve();
             while(params->size > 0)
             {
                 free(List_Retrieve(params));
@@ -884,7 +884,7 @@ HRESULT pp_parser_parse_directive(pp_parser *self)
             }
             List_Clear(params);
             free(params);
-            List_Remove(&self->ctx->func_macros);
+            self->ctx->func_macros.remove();
         }
 
         return S_OK;
@@ -1017,9 +1017,9 @@ HRESULT pp_parser_define(pp_parser *self, char *name)
         free(List_Retrieve(&self->ctx->macros));
         List_Remove(&self->ctx->macros);
     }
-    if(List_FindByName(&self->ctx->func_macros, name))
+    if (self->ctx->func_macros.findByName(name))
     {
-        List *params2 = (List*) List_Retrieve(&self->ctx->func_macros);
+        List *params2 = self->ctx->func_macros.retrieve();
         List_GotoLast(params2);
         pp_warning(self, "'%s' redefined (previously \"%s\")", name, List_Retrieve(params2));
         List_Reset(params2);
@@ -1030,7 +1030,7 @@ HRESULT pp_parser_define(pp_parser *self, char *name)
         }
         List_Clear(params2);
         free(params2);
-        List_Remove(&self->ctx->func_macros);
+        self->ctx->func_macros.remove();
     }
 
     // do NOT skip whitespace here - the '(' must come immediately after the name!
@@ -1089,7 +1089,7 @@ HRESULT pp_parser_define(pp_parser *self, char *name)
     if(is_function)
     {
         List_InsertAfter(params, contents, NULL);
-        List_InsertAfter(&self->ctx->func_macros, params, name);
+        self->ctx->func_macros.insertAfter(params, name);
     }
     else
     {
@@ -1268,11 +1268,15 @@ HRESULT pp_parser_insert_function_macro(pp_parser *self, char *name)
     char paramBuffer[1024] = "", *tail;
 
     // find macro and get number of parameters
-    if(strcmp((char *)List_Retrieve(&self->ctx->func_macros), name))
+#if 0 // is this wrong?
+    if(strcmp((char*) List_Retrieve(&self->ctx->func_macros), name))
     {
         List_FindByName(&self->ctx->func_macros, name);
     }
-    params = (List*) List_Retrieve(&self->ctx->func_macros);
+#else
+    self->ctx->func_macros.findByName(name);
+#endif
+    params = self->ctx->func_macros.retrieve();
     numParams = List_GetSize(params) - 1;
 
     paramDefs = (List*) malloc(sizeof(List));
@@ -1458,7 +1462,7 @@ void pp_parser_insert_builtin_macro(pp_parser *self, const char *name)
 extern "C" bool pp_parser_is_defined(pp_parser *self, const char *name)
 {
     if(List_FindByName(&self->ctx->macros, name) ||
-            List_FindByName(&self->ctx->func_macros, name) ||
+            self->ctx->func_macros.findByName(name) ||
             pp_is_builtin_macro(name))
     {
         return true;

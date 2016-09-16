@@ -57,7 +57,11 @@ typedef union
 typedef struct pp_context
 {
     List macros;                       // list of currently defined non-function macros
+#ifdef __cplusplus
+    CList<List> func_macros;
+#else
     List func_macros;                  // list of currently defined function-style macros
+#endif
     List imports;                      // list of files for the interpreter to "import"
     conditional_stack conditionals;    // the conditional stack
     int num_conditionals;              // current size of the conditional stack
