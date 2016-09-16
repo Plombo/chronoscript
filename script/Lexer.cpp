@@ -48,7 +48,7 @@ static const char *keywords[] = {
     "while",
 };
 
-static const int keyword_tokens[] = {
+static const MY_TOKEN_TYPE keyword_tokens[] = {
     TOKEN_AUTO,
     TOKEN_BREAK,
     TOKEN_CASE,
