@@ -1,7 +1,7 @@
 if Platform().name == 'win32':
     env = Environment(tools=['mingw'], CPPPATH=['.', 'script'], CCFLAGS='-g -Wall')
 else:
-    env = Environment(CPPPATH=['.', 'script'], CCFLAGS='-g -Wall')
+    env = Environment(CPPPATH=['.', 'script'], CCFLAGS='-g -Wall -O2')
 
 c_sources = [
     'List',
@@ -12,7 +12,6 @@ c_sources = [
     'ScriptUtils',
     'script/ParserSet',
     'script/Lexer',
-    'script/pp_parser',
     'script/pp_lexer',
 ]
 cpp_sources = [
@@ -28,6 +27,7 @@ cpp_sources = [
     'Builtins',
     'StrCache',
     'ImportCache',
+    'script/pp_parser',
     'script/pp_expr',
 ]
 objects = []

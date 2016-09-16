@@ -97,24 +97,8 @@ void pp_context_init(pp_context *self);
 void pp_context_destroy(pp_context *self);
 
 void pp_parser_init(pp_parser *self, pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition);
-pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char *sourceCode, pp_parser_type type);
-pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, List* params, pp_parser_type type);
-
 pp_token *pp_parser_emit_token(pp_parser *self);
 HRESULT pp_parser_lex_token(pp_parser *self, bool skip_whitespace);
-HRESULT pp_parser_readline(pp_parser *self, char *buf, int bufsize);
-HRESULT pp_parser_stringify(pp_parser *self);
-void pp_parser_concatenate(pp_parser *self, const char *token1, const char *token2);
-HRESULT pp_parser_parse_directive(pp_parser *self);
-HRESULT pp_parser_include(pp_parser *self, char *filename);
-HRESULT pp_parser_define(pp_parser *self, char *name);
-HRESULT pp_parser_conditional(pp_parser *self, const char *directive);
-HRESULT pp_parser_eval_conditional(pp_parser *self, const char *directive, int *result);
-void pp_parser_insert_param(pp_parser* self, char* name);
-void pp_parser_insert_macro(pp_parser *self, char *name);
-HRESULT pp_parser_insert_function_macro(pp_parser *self, char *name);
-bool pp_is_builtin_macro(const char *name);
-void pp_parser_insert_builtin_macro(pp_parser *self, const char *name);
 bool pp_parser_is_defined(pp_parser *self, const char *name);
 
 HRESULT pp_error(pp_parser *self, const char *format, ...);

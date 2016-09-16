@@ -46,11 +46,28 @@ char *get_full_path(char *filename) { return filename; };
 #undef time
 #endif
 
+pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char *sourceCode, pp_parser_type type);
+pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, List* params, pp_parser_type type);
+
+HRESULT pp_parser_readline(pp_parser *self, char *buf, int bufsize);
+HRESULT pp_parser_stringify(pp_parser *self);
+void pp_parser_concatenate(pp_parser *self, const char *token1, const char *token2);
+HRESULT pp_parser_parse_directive(pp_parser *self);
+HRESULT pp_parser_include(pp_parser *self, char *filename);
+HRESULT pp_parser_define(pp_parser *self, char *name);
+HRESULT pp_parser_conditional(pp_parser *self, const char *directive);
+HRESULT pp_parser_eval_conditional(pp_parser *self, const char *directive, int *result);
+void pp_parser_insert_param(pp_parser* self, char* name);
+void pp_parser_insert_macro(pp_parser *self, char *name);
+HRESULT pp_parser_insert_function_macro(pp_parser *self, char *name);
+bool pp_is_builtin_macro(const char *name);
+void pp_parser_insert_builtin_macro(pp_parser *self, const char *name);
+
 /**
  * Initializes a preprocessor context.  Assumes that this context either hasn't
  * been initialized yet or has been destroyed since the last time it was initialized.
  */
-void pp_context_init(pp_context *self)
+extern "C" void pp_context_init(pp_context *self)
 {
     char buf[64];
     time_t currentTime = time(NULL);
@@ -92,7 +109,7 @@ void pp_context_init(pp_context *self)
  * consequences.  However, it does assume that the context has been initialized
  * at least once.
  */
-void pp_context_destroy(pp_context *self)
+extern "C" void pp_context_destroy(pp_context *self)
 {
     // undefine and free all non-function macros
     List_Reset(&self->macros);
@@ -107,7 +124,7 @@ void pp_context_destroy(pp_context *self)
     List_Reset(&self->func_macros);
     while(self->func_macros.size > 0)
     {
-        List *params = List_Retrieve(&self->func_macros);
+        List *params = (List*) List_Retrieve(&self->func_macros);
         while(params->size > 0)
         {
             free(List_Retrieve(params));
@@ -135,7 +152,7 @@ void pp_context_destroy(pp_context *self)
  * @param filename the name of the file to parse
  * @param sourceCode the source code to parse, in string form
  */
-void pp_parser_init(pp_parser *self, pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition)
+extern "C" void pp_parser_init(pp_parser *self, pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition)
 {
     pp_lexer_Init(&self->lexer, sourceCode, initialPosition);
     self->ctx = ctx;
@@ -162,7 +179,7 @@ void pp_parser_init(pp_parser *self, pp_context *ctx, const char *filename, char
  */
 pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char *sourceCode, pp_parser_type type)
 {
-    pp_parser *self = malloc(sizeof(pp_parser));
+    pp_parser *self = new pp_parser;
     TEXTPOS initialPos = {1, 0};
 
     pp_parser_init(self, parent->ctx, filename, sourceCode, initialPos);
@@ -281,7 +298,7 @@ void pp_warning(pp_parser *self, const char *format, ...)
  * Gets the next parsable token from the lexer.
  * @param skip_whitespace true to ignore whitespace, false otherwise
  */
-HRESULT pp_parser_lex_token(pp_parser *self, bool skip_whitespace)
+extern "C" HRESULT pp_parser_lex_token(pp_parser *self, bool skip_whitespace)
 {
     bool success = true;
 
@@ -386,7 +403,7 @@ HRESULT pp_parser_lex_token_essential(pp_parser *self, bool skip_whitespace)
  * Preprocesses the source file until it reaches a token that should be emitted.
  * @return the next token of the output
  */
-pp_token *pp_parser_emit_token(pp_parser *self)
+extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
 {
     bool emitme = false;
     bool success = true;
@@ -430,7 +447,7 @@ pp_token *pp_parser_emit_token(pp_parser *self)
                     free(self->child->macroName);
                 }
 
-                free(self->child);
+                delete self->child;
                 self->child = NULL;
 
                 if(child_token == NULL)
@@ -740,7 +757,7 @@ HRESULT pp_parser_stringify(pp_parser *self)
  */
 void pp_parser_concatenate(pp_parser *self, const char *token1, const char *token2)
 {
-    char *output = malloc(strlen(token1) + strlen(token2) + 1);
+    char *output = (char*) malloc(strlen(token1) + strlen(token2) + 1);
     pp_parser *outputParser;
 
     sprintf(output, "%s%s", token1, token2);
@@ -859,7 +876,7 @@ HRESULT pp_parser_parse_directive(pp_parser *self)
         }
         if(List_FindByName(&self->ctx->func_macros, self->token.theSource))
         {
-            List *params = List_Retrieve(&self->ctx->func_macros);
+            List *params = (List*) List_Retrieve(&self->ctx->func_macros);
             while(params->size > 0)
             {
                 free(List_Retrieve(params));
@@ -946,7 +963,7 @@ HRESULT pp_parser_include(pp_parser *self, char *filename)
     seekpackfile(handle, 0, SEEK_SET);
 
     // Allocate a buffer for the file's contents
-    buffer = malloc(length + 1);
+    buffer = (char*) malloc(length + 1);
     memset(buffer, 0, length + 1);
 
     // Read the file into the buffer
@@ -976,7 +993,7 @@ HRESULT pp_parser_define(pp_parser *self, char *name)
 {
     char *contents = NULL;
     bool is_function = false; // true if this is a function-style #define; false otherwise
-    List *params = malloc(sizeof(List));
+    List *params = (List*) malloc(sizeof(List));
 
     List_Init(params);
 
@@ -1002,7 +1019,7 @@ HRESULT pp_parser_define(pp_parser *self, char *name)
     }
     if(List_FindByName(&self->ctx->func_macros, name))
     {
-        List *params2 = List_Retrieve(&self->ctx->func_macros);
+        List *params2 = (List*) List_Retrieve(&self->ctx->func_macros);
         List_GotoLast(params2);
         pp_warning(self, "'%s' redefined (previously \"%s\")", name, List_Retrieve(params2));
         List_Reset(params2);
@@ -1061,7 +1078,7 @@ HRESULT pp_parser_define(pp_parser *self, char *name)
     }
 
     // Read macro contents
-    contents = malloc(MACRO_CONTENTS_SIZE);
+    contents = (char*) malloc(MACRO_CONTENTS_SIZE);
     contents[0] = '\0';
     if(FAILED(pp_parser_readline(self, contents, MACRO_CONTENTS_SIZE)))
     {
@@ -1221,7 +1238,7 @@ void pp_parser_insert_param(pp_parser* self, char* name)
         List_FindByName(self->params, name);
     }
 
-    pp_parser_alloc_macro(self, List_Retrieve(self->params), NULL, PP_NORMAL_MACRO);
+    pp_parser_alloc_macro(self, (char*) List_Retrieve(self->params), NULL, PP_NORMAL_MACRO);
 }
 
 /**
@@ -1236,7 +1253,7 @@ void pp_parser_insert_macro(pp_parser *self, char *name)
         List_FindByName(&self->ctx->macros, name);
     }
 
-    pp_parser_alloc_macro(self, List_Retrieve(&self->ctx->macros), NULL, PP_NORMAL_MACRO);
+    pp_parser_alloc_macro(self, (char*) List_Retrieve(&self->ctx->macros), NULL, PP_NORMAL_MACRO);
 }
 
 /**
@@ -1255,10 +1272,10 @@ HRESULT pp_parser_insert_function_macro(pp_parser *self, char *name)
     {
         List_FindByName(&self->ctx->func_macros, name);
     }
-    params = List_Retrieve(&self->ctx->func_macros);
+    params = (List*) List_Retrieve(&self->ctx->func_macros);
     numParams = List_GetSize(params) - 1;
 
-    paramDefs = malloc(sizeof(List));
+    paramDefs = (List*) malloc(sizeof(List));
     List_Init(paramDefs);
 
     // read the parameter list and temporarily define a "simple" macro for each parameter
@@ -1336,13 +1353,13 @@ HRESULT pp_parser_insert_function_macro(pp_parser *self, char *name)
         case PP_TOKEN_IDENTIFIER:
             if(self->type == PP_FUNCTION_MACRO && List_FindByName(self->params, self->token.theSource))
             {
-                if((strlen(paramBuffer) + strlen(List_Retrieve(self->params)) + 1) > sizeof(paramBuffer))
+                if((strlen(paramBuffer) + strlen((char*)List_Retrieve(self->params)) + 1) > sizeof(paramBuffer))
                 {
                     return pp_error(self,
                                     "parameter %d of function '%s' exceeds max length of %d characters",
                                     name, sizeof(paramBuffer)-1);
                 }
-                strcat(paramBuffer, List_Retrieve(self->params));
+                strcat(paramBuffer, (char*)List_Retrieve(self->params));
                 write = false;
             }
             else write = true;
@@ -1373,7 +1390,7 @@ HRESULT pp_parser_insert_function_macro(pp_parser *self, char *name)
 
     // do the actual parsing
     List_GotoLast(params);
-    pp_parser_alloc_macro(self, List_Retrieve(params), paramDefs, PP_FUNCTION_MACRO);
+    pp_parser_alloc_macro(self, (char*) List_Retrieve(params), paramDefs, PP_FUNCTION_MACRO);
     self->child->macroName = strdup(name);
 
     return S_OK;
@@ -1438,7 +1455,7 @@ void pp_parser_insert_builtin_macro(pp_parser *self, const char *name)
  * Returns true if the given name is the name of a currently defined macro,
  * false otherwise.
  */
-bool pp_parser_is_defined(pp_parser *self, const char *name)
+extern "C" bool pp_parser_is_defined(pp_parser *self, const char *name)
 {
     if(List_FindByName(&self->ctx->macros, name) ||
             List_FindByName(&self->ctx->func_macros, name) ||
