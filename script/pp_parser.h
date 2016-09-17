@@ -54,18 +54,18 @@ typedef union
     };
 } conditional_stack;
 
-typedef struct pp_context
+#ifdef __cplusplus
+struct pp_context
 {
     List macros;                       // list of currently defined non-function macros
-#ifdef __cplusplus
-    CList<List> func_macros;
-#else
-    List func_macros;                  // list of currently defined function-style macros
-#endif
+    CList<List> func_macros;           // list of currently defined function-style macros
     List imports;                      // list of files for the interpreter to "import"
     conditional_stack conditionals;    // the conditional stack
     int num_conditionals;              // current size of the conditional stack
-} pp_context;
+};
+#else
+typedef struct pp_context pp_context;
+#endif
 
 typedef enum
 {
@@ -77,8 +77,10 @@ typedef enum
     PP_CONDITIONAL
 } pp_parser_type;
 
-typedef struct pp_parser
+#ifdef __cplusplus
+struct pp_parser
 {
+public:
     pp_parser_type type;
     pp_context *ctx;
     pp_lexer lexer;
@@ -95,7 +97,28 @@ typedef struct pp_parser
     struct pp_parser *child;
     bool newline;
     bool overread;
-} pp_parser;
+
+    HRESULT lexToken(bool skipWhitespace);
+    bool isDefined(const char *name);
+public: // TODO make private
+    int peekToken();
+    HRESULT lexTokenEssential(bool skipWhitespace);
+    HRESULT readLine(char *buf, size_t bufsize);
+    HRESULT stringify();
+    void concatenate(const char *token1, const char *token2);
+    HRESULT parseDirective();
+    HRESULT include(char *filename);
+    HRESULT define(char *name);
+    HRESULT conditional(const char *directive);
+    HRESULT evalConditional(const char *directive, int *result);
+    void insertParam(char* name);
+    void insertMacro(char *name);
+    HRESULT insertFunctionMacro(char *name);
+    void insertBuiltinMacro(const char *name);
+};
+#else
+typedef struct pp_parser pp_parser;
+#endif
 
 void pp_context_init(pp_context *self);
 void pp_context_destroy(pp_context *self);

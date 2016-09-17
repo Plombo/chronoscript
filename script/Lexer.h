@@ -59,6 +59,7 @@ typedef struct Token
 *  script.  Its purpose is to break down the characters into "words" for the
 *  parser.
 ******************************************************************************/
+#ifdef __cplusplus
 typedef struct Lexer
 {
     const char *thePath;
@@ -67,6 +68,9 @@ typedef struct Lexer
     char *pcurChar;
     TEXTPOS theTokenPosition;
 } Lexer;
+#else
+typedef struct Lexer Lexer;
+#endif
 
 
 //Constructor
