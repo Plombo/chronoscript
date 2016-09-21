@@ -9,6 +9,7 @@ c_sources = [
     'Stack',
     'SymbolTable',
     'ralloc',
+    'cfuhash',
     'ScriptUtils',
     'script/ParserSet',
     'script/pp_lexer',

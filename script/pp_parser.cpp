@@ -51,43 +51,50 @@ pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, CList<c
 
 static bool pp_is_builtin_macro(const char *name);
 
+static void freeParams(void *data)
+{
+    CList<char> *params = (CList<char>*) data;
+    while(params->size() > 0)
+    {
+        free(params->retrieve());
+        params->remove();
+    }
+    params->clear();
+    delete params;
+}
+
 /**
  * Initializes a preprocessor context.  Assumes that this context either hasn't
  * been initialized yet or has been destroyed since the last time it was initialized.
  */
-extern "C" void pp_context_init(pp_context *self)
+pp_context::pp_context() : macros(CFUHASH_FREE_DATA), func_macros(CFUHASH_FREE_DATA)
 {
     char buf[64];
     time_t currentTime = time(NULL);
     char *datetime = ctime(&currentTime);
 
-    // initialize the macro lists
-    List_Init(&self->macros.list);
-    List_Init(&self->func_macros.list);
-
-    // initialize the import list
-    List_Init(&self->imports.list);
+    func_macros.setFreeFunction(freeParams);
 
     // initialize the conditional stack
-    self->conditionals.all = 0ll;
-    self->num_conditionals = 0;
+    conditionals.all = 0ll;
+    num_conditionals = 0;
 
     // initialize the builtin macros other than __FILE__ and __LINE__
     strcpy(buf, "\"");
     strncat(buf, datetime + 4, 7);
     strncat(buf, datetime + 20, 4);
     strcat(buf, "\"");
-    self->macros.insertAfter(strdup(buf), "__DATE__");
+    macros.put("__DATE__", strdup(buf));
 
     strcpy(buf, "\"");
     strncat(buf, datetime + 11, 8);
     strcat(buf, "\"");
-    self->macros.insertAfter(strdup(buf), "__TIME__");
+    macros.put("__TIME__", strdup(buf));
 
 #if PP_TEST
-    self->macros.insertAfter(strdup("1"), "__STDC__");
-    self->macros.insertAfter(strdup("1"), "__STDC_HOSTED__");
-    self->macros.insertAfter(strdup("199901L"), "__STDC_VERSION__");
+    macros.put("__STDC__", strdup("1"));
+    macros.put("__STDC_HOSTED__", strdup("1"));
+    macros.put("__STDC_VERSION__", strdup("199901L"));
 #endif
 }
 
@@ -99,31 +106,6 @@ extern "C" void pp_context_init(pp_context *self)
  */
 extern "C" void pp_context_destroy(pp_context *self)
 {
-    // undefine and free all non-function macros
-    self->macros.gotoFirst();
-    while(self->macros.size() > 0)
-    {
-        free(self->macros.retrieve());
-        self->macros.remove();
-    }
-    self->macros.clear();
-
-    // undefine and free all function-style macros
-    self->func_macros.gotoFirst();
-    while(self->func_macros.size() > 0)
-    {
-        CList<char> *params = self->func_macros.retrieve();
-        while(params->size() > 0)
-        {
-            free(params->retrieve());
-            params->remove();
-        }
-        params->clear();
-        delete params;
-        self->func_macros.remove();
-    }
-    self->func_macros.clear();
-
     // free the import list
     self->imports.clear();
 }
@@ -621,7 +603,7 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                     self->insertBuiltinMacro(token2.theSource);
                 }
                 else if(self->peekToken() == PP_TOKEN_LPAREN &&
-                        self->ctx->func_macros.findByName(token2.theSource))
+                        self->ctx->func_macros.containsKey(token2.theSource))
                 {
                     success = SUCCEEDED(self->lexToken(true));
                     assert(self->token.theType == PP_TOKEN_LPAREN);
@@ -634,7 +616,7 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                         return NULL;
                     }
                 }
-                else if(self->ctx->macros.findByName(token2.theSource))
+                else if(self->ctx->macros.containsKey(token2.theSource))
                 {
                     self->insertMacro(token2.theSource);
                 }
@@ -857,22 +839,13 @@ HRESULT pp_parser::parseDirective()
         {
             return pp_error(this, "'%s' is a builtin macro and cannot be undefined", token.theSource);
         }
-        if(ctx->macros.findByName(token.theSource))
+        if(ctx->macros.containsKey(token.theSource))
         {
-            free(ctx->macros.retrieve());
-            ctx->macros.remove();
+            ctx->macros.remove(token.theSource);
         }
-        if(ctx->func_macros.findByName(token.theSource))
+        if(ctx->func_macros.containsKey(token.theSource))
         {
-            CList<char> *params = ctx->func_macros.retrieve();
-            while(params->size() > 0)
-            {
-                free(params->retrieve());
-                params->remove();
-            }
-            params->clear();
-            delete params;
-            ctx->func_macros.remove();
+            ctx->func_macros.remove(token.theSource);
         }
 
         return S_OK;
@@ -997,26 +970,15 @@ HRESULT pp_parser::define(char *name)
 
     // emit a warning if the macro is already defined
     // note: this won't mess with function macro parameters since #define can't be used from inside a macro
-    if(ctx->macros.findByName(name))
+    if(ctx->macros.containsKey(name))
     {
-        pp_warning(this, "'%s' redefined (previously \"%s\")", name, ctx->macros.retrieve());
-        free(ctx->macros.retrieve());
-        ctx->macros.remove();
+        pp_warning(this, "'%s' redefined (previously \"%s\")", name, ctx->macros.get(name));
     }
-    if (ctx->func_macros.findByName(name))
+    if (ctx->func_macros.containsKey(name))
     {
-        CList<char> *params2 = ctx->func_macros.retrieve();
+        CList<char> *params2 = ctx->func_macros.get(name);
         params2->gotoLast();
         pp_warning(this, "'%s' redefined (previously \"%s\")", name, params2->retrieve());
-        params2->gotoFirst();
-        while(params2->size() > 0)
-        {
-            free(params2->retrieve());
-            params2->remove();
-        }
-        params2->clear();
-        delete params2;
-        ctx->func_macros.remove();
     }
 
     // do NOT skip whitespace here - the '(' must come immediately after the name!
@@ -1075,12 +1037,12 @@ HRESULT pp_parser::define(char *name)
     if(is_function)
     {
         funcParams->insertAfter(contents, NULL);
-        ctx->func_macros.insertAfter(funcParams, name);
+        ctx->func_macros.put(name, funcParams);
     }
     else
     {
         delete funcParams;
-        ctx->macros.insertAfter(contents, name);
+        ctx->macros.put(name, contents);
     }
 
     return S_OK;
@@ -1174,7 +1136,7 @@ HRESULT pp_parser::evalConditional(const char *directive, int *result) // FIXME:
         {
             return E_FAIL;
         }
-        *result = ctx->macros.findByName(token.theSource);
+        *result = ctx->macros.containsKey(token.theSource);
         if (!strcmp(directive, "ifndef"))
         {
             *result = !(*result);
@@ -1225,8 +1187,7 @@ void pp_parser::insertParam(char* name)
  */
 void pp_parser::insertMacro(char *name)
 {
-    ctx->macros.findByName(name);
-    pp_parser_alloc_macro(this, ctx->macros.retrieve(), NULL, PP_NORMAL_MACRO);
+    pp_parser_alloc_macro(this, ctx->macros.get(name), NULL, PP_NORMAL_MACRO);
 }
 
 /**
@@ -1242,15 +1203,13 @@ HRESULT pp_parser::insertFunctionMacro(char *name)
     char paramBuffer[1024] = "", *tail;
 
     // find macro and get number of parameters
-    ctx->func_macros.findByName(name);
-    funcParams = ctx->func_macros.retrieve();
+    funcParams = ctx->func_macros.get(name);
     numParams = funcParams->size() - 1;
 
     paramDefs = new(NULL) CList<char>();
 
     // read the parameter list and temporarily define a "simple" macro for each parameter
     funcParams->gotoFirst();
-    ctx->macros.gotoFirst(); // this line seems completely pointless?
     do
     {
         if(FAILED(lexTokenEssential(false)))
@@ -1423,8 +1382,8 @@ void pp_parser::insertBuiltinMacro(const char *name)
 
 bool pp_parser::isDefined(const char *name)
 {
-    return (ctx->macros.findByName(name) ||
-            ctx->func_macros.findByName(name) ||
+    return (ctx->macros.containsKey(name) ||
+            ctx->func_macros.containsKey(name) ||
             pp_is_builtin_macro(name));
 }
 

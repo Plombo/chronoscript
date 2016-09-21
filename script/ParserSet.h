@@ -9,12 +9,12 @@
 #ifndef PARSERSET_H
 #define PARSERSET_H
 
+#include "Lexer.h"
+#include "Productions.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "Lexer.h"
-#include "Productions.h"
 
 typedef struct ParserSet
 {

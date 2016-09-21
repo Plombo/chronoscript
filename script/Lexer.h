@@ -9,12 +9,12 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include "depends.h"
+#include "pp_parser.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "depends.h"
-#include "pp_parser.h"
 
 //enumerate the possible token types.  Some tokens here, such as LBRACKET, are
 //never used.

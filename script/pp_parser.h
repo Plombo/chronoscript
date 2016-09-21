@@ -18,13 +18,13 @@
 #ifndef PP_PARSER_H
 #define PP_PARSER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "pp_lexer.h"
 #include "List.h"
 #include "depends.h" // #include "types.h"
+
+#ifdef __cplusplus
+#include "HashMap.h"
+#endif
 
 #define MACRO_CONTENTS_SIZE		512
 
@@ -57,11 +57,14 @@ typedef union
 #ifdef __cplusplus
 struct pp_context
 {
-    CList<char> macros;                // list of currently defined non-function macros
-    CList<CList<char> > func_macros;           // list of currently defined function-style macros
+public:
+    HashMap<char*> macros;             // list of currently defined non-function macros
+    HashMap<CList<char>*> func_macros; // list of currently defined function-style macros
     CList<void> imports;               // list of files for the interpreter to "import"
     conditional_stack conditionals;    // the conditional stack
     int num_conditionals;              // current size of the conditional stack
+public:
+    pp_context();
 };
 #else
 typedef struct pp_context pp_context;
@@ -120,7 +123,10 @@ public: // TODO make private
 typedef struct pp_parser pp_parser;
 #endif
 
-void pp_context_init(pp_context *self);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void pp_context_destroy(pp_context *self);
 
 void pp_parser_init(pp_parser *self, pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition);

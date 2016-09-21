@@ -288,7 +288,6 @@ Interpreter *compileFile(const char *filename)
     pp_context ppContext;
     Parser parser;
 
-    pp_context_init(&ppContext);
     parser.parseText(&ppContext, &execBuilder, scriptText, 1, filename);
 
     execBuilder.allocateExecFunctions();
