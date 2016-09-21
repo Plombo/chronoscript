@@ -297,19 +297,19 @@ Interpreter *compileFile(const char *filename)
 
     // get imports
     CList<Interpreter> imports;
-    int numImports = List_GetSize(&ppContext.imports);
-    List_Reset(&ppContext.imports);
+    int numImports = ppContext.imports.size();
+    ppContext.imports.gotoFirst();
     for (int i = 0; i < numImports; i++)
     {
-        Interpreter *importedScript = ImportCache_ImportFile(List_GetName(&ppContext.imports));
+        Interpreter *importedScript = ImportCache_ImportFile(ppContext.imports.getName());
         if (importedScript == NULL)
         {
             pp_context_destroy(&ppContext);
             goto error;
         }
-        printf("imported script %s => %p\n", List_GetName(&ppContext.imports), importedScript);
+        printf("imported script %s => %p\n", ppContext.imports.getName(), importedScript);
         imports.insertAfter(importedScript);
-        List_GotoNext(&ppContext.imports);
+        ppContext.imports.gotoNext();
     }
     pp_context_destroy(&ppContext);
 
