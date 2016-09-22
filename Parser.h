@@ -38,10 +38,10 @@ public:
     ExecBuilder *execBuilder;
     CList<SSABuilder> functions;
 
-    Parser();
+    Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
+           int startingLineNumber, const char *path);
     ~Parser();
-    void parseText(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
-                      int startingLineNumber, const char *path);
+    void parseText();
     bool check(MY_TOKEN_TYPE theType);
     void match();
     void rewind(Token *token);

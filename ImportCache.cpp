@@ -286,9 +286,9 @@ Interpreter *compileFile(const char *filename)
 
     ExecBuilder execBuilder;
     pp_context ppContext;
-    Parser parser;
+    Parser parser(&ppContext, &execBuilder, scriptText, 1, filename);
 
-    parser.parseText(&ppContext, &execBuilder, scriptText, 1, filename);
+    parser.parseText();
 
     execBuilder.allocateExecFunctions();
     compiledScripts.gotoLast();

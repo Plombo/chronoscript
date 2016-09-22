@@ -62,11 +62,15 @@ typedef struct Token
 #ifdef __cplusplus
 typedef struct Lexer
 {
+    pp_parser preprocessor; // FIXME make private
+private:
     const char *thePath;
     const char *ptheSource;
-    pp_parser preprocessor;
     char *pcurChar;
     TEXTPOS theTokenPosition;
+public:
+    Lexer(pp_context *context, const char *thePath, char *theSource, TEXTPOS theStartingPosition);
+    HRESULT getNextToken(Token *theNextToken);
 } Lexer;
 #else
 typedef struct Lexer Lexer;
@@ -75,14 +79,6 @@ typedef struct Lexer Lexer;
 
 //Constructor
 void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, u32 charOffset);
-void Lexer_Init(Lexer *plexer, pp_context *pcontext, const char *thePath, char *theSource, TEXTPOS theStartingPosition);
-void Lexer_Clear(Lexer *plexer);
-HRESULT Lexer_GetNextToken(Lexer *plexer, Token *theNextToken);
-HRESULT Lexer_GetTokenIdentifier(Lexer *plexer, Token *theNextToken);
-HRESULT Lexer_GetTokenNumber(Lexer *plexer, Token *theNextToken);
-HRESULT Lexer_GetTokenStringLiteral(Lexer *plexer, Token *theNextToken);
-HRESULT Lexer_GetTokenSymbol(Lexer *plexer, Token *theNextToken);
-HRESULT Lexer_SkipComment(Lexer *lexer, COMMENT_TYPE theType);
 
 #ifdef __cplusplus
 }; // extern "C"

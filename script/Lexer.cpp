@@ -405,17 +405,12 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
     return S_OK;
 }
 
-void Lexer_Init(Lexer *plexer, pp_context *pcontext, const char *thePath, char *theSource, TEXTPOS theStartingPosition)
+Lexer::Lexer(pp_context *pcontext, const char *thePath, char *theSource, TEXTPOS theStartingPosition)
 {
-    plexer->thePath = thePath;
-    plexer->ptheSource = theSource;
-    plexer->theTokenPosition = theStartingPosition;
-    pp_parser_init(&plexer->preprocessor, pcontext, thePath, theSource, theStartingPosition);
-}
-
-void Lexer_Clear(Lexer *plexer)
-{
-    memset(plexer, 0, sizeof(Lexer));
+    this->thePath = thePath;
+    this->ptheSource = theSource;
+    this->theTokenPosition = theStartingPosition;
+    pp_parser_init(&this->preprocessor, pcontext, thePath, theSource, theStartingPosition);
 }
 
 /******************************************************************************
@@ -427,14 +422,14 @@ void Lexer_Clear(Lexer *plexer)
 *  Returns: S_OK
 *           E_FAIL
 ******************************************************************************/
-HRESULT Lexer_GetNextToken(Lexer *plexer, Token *theNextToken)
+HRESULT Lexer::getNextToken(Token *theNextToken)
 {
     pp_token *ppToken;
 
     // get the next non-whitespace, non-newline token from the preprocessor
     do
     {
-        ppToken = pp_parser_emit_token(&plexer->preprocessor);
+        ppToken = pp_parser_emit_token(&preprocessor);
         if (ppToken == NULL)
         {
             return E_FAIL;
@@ -442,8 +437,8 @@ HRESULT Lexer_GetNextToken(Lexer *plexer, Token *theNextToken)
     }
     while (ppToken->theType == PP_TOKEN_WHITESPACE || ppToken->theType == PP_TOKEN_NEWLINE);
 
-    plexer->theTokenPosition = plexer->preprocessor.lexer.theTokenPosition;
-    plexer->pcurChar = plexer->preprocessor.lexer.pcurChar;
+    theTokenPosition = preprocessor.lexer.theTokenPosition;
+    pcurChar = preprocessor.lexer.pcurChar;
 
     return Token_InitFromPreprocessor(theNextToken, ppToken);
 }

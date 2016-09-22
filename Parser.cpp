@@ -8,7 +8,9 @@
 
 #include "Parser.h"
 
-Parser::Parser()
+Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
+               int startingLineNumber, const char *path)
+ : theLexer(pcontext, path, scriptText, {startingLineNumber, 1})
 {
     memCtx = ralloc_context(NULL);
 
@@ -18,11 +20,23 @@ Parser::Parser()
     theNextToken.theType = END_OF_TOKENS;
     rewound = false;
     bldUtil = NULL;
+
+    this->execBuilder = builder;
+
+    //Create a new CLexer for this script text.
+    if(path)
+    {
+        strncpy(this->currentPath, path, 255);
+    }
+    else
+    {
+        this->currentPath[0] = 0;
+    }
+    this->errorFound = false;
 }
 
 Parser::~Parser()
 {
-    Lexer_Clear(&theLexer);
     ParserSet_Clear(&theParserSet);
 }
 
@@ -38,35 +52,10 @@ Parser::~Parser()
 *                        line counts.
 *  Returns:
 ******************************************************************************/
-void Parser::parseText(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
-                      int startingLineNumber, const char *path)
+void Parser::parseText()
 {
-    this->execBuilder = builder;
-
-    //Create a new CLexer for this script text.
-    TEXTPOS thePosition;
-    thePosition.row = startingLineNumber;
-    thePosition.col = 1;
-    if(path)
-    {
-        strncpy(this->currentPath, path, 255);
-    }
-    else
-    {
-        this->currentPath[0] = 0;
-    }
-    this->errorFound = false;
-    Lexer_Init(&(this->theLexer), pcontext, path, scriptText, thePosition );
-
     //Get the first token from the CLexer.
-    Lexer_GetNextToken(&(this->theLexer), &(this->theNextToken));
-
-#if 0 // global include? obscure feature that apparently exists
-    if(!this->isImport && testpackfile("data/scripts/openbor.h", packfile) >= 0)
-    {
-        pp_parser_include(&theLexer.preprocessor, "data/scripts/openbor.h");
-    }
-#endif
+    theLexer.getNextToken(&theNextToken);
 
     //Parse the script text until you reach the end of the file, or until
     //an error occurs.
@@ -101,7 +90,7 @@ void Parser::match()
         memcpy(&theNextToken, &theNextNextToken, sizeof(Token));
         rewound = false;
     }
-    else if (FAILED(Lexer_GetNextToken(&theLexer, &theNextToken)))
+    else if (FAILED(theLexer.getNextToken(&theNextToken)))
     {
         Parser_Error(this, error);
     }
@@ -1946,7 +1935,7 @@ void Parser::error(PRODUCTION offender, const char *offenderStr)
     //grabbing tokens until we find one we can use
     do
     {
-        while (!SUCCEEDED(Lexer_GetNextToken(&theLexer, &theNextToken)));
+        while (!SUCCEEDED(theLexer.getNextToken(&theNextToken)));
         if (theNextToken.theType == TOKEN_EOF)
         {
             break;
