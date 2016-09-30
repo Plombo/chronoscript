@@ -1,3 +1,4 @@
+// Compiles and runs a script from a file.
 #include <stdio.h>
 #include <errno.h>
 #include "pp_parser.h"

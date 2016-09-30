@@ -18,7 +18,7 @@ cpp_sources = [
     'ssa',
     'Instruction',
     'Parser',
-    'ParserTest',
+    'Main',
     'regalloc',
     'liveness',
     'RegAllocUtil',
@@ -40,6 +40,6 @@ for name in cpp_sources:
     env.Object(name + '.o', name + '.cpp')
     objects.append(name + '.o')
 
-env.Program('ssa', objects)
+env.Program('runscript', objects)
 
 
