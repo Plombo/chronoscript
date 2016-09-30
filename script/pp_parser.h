@@ -101,9 +101,11 @@ public:
     bool newline;
     bool overread;
 
+    pp_parser(pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition);
     HRESULT lexToken(bool skipWhitespace);
     bool isDefined(const char *name);
-public: // TODO make private
+    pp_token *emitToken();
+private:
     int peekToken();
     HRESULT lexTokenEssential(bool skipWhitespace);
     HRESULT readLine(char *buf, size_t bufsize);
@@ -128,11 +130,6 @@ extern "C" {
 #endif
 
 void pp_context_destroy(pp_context *self);
-
-void pp_parser_init(pp_parser *self, pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition);
-pp_token *pp_parser_emit_token(pp_parser *self);
-HRESULT pp_parser_lex_token(pp_parser *self, bool skip_whitespace);
-bool pp_parser_is_defined(pp_parser *self, const char *name);
 
 HRESULT pp_error(pp_parser *self, const char *format, ...);
 void pp_warning(pp_parser *self, const char *format, ...);

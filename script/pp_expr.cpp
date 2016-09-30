@@ -119,7 +119,7 @@ static int applyUnaryOp(PP_TOKEN_TYPE op, int src)
 void pp_expr::match()
 {
     do {
-        token = pp_parser_emit_token(parser);
+        token = parser->emitToken();
     } while(token->theType == PP_TOKEN_WHITESPACE);
 }
 
@@ -211,20 +211,20 @@ HRESULT pp_expr::primary_expr(int *result)
 {
     if (check(PP_TOKEN_IDENTIFIER) && !strcmp(parser->token.theSource, "defined"))
     {
-        pp_parser_lex_token(parser, true);
+        parser->lexToken(true);
         if (parser->token.theType == PP_TOKEN_LPAREN)
         {
-            pp_parser_lex_token(parser, true);
+            parser->lexToken(true);
             if (parser->token.theType != PP_TOKEN_IDENTIFIER) return expect_fail("<identifier>");
-            *result = pp_parser_is_defined(parser, token->theSource);
-            pp_parser_lex_token(parser, true);
+            *result = parser->isDefined(token->theSource);
+            parser->lexToken(true);
             if (parser->token.theType != PP_TOKEN_RPAREN) return expect_fail("')'");
             match();
         }
         else
         {
             if (parser->token.theType != PP_TOKEN_IDENTIFIER) return expect_fail("<identifier>");
-            *result = pp_parser_is_defined(parser, token->theSource);
+            *result = parser->isDefined(token->theSource);
             match();
         }
         return S_OK;

@@ -46,9 +46,6 @@ char *get_full_path(char *filename) { return filename; };
 #undef time
 #endif
 
-pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char *sourceCode, pp_parser_type type);
-pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, CList<char>* params, pp_parser_type type);
-
 static bool pp_is_builtin_macro(const char *name);
 
 static void freeParams(void *data)
@@ -67,7 +64,8 @@ static void freeParams(void *data)
  * Initializes a preprocessor context.  Assumes that this context either hasn't
  * been initialized yet or has been destroyed since the last time it was initialized.
  */
-pp_context::pp_context() : macros(CFUHASH_FREE_DATA), func_macros(CFUHASH_FREE_DATA)
+pp_context::pp_context()
+    : macros(CFUHASH_FREE_DATA), func_macros(CFUHASH_FREE_DATA)
 {
     char buf[64];
     time_t currentTime = time(NULL);
@@ -111,29 +109,28 @@ extern "C" void pp_context_destroy(pp_context *self)
 }
 
 /**
- * Initializes a preprocessor parser (pp_parser) object.
- * @param self the object
+ * Initializes a preprocessor (pp_parser) object.
  * @param ctx the shared context used by this parser
  * @param filename the name of the file to parse
  * @param sourceCode the source code to parse, in string form
  */
-extern "C" void pp_parser_init(pp_parser *self, pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition)
+pp_parser::pp_parser(pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition)
 {
-    pp_lexer_Init(&self->lexer, sourceCode, initialPosition);
-    self->ctx = ctx;
-    self->filename = filename;
-    self->sourceCode = sourceCode;
+    pp_lexer_Init(&lexer, sourceCode, initialPosition);
+    this->ctx = ctx;
+    this->filename = filename;
+    this->sourceCode = sourceCode;
 
-    self->type = PP_ROOT;
-    self->freeFilename = false;
-    self->freeSourceCode = false;
-    self->parent = NULL;
-    self->child = NULL;
-    self->numParams = 0;
-    self->params = NULL;
-    self->macroName = NULL;
-    self->newline = true;
-    self->overread = false;
+    type = PP_ROOT;
+    freeFilename = false;
+    freeSourceCode = false;
+    parent = NULL;
+    child = NULL;
+    numParams = 0;
+    params = NULL;
+    macroName = NULL;
+    newline = true;
+    overread = false;
 }
 
 /**
@@ -142,12 +139,10 @@ extern "C" void pp_parser_init(pp_parser *self, pp_context *ctx, const char *fil
  * @param filename the name of the file to parse
  * @param sourceCode the source code to parse, in string form
  */
-pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char *sourceCode, pp_parser_type type)
+static pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char *sourceCode, pp_parser_type type)
 {
-    pp_parser *self = new pp_parser;
     TEXTPOS initialPos = {1, 0};
-
-    pp_parser_init(self, parent->ctx, filename, sourceCode, initialPos);
+    pp_parser *self = new pp_parser(parent->ctx, filename, sourceCode, initialPos);
     self->type = type;
     self->parent = parent;
     parent->child = self;
@@ -163,7 +158,7 @@ pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char *source
  *        when freeing this parser (0 for non-function macros)
  * @return the newly allocated parser
  */
-pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, CList<char>* params, pp_parser_type type)
+static pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, CList<char>* params, pp_parser_type type)
 {
     pp_parser *self = pp_parser_alloc(parent, parent->filename, macroContents, type);
     self->params = params;
@@ -176,7 +171,7 @@ pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, CList<c
  * @param messageType the type of message ("error" or "warning")
  * @param message the actual message to display
  */
-void pp_message(pp_parser *self, const char *messageType, const char *message)
+static void pp_message(pp_parser *self, const char *messageType, const char *message)
 {
     pp_parser *parser = self;
     char buf[1024] = {""}, *linePtr;
@@ -300,11 +295,6 @@ HRESULT pp_parser::lexToken(bool skipWhitespace)
     return S_OK;
 }
 
-extern "C" HRESULT pp_parser_lex_token(pp_parser *self, bool skip_whitespace)
-{
-    return self->lexToken(skip_whitespace);
-}
-
 /**
  * Returns the type of the next non-whitespace token in the lexer's stream
  * without permanently changing the state of the parser or its lexer, or -1 if
@@ -374,7 +364,7 @@ HRESULT pp_parser::lexTokenEssential(bool skipWhitespace)
  * Preprocesses the source file until it reaches a token that should be emitted.
  * @return the next token of the output
  */
-extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
+pp_token *pp_parser::emitToken()
 {
     bool emitme = false;
     bool success = true;
@@ -382,46 +372,46 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
     pp_token *child_token;
     int i;
 
-    while(success && !emitme)
+    while (success && !emitme)
     {
         // get token from subparser ("child") if one exists
-        if(self->child)
+        if (child)
         {
-            child_token = pp_parser_emit_token(self->child);
+            child_token = child->emitToken();
 
-            if(child_token == NULL || child_token->theType == PP_TOKEN_EOF)
+            if (child_token == NULL || child_token->theType == PP_TOKEN_EOF)
             {
                 // free the parameters of function macros
-                if(self->child->type == PP_FUNCTION_MACRO)
+                if (child->type == PP_FUNCTION_MACRO)
                 {
-                    self->child->params->gotoFirst();
-                    for(i=0; i<self->child->numParams; i++)
+                    child->params->gotoFirst();
+                    for(i=0; i<child->numParams; i++)
                     {
-                        free(self->child->params->retrieve());
-                        self->child->params->remove();
+                        free(child->params->retrieve());
+                        child->params->remove();
                     }
-                    self->child->params->clear();
-                    delete self->child->params;
+                    child->params->clear();
+                    delete child->params;
                 }
 
                 // free the source code and filename if necessary
-                if(self->child->freeFilename)
+                if (child->freeFilename)
                 {
-                    free((void *)self->child->filename);
+                    free((void *)child->filename);
                 }
-                if(self->child->freeSourceCode)
+                if (child->freeSourceCode)
                 {
-                    free(self->child->sourceCode);
+                    free(child->sourceCode);
                 }
-                if(self->child->macroName)
+                if (child->macroName)
                 {
-                    free(self->child->macroName);
+                    free(child->macroName);
                 }
 
-                delete self->child;
-                self->child = NULL;
+                delete child;
+                child = NULL;
 
-                if(child_token == NULL)
+                if (child_token == NULL)
                 {
                     return NULL;
                 }
@@ -432,26 +422,25 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
             }
             else
             {
-                memcpy(&self->token, child_token, sizeof(pp_token));
+                memcpy(&this->token, child_token, sizeof(pp_token));
                 emitme = true;
             }
         }
 
-        if(emitme) // re-process tokens emitted by the subparser
+        if (emitme) // re-process tokens emitted by the subparser
         {
             emitme = false;
         }
-        else // lex the next token if no token is obtained from the subparser
-            if(FAILED(self->lexToken(false)))
-            {
-                break;
-            }
+        else if (FAILED(lexToken(false))) // lex the next token if no token is obtained from the subparser
+        {
+            break;
+        }
 
-        if(self->token.theType == PP_TOKEN_DIRECTIVE ||
-                self->ctx->conditionals.all == (self->ctx->conditionals.all & 0x5555555555555555ll))
+        if (this->token.theType == PP_TOKEN_DIRECTIVE ||
+            ctx->conditionals.all == (ctx->conditionals.all & 0x5555555555555555ll))
         {
             // handle token concatenation
-            if(self->type == PP_FUNCTION_MACRO || self->type == PP_NORMAL_MACRO)
+            if(type == PP_FUNCTION_MACRO || type == PP_NORMAL_MACRO)
             {
                 pp_parser* p;
                 pp_lexer tmpLexer;
@@ -460,34 +449,34 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                 char buf1[1024] = {""}, buf2[1024] = {""};
                 TEXTPOS start = {0,0};
 
-                if (self->peekToken() == PP_TOKEN_CONCATENATE)
+                if (peekToken() == PP_TOKEN_CONCATENATE)
                 {
-                    memcpy(&token2, &self->token, sizeof(pp_token));
-                    success = SUCCEEDED(self->lexToken(true)); // lex '##'
-                    assert(self->token.theType == PP_TOKEN_CONCATENATE);
-                    if(!success)
+                    memcpy(&token2, &this->token, sizeof(pp_token));
+                    success = SUCCEEDED(lexToken(true)); // lex '##'
+                    assert(this->token.theType == PP_TOKEN_CONCATENATE);
+                    if (!success)
                     {
                         break;
                     }
-                    success = SUCCEEDED(self->lexToken(true)); // lex second token
-                    if(!success)
+                    success = SUCCEEDED(lexToken(true)); // lex second token
+                    if (!success)
                     {
                         break;
                     }
 
-                    if(self->token.theType == PP_TOKEN_EOF)
+                    if (this->token.theType == PP_TOKEN_EOF)
                     {
-                        pp_error(self, "'##' at end of macro expansion");
+                        pp_error(this, "'##' at end of macro expansion");
                         return NULL;
                     }
 
                     // expand the token on the left side of the ##
                     param1 = token2.theSource;
-                    p = self;
+                    p = this;
                     buf1[0] = 0;
-                    while(1)
+                    while (true)
                     {
-                        if(p->type == PP_FUNCTION_MACRO && p->params->findByName(param1))
+                        if (p->type == PP_FUNCTION_MACRO && p->params->findByName(param1))
                         {
                             param1 = p->params->retrieve();
                             p = p->parent;
@@ -505,17 +494,17 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                             // printf("cat '%s' to buf1\n", tokenB.theSource);
                             strcat(buf1, tokenB.theSource);
                             memcpy(&tokenB, &tokenA, sizeof(pp_token));
-                        } while(1);
+                        } while (true);
                         param1 = param1 + strlen(param1) - strlen(tokenB.theSource);
                         assert(strcmp(param1, tokenB.theSource) == 0);
                     }
                     strcat(buf1, param1);
 
-                    param2 = self->token.theSource;
-                    p = self;
-                    while(1)
+                    param2 = this->token.theSource;
+                    p = this;
+                    while (true)
                     {
-                        if(p->type == PP_FUNCTION_MACRO && p->params->findByName(param2))
+                        if (p->type == PP_FUNCTION_MACRO && p->params->findByName(param2))
                         {
                             param2 = (char*)p->params->retrieve();
                             p = p->parent;
@@ -533,27 +522,27 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                     memcpy(buf2, param2, strlen(param2));
 
                     // printf("buf1='%s' buf2='%s'\n", buf1, buf2);
-                    self->concatenate(buf1, buf2);
+                    concatenate(buf1, buf2);
                     emitme = false;
                     continue;
                 }
             }
 
-            switch(self->token.theType)
+            switch (this->token.theType)
             {
             case PP_TOKEN_DIRECTIVE:
-                if(self->type == PP_FUNCTION_MACRO)
+                if (this->type == PP_FUNCTION_MACRO)
                 {
-                    success = SUCCEEDED(self->lexToken(true));
-                    if(!success)
+                    success = SUCCEEDED(lexToken(true));
+                    if (!success)
                     {
                         break;
                     }
 
-                    if(self->token.theType == PP_TOKEN_IDENTIFIER &&
-                            self->params->findByName(self->token.theSource))
+                    if (this->token.theType == PP_TOKEN_IDENTIFIER &&
+                        params->findByName(this->token.theSource))
                     {
-                        if(FAILED(self->stringify()))
+                        if (FAILED(stringify()))
                         {
                             return NULL;
                         }
@@ -562,14 +551,14 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                     }
                     else
                     {
-                        self->overread = true;
+                        overread = true;
                     }
                 }
-                else if(self->newline)
+                else if (newline)
                 {
                     /* only parse the "#" symbol when it's at the beginning of a
                      * line (ignoring whitespace) */
-                    if(FAILED(self->parseDirective()))
+                    if (FAILED(parseDirective()))
                     {
                         return NULL;
                     }
@@ -580,45 +569,45 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                 emitme = true;
                 break;
             case PP_TOKEN_NEWLINE:
-                if(!self->newline)
+                if (!newline)
                 {
                     emitme = true;
                 }
-                self->newline = true;
+                newline = true;
                 break;
             case PP_TOKEN_WHITESPACE:
                 emitme = true;
                 // whitespace doesn't affect the newline property
                 break;
             case PP_TOKEN_IDENTIFIER:
-                memcpy(&token2, &self->token, sizeof(pp_token)); // FIXME: this should be moved into the function macro else if block
-                self->newline = false;
+                memcpy(&token2, &this->token, sizeof(pp_token)); // FIXME: this should be moved into the function macro else if block
+                newline = false;
 
-                if(self->type == PP_FUNCTION_MACRO && self->params->findByName(self->token.theSource))
+                if (this->type == PP_FUNCTION_MACRO && params->findByName(this->token.theSource))
                 {
-                    self->insertParam(self->token.theSource);
+                    insertParam(this->token.theSource);
                 }
-                else if(!strcmp(self->token.theSource, "__FILE__") || !strcmp(self->token.theSource, "__LINE__"))
+                else if (!strcmp(this->token.theSource, "__FILE__") || !strcmp(this->token.theSource, "__LINE__"))
                 {
-                    self->insertBuiltinMacro(token2.theSource);
+                    insertBuiltinMacro(token2.theSource);
                 }
-                else if(self->peekToken() == PP_TOKEN_LPAREN &&
-                        self->ctx->func_macros.containsKey(token2.theSource))
+                else if (peekToken() == PP_TOKEN_LPAREN &&
+                         ctx->func_macros.containsKey(token2.theSource))
                 {
-                    success = SUCCEEDED(self->lexToken(true));
-                    assert(self->token.theType == PP_TOKEN_LPAREN);
-                    if(!success)
+                    success = SUCCEEDED(lexToken(true));
+                    assert(this->token.theType == PP_TOKEN_LPAREN);
+                    if (!success)
                     {
                         break;
                     }
-                    if(FAILED(self->insertFunctionMacro(token2.theSource)))
+                    if (FAILED(insertFunctionMacro(token2.theSource)))
                     {
                         return NULL;
                     }
                 }
-                else if(self->ctx->macros.containsKey(token2.theSource))
+                else if (ctx->macros.containsKey(token2.theSource))
                 {
-                    self->insertMacro(token2.theSource);
+                    insertMacro(token2.theSource);
                 }
                 else
                 {
@@ -627,12 +616,12 @@ extern "C" pp_token *pp_parser_emit_token(pp_parser *self)
                 break;
             default: // now includes EOF
                 emitme = true;
-                self->newline = false;
+                newline = false;
             }
         }
     }
 
-    return success ? &self->token : NULL;
+    return success ? &this->token : NULL;
 }
 
 // this->token contains the first token of the macro/message if this->overread is true
@@ -1380,19 +1369,14 @@ void pp_parser::insertBuiltinMacro(const char *name)
     child->freeSourceCode = true;
 }
 
+/**
+ * Returns true if the given name is the name of a currently defined macro,
+ * false otherwise.
+ */
 bool pp_parser::isDefined(const char *name)
 {
     return (ctx->macros.containsKey(name) ||
             ctx->func_macros.containsKey(name) ||
             pp_is_builtin_macro(name));
-}
-
-/**
- * Returns true if the given name is the name of a currently defined macro,
- * false otherwise.
- */
-extern "C" bool pp_parser_is_defined(pp_parser *self, const char *name)
-{
-    return self->isDefined(name);
 }
 

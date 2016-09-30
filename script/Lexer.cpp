@@ -406,11 +406,11 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
 }
 
 Lexer::Lexer(pp_context *pcontext, const char *thePath, char *theSource, TEXTPOS theStartingPosition)
+ : preprocessor(pcontext, thePath, theSource, theStartingPosition)
 {
     this->thePath = thePath;
     this->ptheSource = theSource;
     this->theTokenPosition = theStartingPosition;
-    pp_parser_init(&this->preprocessor, pcontext, thePath, theSource, theStartingPosition);
 }
 
 /******************************************************************************
@@ -429,7 +429,7 @@ HRESULT Lexer::getNextToken(Token *theNextToken)
     // get the next non-whitespace, non-newline token from the preprocessor
     do
     {
-        ppToken = pp_parser_emit_token(&preprocessor);
+        ppToken = preprocessor.emitToken();
         if (ppToken == NULL)
         {
             return E_FAIL;
