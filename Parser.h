@@ -20,7 +20,7 @@ class Parser
 public:
     //Private data members
     Lexer theLexer;                    //this parser's lexer
-    ParserSet theParserSet;            //this parser's parserSet
+    ParserSet parserSet;               //this parser's parserSet
     Token theNextToken;                //The next token
     Token theNextNextToken;            //The token after the next one (used for overread)
     bool rewound;                      //If true, use theNextNextToken instead of lexing another
@@ -40,7 +40,6 @@ public:
 
     Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
            int startingLineNumber, const char *path);
-    ~Parser();
     void parseText();
     bool check(MY_TOKEN_TYPE theType);
     void match();

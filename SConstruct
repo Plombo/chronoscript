@@ -11,7 +11,6 @@ c_sources = [
     'ralloc',
     'cfuhash',
     'ScriptUtils',
-    'script/ParserSet',
     'script/pp_lexer',
 ]
 cpp_sources = [
@@ -28,6 +27,7 @@ cpp_sources = [
     'StrCache',
     'ImportCache',
     'script/Lexer',
+    'script/ParserSet',
     'script/pp_parser',
     'script/pp_expr',
 ]

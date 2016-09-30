@@ -14,7 +14,6 @@ Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
 {
     memCtx = ralloc_context(NULL);
 
-    ParserSet_Buildup(&theParserSet);
     labelCount = 0;
     theFieldToken.theType = END_OF_TOKENS;
     theNextToken.theType = END_OF_TOKENS;
@@ -33,11 +32,6 @@ Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
         this->currentPath[0] = 0;
     }
     this->errorFound = false;
-}
-
-Parser::~Parser()
-{
-    ParserSet_Clear(&theParserSet);
 }
 
 /******************************************************************************
@@ -122,7 +116,7 @@ void Parser::rewind(Token *token)
 ******************************************************************************/
 void Parser::externalDecl()
 {
-    if (ParserSet_First(&theParserSet, Productions::decl_spec, theNextToken.theType))
+    if (parserSet.first(Productions::decl_spec, theNextToken.theType))
     {
         declSpec();
         externalDecl2(false); // go for the declaration
@@ -151,7 +145,7 @@ void Parser::externalDecl2(bool variableonly)
     // global variable declaration
 #if 0 // global variables with initializer not supported yet
     //type a =
-    if (ParserSet_First(&theParserSet, Productions::initializer, theNextToken.theType))
+    if (parserSet.first(Productions::initializer, theNextToken.theType))
     {
         //switch to immediate mode and allocate a variable.
         execBuilder->globals.declareGlobalVariable(token.theSource);
@@ -204,7 +198,7 @@ void Parser::externalDecl2(bool variableonly)
     }
 
     // not a comma, semicolon, or initializer, so must be a function declaration
-    else if (!variableonly && ParserSet_First(&theParserSet, Productions::funcDecl, theNextToken.theType))
+    else if (!variableonly && parserSet.first(Productions::funcDecl, theNextToken.theType))
     {
         bld = new(memCtx) SSABuilder(memCtx, token.theSource);
         bldUtil = new SSABuildUtil(bld, &execBuilder->globals);
@@ -279,7 +273,7 @@ void Parser::declSpec()
 // internal decleraton for variables.
 void Parser::decl()
 {
-    if (ParserSet_First(&theParserSet, Productions::decl_spec, theNextToken.theType ))
+    if (parserSet.first(Productions::decl_spec, theNextToken.theType))
     {
         //ignore the type of this declaration
         declSpec();
@@ -303,7 +297,7 @@ void Parser::decl2()
     match();
 
     // =
-    if (ParserSet_First(&theParserSet, Productions::initializer, theNextToken.theType))
+    if (parserSet.first(Productions::initializer, theNextToken.theType))
     {
         // Parser_AddInstructionViaToken(pparser, DATA, &token, NULL );
         bldUtil->declareVariable(token.theSource);
@@ -361,7 +355,7 @@ void Parser::funcDeclare()
         match();
         funcDeclare1();
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::funcDecl, theNextToken.theType)) {}
+    else if (parserSet.follow(Productions::funcDecl, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, funcDecl);
@@ -370,7 +364,7 @@ void Parser::funcDeclare()
 
 void Parser::funcDeclare1()
 {
-    if (ParserSet_First(&theParserSet, Productions::param_list, theNextToken.theType ))
+    if (parserSet.first(Productions::param_list, theNextToken.theType))
     {
         paramList();
         check(TOKEN_RPAREN);
@@ -393,7 +387,7 @@ RValue *Parser::initializer()
         match();
         return assignmentExpr();
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::initializer, theNextToken.theType)) {}
+    else if (parserSet.follow(Productions::initializer, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, initializer);
@@ -403,7 +397,7 @@ RValue *Parser::initializer()
 
 void Parser::parmDecl()
 {
-    if (ParserSet_First(&theParserSet, Productions::decl_spec, theNextToken.theType ))
+    if (parserSet.first(Productions::decl_spec, theNextToken.theType))
     {
         declSpec();
 
@@ -421,7 +415,7 @@ void Parser::parmDecl()
 
 void Parser::paramList()
 {
-    if (ParserSet_First(&theParserSet, Productions::parm_decl, theNextToken.theType ))
+    if (parserSet.first(Productions::parm_decl, theNextToken.theType))
     {
         parmDecl();
         paramCount = 1; // start count params
@@ -442,7 +436,7 @@ void Parser::paramList2()
         paramCount++;
         paramList2();
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::param_list2, theNextToken.theType )) {}
+    else if (parserSet.follow(Productions::param_list2, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, param_list2 );
@@ -451,7 +445,7 @@ void Parser::paramList2()
 
 void Parser::declList()
 {
-    if (ParserSet_First(&(theParserSet), Productions::decl, theNextToken.theType ))
+    if (parserSet.first(Productions::decl, theNextToken.theType))
     {
         decl();
         declList2();
@@ -464,17 +458,17 @@ void Parser::declList()
 
 void Parser::declList2()
 {
-    if (ParserSet_First(&(theParserSet), Productions::decl, theNextToken.theType ))
+    if (parserSet.first(Productions::decl, theNextToken.theType))
     {
         decl();
         declList2();
     }
-    if (ParserSet_First(&(theParserSet), Productions::stmt, theNextToken.theType ))
+    if (parserSet.first(Productions::stmt, theNextToken.theType))
     {
         stmt();
         stmtList2();
     }
-    else if (ParserSet_Follow(&(theParserSet), Productions::decl_list2, theNextToken.theType )) {}
+    else if (parserSet.follow(Productions::decl_list2, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, decl_list2 );
@@ -487,7 +481,7 @@ void Parser::declList2()
 ******************************************************************************/
 void Parser::stmtList()
 {
-    if (ParserSet_First(&(theParserSet), Productions::stmt, theNextToken.theType ))
+    if (parserSet.first(Productions::stmt, theNextToken.theType))
     {
         stmt();
         stmtList2();
@@ -500,17 +494,17 @@ void Parser::stmtList()
 
 void Parser::stmtList2()
 {
-    if (ParserSet_First(&theParserSet, Productions::stmt, theNextToken.theType))
+    if (parserSet.first(Productions::stmt, theNextToken.theType))
     {
         stmt();
         stmtList2();
     }
-    else if (ParserSet_First(&theParserSet, Productions::decl, theNextToken.theType))
+    else if (parserSet.first(Productions::decl, theNextToken.theType))
     {
         decl();
         declList2();
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::stmt_list2, theNextToken.theType)) {}
+    else if (parserSet.follow(Productions::stmt_list2, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, stmt_list2);
@@ -519,23 +513,23 @@ void Parser::stmtList2()
 
 void Parser::stmt()
 {
-    if (ParserSet_First(&theParserSet, Productions::expr_stmt, theNextToken.theType))
+    if (parserSet.first(Productions::expr_stmt, theNextToken.theType))
     {
         exprStmt();
     }
-    else if (ParserSet_First(&theParserSet, Productions::comp_stmt, theNextToken.theType))
+    else if (parserSet.first(Productions::comp_stmt, theNextToken.theType))
     {
         compStmt();
     }
-    else if (ParserSet_First(&theParserSet, Productions::select_stmt, theNextToken.theType))
+    else if (parserSet.first(Productions::select_stmt, theNextToken.theType))
     {
         selectStmt();
     }
-    else if (ParserSet_First(&theParserSet, Productions::iter_stmt, theNextToken.theType))
+    else if (parserSet.first(Productions::iter_stmt, theNextToken.theType))
     {
         iterStmt();
     }
-    else if (ParserSet_First(&theParserSet, Productions::jump_stmt, theNextToken.theType))
+    else if (parserSet.first(Productions::jump_stmt, theNextToken.theType))
     {
         jumpStmt();
     }
@@ -547,7 +541,7 @@ void Parser::stmt()
 
 void Parser::exprStmt()
 {
-    if (ParserSet_First(&theParserSet, Productions::expr, theNextToken.theType))
+    if (parserSet.first(Productions::expr, theNextToken.theType))
     {
         expr();
         check(TOKEN_SEMICOLON);
@@ -579,11 +573,11 @@ void Parser::compStmt()
 
 void Parser::compStmt2()
 {
-    if (ParserSet_First(&theParserSet, Productions::decl_list, theNextToken.theType))
+    if (parserSet.first(Productions::decl_list, theNextToken.theType))
     {
         declList();
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::comp_stmt2, theNextToken.theType )) {}
+    else if (parserSet.follow(Productions::comp_stmt2, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, comp_stmt2);
@@ -592,11 +586,11 @@ void Parser::compStmt2()
 
 void Parser::compStmt3()
 {
-    if (ParserSet_First(&theParserSet, Productions::stmt_list, theNextToken.theType))
+    if (parserSet.first(Productions::stmt_list, theNextToken.theType))
     {
         stmtList();
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::comp_stmt3, theNextToken.theType )) {}
+    else if (parserSet.follow(Productions::comp_stmt3, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, comp_stmt3);
@@ -701,7 +695,7 @@ void Parser::switchBody(RValue *baseVal)
     while(1)
     {
         bldUtil->currentBlock = body;
-        if (ParserSet_First(&theParserSet, Productions::case_label, theNextToken.theType))
+        if (parserSet.first(Productions::case_label, theNextToken.theType))
         {
             if (!body->isEmpty())
             {
@@ -730,17 +724,17 @@ void Parser::switchBody(RValue *baseVal)
                 defaultTarget = body;
             }
         }
-        else if (ParserSet_First(&theParserSet, Productions::stmt, theNextToken.theType))
+        else if (parserSet.first(Productions::stmt, theNextToken.theType))
         {
             stmt();
             stmtList2();
         }
-        else if (ParserSet_First(&theParserSet, Productions::decl, theNextToken.theType))
+        else if (parserSet.first(Productions::decl, theNextToken.theType))
         {
             decl();
             declList2();
         }
-        else if (ParserSet_Follow(&theParserSet, Productions::switch_body, theNextToken.theType))
+        else if (parserSet.follow(Productions::switch_body, theNextToken.theType))
         {
             break;
         }
@@ -897,11 +891,11 @@ void Parser::iterStmt()
 
         // The last parameter goes in the footer
         bldUtil->currentBlock = footer;
-        if (ParserSet_First(&theParserSet, Productions::expr, theNextToken.theType))
+        if (parserSet.first(Productions::expr, theNextToken.theType))
         {
             expr();
         }
-        else if (ParserSet_Follow(&theParserSet, Productions::defer_expr_stmt, theNextToken.theType)) {}
+        else if (parserSet.follow(Productions::defer_expr_stmt, theNextToken.theType)) {}
         else
         {
             Parser_Error(this, defer_expr_stmt);
@@ -939,11 +933,11 @@ void Parser::iterStmt()
 
 void Parser::optExprStmt() // used in for loop
 {
-    if (ParserSet_First(&theParserSet, Productions::expr_stmt, theNextToken.theType))
+    if (parserSet.first(Productions::expr_stmt, theNextToken.theType))
     {
         exprStmt();
     }
-    else if (ParserSet_First(&theParserSet, Productions::decl, theNextToken.theType))
+    else if (parserSet.first(Productions::decl, theNextToken.theType))
     {
         decl();
     }
@@ -951,7 +945,7 @@ void Parser::optExprStmt() // used in for loop
     {
         match();
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::opt_expr_stmt, theNextToken.theType)) {}
+    else if (parserSet.follow(Productions::opt_expr_stmt, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, opt_expr_stmt);
@@ -1003,11 +997,11 @@ void Parser::jumpStmt()
 ******************************************************************************/
 RValue *Parser::optExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::expr, theNextToken.theType))
+    if (parserSet.first(Productions::expr, theNextToken.theType))
     {
         return expr();
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::opt_expr, theNextToken.theType))
+    else if (parserSet.follow(Productions::opt_expr, theNextToken.theType))
     {
         return NULL;
     }
@@ -1063,7 +1057,7 @@ RValue *Parser::assignmentExpr()
     {
         Token identifier = theNextToken;
         match();
-        if (ParserSet_First(&theParserSet, Productions::assignment_op, theNextToken.theType))
+        if (parserSet.first(Productions::assignment_op, theNextToken.theType))
         {
             // this is actually an assignment
             OpCode op = assignmentOp();
@@ -1087,7 +1081,7 @@ RValue *Parser::assignmentExpr()
             // now fall through to the logic below
         }
     }
-    if (ParserSet_First(&theParserSet, Productions::cond_expr, theNextToken.theType)) //= /= += Operator, or a comma and the like (the reputation of a variable)
+    if (parserSet.first(Productions::cond_expr, theNextToken.theType)) //= /= += Operator, or a comma and the like (the reputation of a variable)
     {
         return condExpr();
     }
@@ -1100,7 +1094,7 @@ RValue *Parser::assignmentExpr()
 
 RValue *Parser::condExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::log_or_expr, theNextToken.theType))
+    if (parserSet.first(Productions::log_or_expr, theNextToken.theType))
     {
         RValue *lhs = logOrExpr();
         return condExpr2(lhs);
@@ -1158,7 +1152,7 @@ RValue *Parser::condExpr2(RValue *lhs)
             return bldUtil->undef();
         }
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::cond_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::cond_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1172,7 +1166,7 @@ RValue *Parser::condExpr2(RValue *lhs)
 // void Parser_Log_or_expr(Parser *pparser )
 RValue *Parser::logOrExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::log_and_expr, theNextToken.theType))
+    if (parserSet.first(Productions::log_and_expr, theNextToken.theType))
     {
         RValue *lhs = logAndExpr();
         return logOrExpr2(lhs);
@@ -1211,7 +1205,7 @@ RValue *Parser::logOrExpr2(RValue *lhs)
         result = bldUtil->mkUnaryOp(OP_BOOL, result);
         return logOrExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::log_or_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::log_or_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1224,7 +1218,7 @@ RValue *Parser::logOrExpr2(RValue *lhs)
 
 RValue *Parser::logAndExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::bit_or_expr, theNextToken.theType))
+    if (parserSet.first(Productions::bit_or_expr, theNextToken.theType))
     {
         RValue *lhs = bitOrExpr();
         return logAndExpr2(lhs);
@@ -1263,7 +1257,7 @@ RValue *Parser::logAndExpr2(RValue *lhs)
         result = bldUtil->mkUnaryOp(OP_BOOL, result);
         return logAndExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::log_and_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::log_and_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1276,7 +1270,7 @@ RValue *Parser::logAndExpr2(RValue *lhs)
 
 RValue *Parser::bitOrExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::xor_expr, theNextToken.theType))
+    if (parserSet.first(Productions::xor_expr, theNextToken.theType))
     {
         RValue *lhs = xorExpr();
         return bitOrExpr2(lhs);
@@ -1297,7 +1291,7 @@ RValue *Parser::bitOrExpr2(RValue *lhs)
         RValue *result = bldUtil->mkBinaryOp(OP_BIT_OR, lhs, rhs);
         return bitOrExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::bit_or_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::bit_or_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1310,7 +1304,7 @@ RValue *Parser::bitOrExpr2(RValue *lhs)
 
 RValue *Parser::xorExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::bit_and_expr, theNextToken.theType))
+    if (parserSet.first(Productions::bit_and_expr, theNextToken.theType))
     {
         RValue *lhs = bitAndExpr();
         return xorExpr2(lhs);
@@ -1332,7 +1326,7 @@ RValue *Parser::xorExpr2(RValue *lhs)
         RValue *result = bldUtil->mkBinaryOp(OP_XOR, lhs, rhs);
         return xorExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::xor_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::xor_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1345,7 +1339,7 @@ RValue *Parser::xorExpr2(RValue *lhs)
 
 RValue *Parser::bitAndExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::equal_expr, theNextToken.theType))
+    if (parserSet.first(Productions::equal_expr, theNextToken.theType))
     {
         RValue *lhs = equalExpr();
         return bitAndExpr2(lhs);
@@ -1366,7 +1360,7 @@ RValue *Parser::bitAndExpr2(RValue *lhs)
         RValue *result = bldUtil->mkBinaryOp(OP_BIT_AND, lhs, rhs);
         return bitAndExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::bit_and_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::bit_and_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1398,7 +1392,7 @@ OpCode Parser::equalOp()
 
 RValue *Parser::equalExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::rel_expr, theNextToken.theType))
+    if (parserSet.first(Productions::rel_expr, theNextToken.theType))
     {
         RValue *lhs = relExpr();
         return equalExpr2(lhs);
@@ -1413,14 +1407,14 @@ RValue *Parser::equalExpr()
 RValue *Parser::equalExpr2(RValue *lhs)
 {
     OpCode code;
-    if (ParserSet_First(&theParserSet, Productions::eq_op, theNextToken.theType))
+    if (parserSet.first(Productions::eq_op, theNextToken.theType))
     {
         code = equalOp();
         RValue *rhs = relExpr();
         RValue *result = bldUtil->mkBinaryOp(code, lhs, rhs);
         return equalExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::equal_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::equal_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1462,7 +1456,7 @@ OpCode Parser::relOp()
 
 RValue *Parser::relExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::shift_expr, theNextToken.theType))
+    if (parserSet.first(Productions::shift_expr, theNextToken.theType))
     {
         RValue *lhs = shiftExpr();
         return relExpr2(lhs);
@@ -1477,14 +1471,14 @@ RValue *Parser::relExpr()
 RValue *Parser::relExpr2(RValue *lhs)
 {
     OpCode code;
-    if (ParserSet_First(&theParserSet, Productions::rel_op, theNextToken.theType))
+    if (parserSet.first(Productions::rel_op, theNextToken.theType))
     {
         code = relOp();
         RValue *rhs = shiftExpr();
         RValue *result = bldUtil->mkBinaryOp(code, lhs, rhs);
         return relExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::rel_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::rel_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1516,7 +1510,7 @@ OpCode Parser::shiftOp()
 
 RValue *Parser::shiftExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::add_expr, theNextToken.theType))
+    if (parserSet.first(Productions::add_expr, theNextToken.theType))
     {
         RValue *lhs = addExpr();
         return shiftExpr2(lhs);
@@ -1531,14 +1525,14 @@ RValue *Parser::shiftExpr()
 RValue *Parser::shiftExpr2(RValue *lhs)
 {
     OpCode code;
-    if (ParserSet_First(&theParserSet, Productions::shift_op, theNextToken.theType))
+    if (parserSet.first(Productions::shift_op, theNextToken.theType))
     {
         code = shiftOp();
         RValue *rhs = addExpr();
         RValue *result = bldUtil->mkBinaryOp(code, lhs, rhs);
         return shiftExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::shift_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::shift_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1570,7 +1564,7 @@ OpCode Parser::addOp()
 
 RValue *Parser::addExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::mult_expr, theNextToken.theType))
+    if (parserSet.first(Productions::mult_expr, theNextToken.theType))
     {
         RValue *lhs = multExpr();
         return addExpr2(lhs);
@@ -1585,14 +1579,14 @@ RValue *Parser::addExpr()
 RValue *Parser::addExpr2(RValue *lhs)
 {
     OpCode code;
-    if (ParserSet_First(&theParserSet, Productions::add_op, theNextToken.theType))
+    if (parserSet.first(Productions::add_op, theNextToken.theType))
     {
         code = addOp();
         RValue *rhs = multExpr();
         RValue *result = bldUtil->mkBinaryOp(code, lhs, rhs);
         return addExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::add_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::add_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1629,7 +1623,7 @@ OpCode Parser::multOp()
 
 RValue *Parser::multExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::unary_expr, theNextToken.theType))
+    if (parserSet.first(Productions::unary_expr, theNextToken.theType))
     {
         RValue *lhs = unaryExpr();
         return multExpr2(lhs);
@@ -1644,14 +1638,14 @@ RValue *Parser::multExpr()
 RValue *Parser::multExpr2(RValue *lhs)
 {
     OpCode code;
-    if (ParserSet_First(&theParserSet, Productions::mult_op, theNextToken.theType))
+    if (parserSet.first(Productions::mult_op, theNextToken.theType))
     {
         code = multOp();
         RValue *rhs = unaryExpr();
         RValue *result = bldUtil->mkBinaryOp(code, lhs, rhs);
         return multExpr2(result);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::mult_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::mult_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1666,7 +1660,7 @@ RValue *Parser::unaryExpr()
 {
     RValue *src;
 
-    if (ParserSet_First(&theParserSet, Productions::postfix_expr, theNextToken.theType))
+    if (parserSet.first(Productions::postfix_expr, theNextToken.theType))
     {
         return postfixExpr();
     }
@@ -1718,7 +1712,7 @@ RValue *Parser::unaryExpr()
 
 RValue *Parser::postfixExpr()
 {
-    if (ParserSet_First(&theParserSet, Productions::primary_expr, theNextToken.theType))
+    if (parserSet.first(Productions::primary_expr, theNextToken.theType))
     {
         RValue *lhs = primaryExpr();
         return postfixExpr2(lhs);
@@ -1780,7 +1774,7 @@ RValue *Parser::postfixExpr2(RValue *lhs)
         lhs->lvalue = NULL;
         return postfixExpr2(lhs);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::postfix_expr2, theNextToken.theType))
+    else if (parserSet.follow(Productions::postfix_expr2, theNextToken.theType))
     {
         return lhs;
     }
@@ -1794,13 +1788,13 @@ RValue *Parser::postfixExpr2(RValue *lhs)
 
 void Parser::argExprList(FunctionCall *call)
 {
-    if (ParserSet_First(&theParserSet, Productions::assignment_expr, theNextToken.theType))
+    if (parserSet.first(Productions::assignment_expr, theNextToken.theType))
     {
         RValue *arg = assignmentExpr();
         call->appendOperand(arg);
         argExprList2(call);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::arg_expr_list, theNextToken.theType))
+    else if (parserSet.follow(Productions::arg_expr_list, theNextToken.theType))
     {
         //No arguments, so push a zero argument count onto the stack
         // Parser_AddInstructionViaLabel(pparser, CONSTINT, "0", NULL );
@@ -1820,7 +1814,7 @@ void Parser::argExprList2(FunctionCall *call)
         call->appendOperand(arg);
         argExprList2(call);
     }
-    else if (ParserSet_Follow(&theParserSet, Productions::arg_expr_list2, theNextToken.theType))
+    else if (parserSet.follow(Productions::arg_expr_list2, theNextToken.theType))
     {
     }
     else
@@ -1838,7 +1832,7 @@ RValue *Parser::primaryExpr()
         match();
         return value;
     }
-    else if (ParserSet_First(&theParserSet, Productions::constant, theNextToken.theType))
+    else if (parserSet.first(Productions::constant, theNextToken.theType))
     {
         return constant();
     }
@@ -1941,5 +1935,5 @@ void Parser::error(PRODUCTION offender, const char *offenderStr)
             break;
         }
     }
-    while (!ParserSet_Follow(&theParserSet, offender, theNextToken.theType));
+    while (!parserSet.follow(offender, theNextToken.theType));
 }
