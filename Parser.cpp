@@ -15,23 +15,11 @@ Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
     memCtx = ralloc_context(NULL);
 
     labelCount = 0;
-    theFieldToken.theType = END_OF_TOKENS;
     theNextToken.theType = END_OF_TOKENS;
     rewound = false;
     bldUtil = NULL;
-
-    this->execBuilder = builder;
-
-    //Create a new CLexer for this script text.
-    if(path)
-    {
-        strncpy(this->currentPath, path, 255);
-    }
-    else
-    {
-        this->currentPath[0] = 0;
-    }
-    this->errorFound = false;
+    execBuilder = builder;
+    errorFound = false;
 }
 
 /******************************************************************************
@@ -418,7 +406,6 @@ void Parser::paramList()
     if (parserSet.first(Productions::parm_decl, theNextToken.theType))
     {
         parmDecl();
-        paramCount = 1; // start count params
         paramList2();
     }
     else
@@ -433,7 +420,6 @@ void Parser::paramList2()
     {
         match();
         parmDecl();
-        paramCount++;
         paramList2();
     }
     else if (parserSet.follow(Productions::param_list2, theNextToken.theType)) {}

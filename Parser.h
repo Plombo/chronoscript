@@ -17,30 +17,27 @@
 
 class Parser
 {
-public:
-    //Private data members
+private:
     Lexer theLexer;                    //this parser's lexer
     ParserSet parserSet;               //this parser's parserSet
     Token theNextToken;                //The next token
     Token theNextNextToken;            //The token after the next one (used for overread)
     bool rewound;                      //If true, use theNextNextToken instead of lexing another
-    List  *pIList;                      //A pointer to the instruction list
     int labelCount;                   //A counter to track the number of labels
-    Token theFieldToken;               //A pointer to the field source token
-    int paramCount;
-    char currentPath[256];                 // current path info of the text
     bool errorFound;
-    BOOL isImport;
-
-    void *memCtx;
     SSABuilder *bld;
     SSABuildUtil *bldUtil;
     ExecBuilder *execBuilder;
     CList<SSABuilder> functions;
 
+public:
+    void *memCtx; // TODO: make this a parameter and private
+
     Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
            int startingLineNumber, const char *path);
     void parseText();
+
+private:
     bool check(MY_TOKEN_TYPE theType);
     void match();
     void rewind(Token *token);
