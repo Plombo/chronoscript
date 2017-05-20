@@ -47,7 +47,10 @@ struct ExecInstruction {
         u16 src1; // second src
         u16 callTarget; // for functions: index in callTargets (CALL) or builtins (CALL_BUILTIN)
     };
-    u16 jumpTarget; // for jumps
+    union {
+        u16 src2; // third src
+        u16 jumpTarget; // for jumps
+    };
 };
 
 struct ExecFunction {

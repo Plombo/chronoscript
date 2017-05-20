@@ -61,7 +61,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
     {
         ExecInstruction *inst = &function->instructions[index];
         bool jumped = false;
-        ScriptVariant *dst, *src0, *src1, *scratch;
+        ScriptVariant *dst, *src0, *src1, *src2, *scratch;
         bool shouldBranch;
         switch(inst->opCode)
         {
@@ -174,6 +174,23 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                     return callResult;
                 break;
             }
+
+            // TODO: these are no-ops for now
+            case OP_MKOBJECT:
+                fetchDst();
+                memset(dst, 0, sizeof(*dst));
+                break;
+            case OP_SET:
+                fetchSrc(src0, inst->src0);
+                fetchSrc(src1, inst->src1);
+                fetchSrc(src2, inst->src2);
+                break;
+            case OP_GET:
+                fetchDst();
+                fetchSrc(src0, inst->src0);
+                fetchSrc(src1, inst->src1);
+                memset(dst, 0, sizeof(*dst));
+                break;
 
             // write to global variable
             case OP_EXPORT:

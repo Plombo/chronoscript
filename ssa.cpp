@@ -600,6 +600,23 @@ RValue *SSABuildUtil::mkMove(RValue *src)
     return inst->value();
 }
 
+RValue *SSABuildUtil::mkObject()
+{
+    Expression *inst = new(builder->memCtx) Expression(OP_MKOBJECT, builder->valueId());
+    builder->insertInstruction(inst, currentBlock);
+    return inst->value();
+}
+
+Instruction *SSABuildUtil::mkSet(RValue *object, RValue *key, RValue *value)
+{
+    Instruction *inst = new(builder->memCtx) Instruction(OP_SET);
+    inst->appendOperand(object);
+    inst->appendOperand(key);
+    inst->appendOperand(value);
+    builder->insertInstruction(inst, currentBlock);
+    return inst;
+}
+
 Export *SSABuildUtil::mkExport(GlobalVarRef *dst, RValue *src)
 {
     Export *inst = new(builder->memCtx) Export(dst, src);

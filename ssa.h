@@ -57,6 +57,11 @@ enum OpCode
     OP_CALL,
     OP_CALL_BUILTIN,
 
+    // object operations
+    OP_MKOBJECT,
+    OP_GET,
+    OP_SET,
+
     // write to global variable
     OP_EXPORT,
 
@@ -460,6 +465,8 @@ public:
     Instruction *mkReturn(RValue *src0);
     RValue *mkBool(RValue *src);
     RValue *mkMove(RValue *val);
+    RValue *mkObject();
+    Instruction *mkSet(RValue *object, RValue *key, RValue *value);
     Export *mkExport(GlobalVarRef *dst, RValue *src);
     
     // creates a function call instruction but doesn't put it in the instruction list yet

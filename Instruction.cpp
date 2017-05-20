@@ -412,6 +412,10 @@ const char *getOpCodeName(OpCode op)
         "call",
         "call_builtin",
 
+        "mkobject",
+        "get",
+        "set",
+
         "export",
     };
     return opCodeNames[op];

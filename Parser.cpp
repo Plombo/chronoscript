@@ -499,13 +499,13 @@ void Parser::stmtList2()
 
 void Parser::stmt()
 {
-    if (parserSet.first(Productions::expr_stmt, theNextToken.theType))
-    {
-        exprStmt();
-    }
-    else if (parserSet.first(Productions::comp_stmt, theNextToken.theType))
+    if (parserSet.first(Productions::comp_stmt, theNextToken.theType))
     {
         compStmt();
+    }
+    else if (parserSet.first(Productions::expr_stmt, theNextToken.theType))
+    {
+        exprStmt();
     }
     else if (parserSet.first(Productions::select_stmt, theNextToken.theType))
     {
@@ -1818,6 +1818,10 @@ RValue *Parser::primaryExpr()
         match();
         return value;
     }
+    else if (parserSet.first(Productions::object, theNextToken.theType))
+    {
+        return object();
+    }
     else if (parserSet.first(Productions::constant, theNextToken.theType))
     {
         return constant();
@@ -1833,6 +1837,47 @@ RValue *Parser::primaryExpr()
     else
     {
         Parser_Error(this, primary_expr);
+        return bldUtil->undef();
+    }
+}
+
+RValue *Parser::object()
+{
+    match(); // TOKEN_LCURLY
+
+    RValue *object = bldUtil->mkObject();
+
+    /* Let's implement these productions iteratively, not recursively, to avoid stack overflow:
+        kv_list: kv_pair kv_list2 | EPSILON
+        kv_list2: COMMA kv_pair kv_list2 | COMMA | EPSILON
+        kv_pair: expr COLON expr
+    */
+    while (parserSet.first(Productions::expr, theNextToken.theType))
+    {
+        RValue *key = expr();
+        if (!check(TOKEN_COLON))
+        {
+            Parser_Error(this, kv_pair);
+            return bldUtil->undef();
+        }
+        match();
+        RValue *value = expr();
+        bldUtil->mkSet(object, key, value);
+        if (check(TOKEN_COMMA))
+        {
+            match();
+        }
+        else break;
+    }
+
+    if (check(TOKEN_RCURLY))
+    {
+        match();
+        return object;
+    }
+    else
+    {
+        Parser_Error(this, object);
         return bldUtil->undef();
     }
 }
@@ -1889,6 +1934,10 @@ const char  *_production_error_message(Parser *pparser, PRODUCTION offender)
         return "Invalid external declaration";
     case Productions::decl_spec:
         return "Invalid identifier";
+    case Productions::kv_pair:
+        return "Expected ':' after key";
+    case Productions::object:
+        return "Expected '}' at end of object declaration";
     case Productions::decl:
         return "Invalid declaration(expected comma, semicolon or initializer?)";
     default:

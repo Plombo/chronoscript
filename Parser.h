@@ -107,6 +107,7 @@ private:
     void argExprList(FunctionCall *call);
     void argExprList2(FunctionCall *call);
     RValue *primaryExpr();
+    RValue *object();
     RValue *constant();
 
     void error(PRODUCTION offender, const char *offenderStr);

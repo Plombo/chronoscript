@@ -114,12 +114,14 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
     else
     {
         int numSrc = ssaInst->operands.size();
-        assert(numSrc >= 0 && numSrc <= 2);
+        assert(numSrc >= 0 && numSrc <= 3);
         if (numSrc >= 1) // src0
             inst->src0 = createSrc(ssaInst->src(0));
         if (numSrc >= 2) // src1
             inst->src1 = createSrc(ssaInst->src(1));
-        if (ssaInst->isJump())
+        if (numSrc >= 3) // src2
+            inst->src2 = createSrc(ssaInst->src(2));
+        else if (ssaInst->isJump()) // note: jumpTarget and src2 are aliased
             inst->jumpTarget = ssaInst->asJump()->target->startIndex;
     }
 
@@ -228,7 +230,7 @@ void ExecBuilder::printInstructions()
             printf("%i: ", i);
 
             // destination
-            if (inst->opCode >= OP_MOV && inst->opCode <= OP_CALL_BUILTIN)
+            if (inst->opCode >= OP_MOV && inst->opCode <= OP_GET)
             {
                 printf("gpr[%i] := ", inst->dst);
             }
@@ -259,6 +261,7 @@ void ExecBuilder::printInstructions()
             {
                 printSrc(inst->src0);
                 printSrc(inst->src1);
+                printSrc(inst->src2);
             }
 
             // jump target
