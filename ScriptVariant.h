@@ -9,6 +9,7 @@
 #ifndef SCRIPTVARIANT_H
 #define SCRIPTVARIANT_H
 
+#include <stdlib.h>
 #include "depends.h"
 #include "StrCache.h"
 
@@ -48,7 +49,7 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
 HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, s32 *pVal);
 HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal);
 BOOL ScriptVariant_IsTrue(ScriptVariant *svar);
-void ScriptVariant_ToString(ScriptVariant *svar, char *buffer);
+void ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize);
 
 ScriptVariant *ScriptVariant_Or(ScriptVariant *svar, ScriptVariant *rightChild);
 ScriptVariant *ScriptVariant_And(ScriptVariant *svar, ScriptVariant *rightChild);

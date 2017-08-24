@@ -12,7 +12,7 @@ HRESULT builtin_log(int numParams, ScriptVariant *params, ScriptVariant *retval)
     for (int i = 0; i < numParams; i++)
     {
         if (i > 0) printf(" ");
-        ScriptVariant_ToString(&params[i], buf);
+        ScriptVariant_ToString(&params[i], buf, sizeof(buf));
         printf("%s", buf);
     }
     printf("\n");

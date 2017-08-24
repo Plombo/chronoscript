@@ -13,6 +13,7 @@ void StrCache_Collect(int index);
 void StrCache_Grab(int index);
 int StrCache_Pop();
 char *StrCache_Get(int index);
+int StrCache_Len(int index);
 void StrCache_Copy(int index, char *str);
 void StrCache_NCopy(int index, char *str, int n);
 int StrCache_FindString(char *str);

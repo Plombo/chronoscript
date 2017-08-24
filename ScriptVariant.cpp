@@ -110,28 +110,27 @@ BOOL ScriptVariant_IsTrue(ScriptVariant *svar)
     }
 }
 
-// this writes into a buffer without knowing the size, not great
-void ScriptVariant_ToString(ScriptVariant *svar, char *buffer)
+void ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize)
 {
     switch (svar->vt)
     {
     case VT_EMPTY:
-        sprintf(buffer, "<VT_EMPTY>   Unitialized");
+        snprintf(buffer, bufsize, "<VT_EMPTY>   Unitialized");
         break;
     case VT_INTEGER:
-        sprintf(buffer, "%d", svar->lVal);
+        snprintf(buffer, bufsize, "%d", svar->lVal);
         break;
     case VT_DECIMAL:
-        sprintf(buffer, "%lf", svar->dblVal);
+        snprintf(buffer, bufsize, "%lf", svar->dblVal);
         break;
     case VT_PTR:
-        sprintf(buffer, "%p", svar->ptrVal);
+        snprintf(buffer, bufsize, "%p", svar->ptrVal);
         break;
     case VT_STR:
-        sprintf(buffer, "%s", StrCache_Get(svar->strVal));
+        snprintf(buffer, bufsize, "%s", StrCache_Get(svar->strVal));
         break;
     default:
-        sprintf(buffer, "<Unprintable VARIANT type.>");
+        snprintf(buffer, bufsize, "<Unprintable VARIANT type.>");
         break;
     }
 }
@@ -495,8 +494,8 @@ ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
     else if (svar->vt == VT_STR || rightChild->vt == VT_STR)
     {
         ScriptVariant_ChangeType(&retvar, VT_STR);
-        ScriptVariant_ToString(svar, StrCache_Get(retvar.strVal));
-        ScriptVariant_ToString(rightChild, buf);
+        ScriptVariant_ToString(svar, StrCache_Get(retvar.strVal), StrCache_Len(retvar.strVal) + 1);
+        ScriptVariant_ToString(rightChild, buf, sizeof(buf));
         strcat(StrCache_Get(retvar.strVal), buf);
     }
     else

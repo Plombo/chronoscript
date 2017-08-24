@@ -31,7 +31,7 @@ void doTest(const char *filename)
         }
         else
         {
-            ScriptVariant_ToString(&retval, buf);
+            ScriptVariant_ToString(&retval, buf, sizeof(buf));
             printf("\nReturned value: %s\n", buf);
         }
         ScriptVariant_Clear(&retval);

@@ -139,7 +139,7 @@ void ScriptObject::print()
         if (var->vt == VT_OBJECT) ObjectHeap_Get(var->objVal)->print();
         else
         {
-            ScriptVariant_ToString(var, buf);
+            ScriptVariant_ToString(var, buf, sizeof(buf));
             printf("%s", buf);
         }
         printf(", ");
@@ -156,7 +156,7 @@ void ScriptObject::toString(char *dst, int dstsize)
     {
         SNPRINTF("\"%s\": ", iter.name());
         ScriptVariant *var = iter.value();
-        ScriptVariant_ToString(var, buf);
+        ScriptVariant_ToString(var, buf, sizeof(buf));
         SNPRINTF("%s", buf);
         SNPRINTF(", ");
     }
