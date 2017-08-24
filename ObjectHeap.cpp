@@ -41,6 +41,14 @@ ScriptObject::~ScriptObject()
     while (map.size())
     {
         ScriptVariant *storage = map.retrieve();
+        if (storage->vt == VT_STR)
+        {
+            StrCache_Collect(storage->strVal);
+        }
+        else if (storage->vt == VT_OBJECT)
+        {
+            ObjectHeap_Unref(storage->objVal);
+        }
         delete storage;
         map.remove();
     }
@@ -59,12 +67,10 @@ void ScriptObject::set(const char *key, ScriptVariant value)
             StrCache_Grab(value.strVal);
         }
     }
-#if 0 // TODO enable when object has been added as a script type
     else if (persistent && value.vt == VT_OBJECT)
     {
         value.objVal = ObjectHeap_GetPersistentRef(value.objVal);
     }
-#endif
 
     if (map.findByName(key))
     {
@@ -73,12 +79,10 @@ void ScriptObject::set(const char *key, ScriptVariant value)
         {
             StrCache_Collect(storage->strVal);
         }
-#if 0 // TODO enable when object has been added as a script type
         else if (storage->vt == VT_OBJECT)
         {
             ObjectHeap_Unref(storage->objVal);
         }
-#endif
         *storage = value;
     }
     else
@@ -101,6 +105,63 @@ ScriptVariant ScriptObject::get(const char *key)
         ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
         return retvar;
     }
+}
+
+void ScriptObject::makePersistent()
+{
+    if (persistent) return;
+    persistent = true; // set it up here to avoid infinite recursion in case of cycles
+    foreach_list(map, ScriptVariant, iter)
+    {
+        ScriptVariant *var = iter.value();
+        // FIXME need to ref object and string even if they are already persistent
+        if (var->vt == VT_OBJECT && var->objVal < 0)
+        {
+            //printf("make object %i persistent\n", var->objVal);
+            var->objVal = ObjectHeap_GetPersistentRef(var->objVal);
+        }
+        else if (var->vt == VT_STR && var->strVal < 0)
+        {
+            //printf("make string %i persistent\n", var->strVal);
+            var->strVal = StrCache_MakePersistent(var->strVal);
+        }
+    }
+}
+
+void ScriptObject::print()
+{
+    char buf[256];
+    printf("{");
+    foreach_list(map, ScriptVariant, iter)
+    {
+        printf("\"%s\": ", iter.name());
+        ScriptVariant *var = iter.value();
+        if (var->vt == VT_OBJECT) ObjectHeap_Get(var->objVal)->print();
+        else
+        {
+            ScriptVariant_ToString(var, buf);
+            printf("%s", buf);
+        }
+        printf(", ");
+    }
+    printf("}");
+}
+
+void ScriptObject::toString(char *dst, int dstsize)
+{
+#define SNPRINTF(...) { int n = snprintf(dst, dstsize, __VA_ARGS__); dst += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
+    char buf[256];
+    SNPRINTF("{");
+    foreach_list(map, ScriptVariant, iter)
+    {
+        SNPRINTF("\"%s\": ", iter.name());
+        ScriptVariant *var = iter.value();
+        ScriptVariant_ToString(var, buf);
+        SNPRINTF("%s", buf);
+        SNPRINTF(", ");
+    }
+    SNPRINTF("}");
+#undef SNPRINTF
 }
 
 class ObjectHeap {
@@ -260,7 +321,8 @@ int ObjectHeap::steal(ScriptObject *obj)
 {
     int index = pop();
     assert(objects[index].type == MEMBER_OBJECT);
-    memcpy(objects[index].object.obj, obj, sizeof(ScriptObject));
+    delete objects[index].object.obj;
+    objects[index].object.obj = obj;
     return index;
 }
 
@@ -268,8 +330,6 @@ int ObjectHeap::steal(ScriptObject *obj)
 void ObjectHeap::replaceWithLink(int index, int target)
 {
     assert(index < size && objects[index].type == MEMBER_OBJECT);
-    memset(objects[index].object.obj, 0, sizeof(ScriptObject));
-    delete objects[index].object.obj;
     objects[index].type = MEMBER_LINK;
     objects[index].link.target = target;
 }
@@ -317,6 +377,7 @@ ScriptObject *ObjectHeap_Get(int index)
 }
 
 // makes temporary object persistent, or refs object if it's already persistent
+// FIXME handle case where index is already a link
 int ObjectHeap_GetPersistentRef(int index)
 {
     if (index >= 0)
@@ -326,9 +387,12 @@ int ObjectHeap_GetPersistentRef(int index)
     }
     else
     {
+        // FIXME make this not infinite loop for cycles...
         ScriptObject *obj = temporaryHeap.get(~index);
         int newIndex = persistentHeap.steal(obj);
         temporaryHeap.replaceWithLink(~index, newIndex);
+        obj->makePersistent();
+        //printf("made persistent: %i -> %i\n", index, newIndex);
         return newIndex;
     }
 }

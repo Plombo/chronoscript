@@ -40,7 +40,7 @@ public:
     //clear the string cache
     void clear();
 
-    // reallocs the string cache to a new size
+    // reallocs a string in the cache to a new size
     void resize(int index, int size);
 
     // increments a string's reference count

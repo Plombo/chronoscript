@@ -11,6 +11,7 @@
 
 #include "ImportCache.h"
 #include "StrCache.h"
+#include "ObjectHeap.h"
 
 void doTest(const char *filename)
 {
@@ -21,8 +22,18 @@ void doTest(const char *filename)
         printf("\n\nRunning function 'main'...\n");
         interpreter->runFunction(interpreter->functions.retrieve(), NULL, &retval);
         char buf[256];
-        ScriptVariant_ToString(&retval, buf);
-        printf("\nReturned value: %s\n", buf);
+        if (retval.vt == VT_OBJECT)
+        {
+            printf("Returned value: ");
+            ObjectHeap_Get(retval.objVal)->print();
+            printf("\n");
+            ObjectHeap_Unref(retval.objVal);
+        }
+        else
+        {
+            ScriptVariant_ToString(&retval, buf);
+            printf("\nReturned value: %s\n", buf);
+        }
         ScriptVariant_Clear(&retval);
     }
 }
@@ -66,6 +77,7 @@ int main(int argc, char **argv)
     // testFile(argv[1]);
 
     ImportCache_Clear();
+    ObjectHeap_ClearAll();
     StrCache_Clear();
     return 0;
 }

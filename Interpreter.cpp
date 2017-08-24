@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "Interpreter.h"
 #include "ScriptVariant.h"
+#include "ObjectHeap.h"
 #include "Builtins.h"
 #include "ssa.h" // for opcodes
 
@@ -62,6 +63,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
         ExecInstruction *inst = &function->instructions[index];
         bool jumped = false;
         ScriptVariant *dst, *src0, *src1, *src2, *scratch;
+        ScriptObject *object;
         bool shouldBranch;
         switch(inst->opCode)
         {
@@ -178,18 +180,32 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
             // TODO: these are no-ops for now
             case OP_MKOBJECT:
                 fetchDst();
-                memset(dst, 0, sizeof(*dst));
+                dst->vt = VT_OBJECT;
+                dst->objVal = ObjectHeap_CreateNewObject();
                 break;
             case OP_SET:
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
                 fetchSrc(src2, inst->src2);
+                if (src0->vt != VT_OBJECT || src1->vt != VT_STR)
+                {
+                    printf("error: invalid parameters for SET instruction");
+                    return E_FAIL;
+                }
+                object = ObjectHeap_Get(src0->objVal);
+                object->set(StrCache_Get(src1->strVal), *src2);
                 break;
             case OP_GET:
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
-                memset(dst, 0, sizeof(*dst));
+                if (src0->vt != VT_OBJECT || src1->vt != VT_STR)
+                {
+                    printf("error: invalid parameters for GET instruction");
+                    return E_FAIL;
+                }
+                object = ObjectHeap_Get(src0->objVal);
+                *dst = object->get(StrCache_Get(src1->strVal));
                 break;
 
             // write to global variable
@@ -222,8 +238,18 @@ HRESULT Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, 
 {
     StrCache_SetExecuting(true);
     HRESULT result = execFunction(function, params, retval);
-    if (result == S_OK && retval->vt == VT_STR)
-        retval->strVal = StrCache_MakePersistent(retval->strVal);
+    if (result == S_OK)
+    {
+        if (retval->vt == VT_STR)
+        {
+            retval->strVal = StrCache_MakePersistent(retval->strVal);
+        }
+        else if (retval->vt == VT_OBJECT)
+        {
+            retval->objVal = ObjectHeap_GetPersistentRef(retval->objVal);
+        }
+    }
+    ObjectHeap_ClearTemporary();
     StrCache_SetExecuting(false);
     return result;
 }

@@ -12,7 +12,7 @@ extern "C" {
 // it only consumes more ram if CreateIndices is actually called
 // but it can be disabled to reduce binary size and mem usage. however the mentioned
 // methods will be much slower.
-#define USE_INDEX
+//#define USE_INDEX
 
 // this switch enables the capability to create a hashmap for quick string searches
 // speeds up search for "findByname" type of queries.

@@ -23,6 +23,7 @@ typedef enum VariantType
     VT_DECIMAL  = 2,    //double
     VT_PTR      = 5,    //void*
     VT_STR      = 6,    //char*
+    VT_OBJECT   = 7,    //ScriptObject*
 } VARTYPE;
 
 typedef struct ScriptVariant
@@ -33,6 +34,7 @@ typedef struct ScriptVariant
         void         *ptrVal;
         double        dblVal;
         int           strVal;
+        int           objVal;
     };
     VARTYPE vt;//variatn type
 } ScriptVariant;
