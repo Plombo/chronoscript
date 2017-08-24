@@ -58,7 +58,7 @@ static u16 createSrc(RValue *src)
     u8 file = FILE_NONE, index = 0;
     if (src->isTemporary())
     {
-        file = FILE_GPR;
+        file = FILE_TEMP;
         index = src->asTemporary()->reg;
     }
     else if (src->isParam())
@@ -171,7 +171,7 @@ void FunctionBuilder::run()
     memset(func->instructions, 0, func->numInstructions * sizeof(ExecInstruction));
     func->callTargets = new ExecFunction*[numCalls];
     func->callParams = new u16[numParams];
-    func->numGPRs = numTemps;
+    func->numTemps = numTemps;
     foreach_list(ssaFunc->instructionList, Instruction, iter)
     {
         Instruction *inst = iter.value();
@@ -232,7 +232,7 @@ void ExecBuilder::printInstructions()
             // destination
             if (inst->opCode >= OP_MOV && inst->opCode <= OP_GET)
             {
-                printf("gpr[%i] := ", inst->dst);
+                printf("temp[%i] := ", inst->dst);
             }
             else if (inst->opCode == OP_EXPORT)
             {

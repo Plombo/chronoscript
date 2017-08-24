@@ -12,11 +12,11 @@ typedef ScriptVariant *(*BinaryOperation)(ScriptVariant*, ScriptVariant*);
 static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
     int index = 0;
-    ScriptVariant gprs[function->numGPRs];
+    ScriptVariant temps[function->numTemps];
     ScriptVariant callParams[function->maxCallParams];
     ScriptVariant *srcFiles[] = {
         NULL,
-        gprs,
+        temps,
         params,
         function->interpreter->globals,
         function->interpreter->constants
@@ -56,7 +56,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
             }\
             dst = &srcFiles[regFile][regIndex];\
         }
-    #define fetchDst() dst = &gprs[inst->dst];
+    #define fetchDst() dst = &temps[inst->dst];
 
     while(1)
     {

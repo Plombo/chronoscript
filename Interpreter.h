@@ -7,7 +7,7 @@
 
 enum RegFile {
     FILE_NONE,
-    FILE_GPR,
+    FILE_TEMP,
     FILE_PARAM,
     FILE_GLOBAL,
     FILE_CONSTANT,
@@ -18,7 +18,7 @@ inline const char *getRegisterFileName(RegFile f)
 {
     const char *regFileNames[] = {
         "(NONE)",
-        "gpr",
+        "temp",
         "param",
         "global",
         "const",
@@ -38,7 +38,7 @@ New ExecInstruction:
 */
 struct ExecInstruction {
     u8 opCode;
-    u8 dst; // index of GPR to store result in (or global if opCode == OP_EXPORT)
+    u8 dst; // index of temporary to store result in (or global if opCode == OP_EXPORT)
     union {
         u16 src0; // first src
         u16 paramsIndex; // for functions
@@ -57,7 +57,7 @@ struct ExecFunction {
     char *functionName;
     Interpreter *interpreter;
     int numParams;
-    int numGPRs;
+    int numTemps;
     ExecFunction **callTargets;
     u16 *callParams; // each "param" is actually 8 bits of src file and 8 bits of src index
     int maxCallParams; // largest number of parameters to a single call in this function
