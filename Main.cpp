@@ -11,7 +11,7 @@
 
 #include "ImportCache.h"
 #include "StrCache.h"
-#include "ObjectHeap.h"
+#include "ScriptObject.h"
 
 void doTest(const char *filename)
 {

@@ -1,7 +1,7 @@
 #include "List.h"
 #include "ScriptVariant.h"
 #include "StrCache.h"
-#include "ObjectHeap.h"
+#include "ScriptObject.h"
 
 #define __reallocto(p, t, n, s) \
     p = (t)realloc((p), sizeof(*(p))*(s));\

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "Interpreter.h"
 #include "ScriptVariant.h"
-#include "ObjectHeap.h"
+#include "ScriptObject.h"
 #include "Builtins.h"
 #include "ssa.h" // for opcodes
 

@@ -25,7 +25,7 @@ cpp_sources = [
     'Interpreter',
     'Builtins',
     'StrCache',
-    'ObjectHeap',
+    'ScriptObject',
     'ImportCache',
     'script/Lexer',
     'script/ParserSet',
