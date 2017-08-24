@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "ScriptVariant.h"
+#include "ObjectHeap.h"
 
 void ScriptVariant_Clear(ScriptVariant *var)
 {
@@ -128,6 +129,9 @@ void ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize)
         break;
     case VT_STR:
         snprintf(buffer, bufsize, "%s", StrCache_Get(svar->strVal));
+        break;
+    case VT_OBJECT:
+        ObjectHeap_Get(svar->objVal)->toString(buffer, bufsize);
         break;
     default:
         snprintf(buffer, bufsize, "<Unprintable VARIANT type.>");
@@ -494,9 +498,10 @@ ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
     else if (svar->vt == VT_STR || rightChild->vt == VT_STR)
     {
         ScriptVariant_ChangeType(&retvar, VT_STR);
-        ScriptVariant_ToString(svar, StrCache_Get(retvar.strVal), StrCache_Len(retvar.strVal) + 1);
+        char *dst = StrCache_Get(retvar.strVal);
+        ScriptVariant_ToString(svar, dst, StrCache_Len(retvar.strVal) + 1);
         ScriptVariant_ToString(rightChild, buf, sizeof(buf));
-        strcat(StrCache_Get(retvar.strVal), buf);
+        strncat(dst, buf, StrCache_Len(retvar.strVal) - strlen(dst));
     }
     else
     {

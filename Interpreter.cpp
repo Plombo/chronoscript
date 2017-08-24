@@ -177,7 +177,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 break;
             }
 
-            // TODO: these are no-ops for now
+            // operations to create/modify/access objects
             case OP_MKOBJECT:
                 fetchDst();
                 dst->vt = VT_OBJECT;
