@@ -5,7 +5,6 @@ else:
 
 c_sources = [
     'List',
-    'ScriptVariant',
     'Stack',
     'SymbolTable',
     'ralloc',
@@ -15,6 +14,7 @@ c_sources = [
 ]
 cpp_sources = [
     'ssa',
+    'ScriptVariant',
     'Instruction',
     'Parser',
     'Main',
