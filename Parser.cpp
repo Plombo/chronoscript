@@ -1811,12 +1811,9 @@ void Parser::argExprList2(FunctionCall *call)
 
 RValue *Parser::primaryExpr()
 {
-    if (check(TOKEN_IDENTIFIER))
+    if (parserSet.first(Productions::lvalue, theNextToken.theType))
     {
-        RValue *value = bldUtil->readVariable(theNextToken.theSource);
-        value->lvalue = ralloc_strdup(value, theNextToken.theSource);
-        match();
-        return value;
+        return lvalue();
     }
     else if (parserSet.first(Productions::object, theNextToken.theType))
     {
@@ -1878,6 +1875,61 @@ RValue *Parser::object()
     else
     {
         Parser_Error(this, object);
+        return bldUtil->undef();
+    }
+}
+
+RValue *Parser::lvalue()
+{
+    if (check(TOKEN_IDENTIFIER))
+    {
+        RValue *value = bldUtil->readVariable(theNextToken.theSource);
+        value->lvalue = ralloc_strdup(value, theNextToken.theSource);
+        match();
+        return lvalue2(value);
+    }
+    else
+    {
+        Parser_Error(this, lvalue);
+        return bldUtil->undef();
+    }
+}
+
+RValue *Parser::lvalue2(RValue *lhs)
+{
+    if (check(TOKEN_FIELD))
+    {
+        match();
+        if (!check(TOKEN_IDENTIFIER))
+        {
+            printf("Error: expected identifier after '.'\n");
+            Parser_Error(this, lvalue2);
+            return lhs;
+        }
+        RValue *fieldName = bldUtil->mkConstString(theNextToken.theSource);
+        match();
+        return lvalue2(bldUtil->mkBinaryOp(OP_GET, lhs, fieldName));
+    }
+    else if (check(TOKEN_LBRACKET))
+    {
+        match();
+        RValue *fieldName = expr();
+        if (!check(TOKEN_RBRACKET))
+        {
+            printf("Error: expected ']' to match preceding '['\n");
+            Parser_Error(this, lvalue2);
+            return lhs;
+        }
+        match();
+        return lvalue2(bldUtil->mkBinaryOp(OP_GET, lhs, fieldName));
+    }
+    else if (parserSet.follow(Productions::lvalue2, theNextToken.theType))
+    {
+        return lhs;
+    }
+    else
+    {
+        Parser_Error(this, lvalue2);
         return bldUtil->undef();
     }
 }

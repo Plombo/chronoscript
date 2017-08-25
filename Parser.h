@@ -108,6 +108,8 @@ private:
     void argExprList2(FunctionCall *call);
     RValue *primaryExpr();
     RValue *object();
+    RValue *lvalue();
+    RValue *lvalue2(RValue *lhs);
     RValue *constant();
 
     void error(PRODUCTION offender, const char *offenderStr);

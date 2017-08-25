@@ -189,7 +189,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 fetchSrc(src2, inst->src2);
                 if (src0->vt != VT_OBJECT || src1->vt != VT_STR)
                 {
-                    printf("error: invalid parameters for SET instruction");
+                    printf("error: invalid parameters for SET instruction\n");
                     return E_FAIL;
                 }
                 object = ObjectHeap_Get(src0->objVal);
@@ -201,7 +201,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 fetchSrc(src1, inst->src1);
                 if (src0->vt != VT_OBJECT || src1->vt != VT_STR)
                 {
-                    printf("error: invalid parameters for GET instruction");
+                    printf("error: invalid parameters for GET instruction\n");
                     return E_FAIL;
                 }
                 object = ObjectHeap_Get(src0->objVal);
