@@ -18,6 +18,7 @@ void ExecBuilder::allocateExecFunctions()
     {
         ExecFunction *execFunc = new ExecFunction;
         execFunc->numParams = iter.value()->paramCount;
+        execFunc->functionName = strdup(iter.value()->functionName);
         interpreter->functions.insertAfter(execFunc, iter.name());
     }
 }
@@ -141,7 +142,6 @@ FunctionBuilder::FunctionBuilder(SSABuilder *ssaFunc, ExecBuilder *builder)
 
 void FunctionBuilder::run()
 {
-    func->functionName = strdup(ssaFunc->functionName);
     func->interpreter = execBuilder->interpreter;
     func->numParams = ssaFunc->paramCount;
     func->maxCallParams = 0;
