@@ -84,8 +84,6 @@ typedef enum PRODUCTION
     primary_expr,
     object,
     kv_pair,
-    lvalue,
-    lvalue2,
     constant,
     error,
 } PRODUCTION;

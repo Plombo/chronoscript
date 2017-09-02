@@ -87,6 +87,7 @@ class FunctionCall;
 class Jump;
 class Export;
 
+class LValue;
 class BasicBlock;
 class Loop;
 class SSABuilder;
@@ -97,7 +98,7 @@ class RValue
     DECLARE_RALLOC_CXX_OPERATORS(RValue);
 public:
     CList<Instruction> users; // instructions that use this value
-    const char *lvalue; // variable name if this is an lvalue, otherwise NULL
+    LValue *lvalue; // non-NULL means this is an lvalue
 
     inline RValue() : lvalue(NULL) {}
 
@@ -194,6 +195,24 @@ Constant *RValue::asConstant() { return static_cast<Constant*>(this); }
 Temporary *RValue::asTemporary() { return static_cast<Temporary*>(this); }
 Param *RValue::asParam() { return static_cast<Param*>(this); }
 GlobalVarRef *RValue::asGlobalVarRef() { return static_cast<GlobalVarRef*>(this); }
+
+class LValue
+{
+    DECLARE_RALLOC_CXX_OPERATORS(LValue);
+public:
+    // this is non-NULL for lvalues read from a variable
+    const char *varName;
+
+    // these are non-NULL for lvalues defined by a GET instruction
+    RValue *parent; // parent object/array if this is an lvalue referring to an object member
+    RValue *key;
+
+    inline LValue(const char *varName)
+        : varName(ralloc_strdup(this, varName)), parent(NULL), key(NULL) {}
+
+    inline LValue(RValue *parent, RValue *key)
+        : varName(NULL), parent(parent), key(key) {}
+};
 
 class Instruction
 {
@@ -466,6 +485,7 @@ public:
     RValue *mkBool(RValue *src);
     RValue *mkMove(RValue *val);
     RValue *mkObject();
+    RValue *mkGet(RValue *object, RValue *key);
     Instruction *mkSet(RValue *object, RValue *key, RValue *value);
     Export *mkExport(GlobalVarRef *dst, RValue *src);
     
@@ -478,6 +498,7 @@ public:
 
     void declareVariable(const char *name);
     bool writeVariable(const char *variable, RValue *value);
+    bool mkAssignment(LValue *lhs, RValue *rhs);
     RValue *readVariable(const char *variable);
 
     void pushScope();

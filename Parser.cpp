@@ -1039,41 +1039,53 @@ OpCode Parser::assignmentOp()
 
 RValue *Parser::assignmentExpr()
 {
-    if (theNextToken.theType == TOKEN_IDENTIFIER) // maybe the start of an assignment?
+    if (parserSet.first(Productions::cond_expr, theNextToken.theType))
     {
-        Token identifier = theNextToken;
-        match();
-        if (parserSet.first(Productions::assignment_op, theNextToken.theType))
-        {
-            // this is actually an assignment
-            OpCode op = assignmentOp();
-            RValue *rhs = assignmentExpr(), *result;
-            if (op == OP_NOOP) // regular assignment (=)
-            {
-                result = rhs;
-            }
-            else // operation and assignment (+=, >>=, etc.)
-            {
-                RValue *lhs = bldUtil->readVariable(identifier.theSource);
-                result = bldUtil->mkBinaryOp(op, lhs, rhs);
-            }
-            bldUtil->writeVariable(identifier.theSource, result);
-            return result;
-        }
-        else
-        {
-            // the identifier we matched is not the LHS of an assignment, so rewind
-            rewind(&identifier);
-            // now fall through to the logic below
-        }
-    }
-    if (parserSet.first(Productions::cond_expr, theNextToken.theType)) //= /= += Operator, or a comma and the like (the reputation of a variable)
-    {
-        return condExpr();
+        RValue *lhs = condExpr();
+        return assignmentExpr2(lhs);
     }
     else
     {
         Parser_Error(this, assignment_expr);
+        return bldUtil->undef();
+    }
+}
+
+RValue *Parser::assignmentExpr2(RValue *lhs)
+{
+    if (parserSet.first(Productions::assignment_op, theNextToken.theType))
+    {
+        LValue *target = lhs->lvalue;
+        if (!target)
+        {
+            printf("Error: trying to assign to something unassignable\n");
+            Parser_Error(this, assignment_expr2);
+            return lhs;
+        }
+        if (target->varName) printf("assign to %s\n", target->varName);
+
+        OpCode op = assignmentOp();
+        /* yes, assignmentExpr, not assignmentExpr2, because chained assignments
+           are evaluated right to left, unlike the other operators */
+        RValue *rhs = assignmentExpr(), *result;
+        if (op == OP_NOOP) // regular assignment (=)
+        {
+            result = rhs;
+        }
+        else // operation and assignment (+=, >>=, etc.)
+        {
+            result = bldUtil->mkBinaryOp(op, lhs, rhs);
+        }
+        bldUtil->mkAssignment(target, result);
+        return result;
+    }
+    else if (parserSet.follow(Productions::assignment_expr2, theNextToken.theType))
+    {
+        return lhs;
+    }
+    else
+    {
+        Parser_Error(this, assignment_expr2);
         return bldUtil->undef();
     }
 }
@@ -1644,8 +1656,6 @@ RValue *Parser::multExpr2(RValue *lhs)
 
 RValue *Parser::unaryExpr()
 {
-    RValue *src;
-
     if (parserSet.first(Productions::postfix_expr, theNextToken.theType))
     {
         return postfixExpr();
@@ -1654,16 +1664,15 @@ RValue *Parser::unaryExpr()
     {
         OpCode op = check(TOKEN_INC_OP) ? OP_ADD : OP_SUB;
         match();
-        src = unaryExpr();
-        if (src->lvalue == NULL)
+        RValue *src = postfixExpr();
+        if (!src->lvalue)
         {
             printf("Error: trying to increment or decrement a non-lvalue\n");
             // FIXME actually go through the error path
             return bldUtil->undef();
         }
         RValue *prefixed = bldUtil->mkBinaryOp(op, src, bldUtil->mkConstInt(1));
-        bldUtil->writeVariable(src->lvalue, prefixed);
-        src->lvalue = NULL;
+        bldUtil->mkAssignment(src->lvalue, prefixed);
         return prefixed;
     }
     else if (check(TOKEN_ADD))
@@ -1674,20 +1683,17 @@ RValue *Parser::unaryExpr()
     else if (check(TOKEN_SUB))
     {
         match();
-        src = unaryExpr();
-        return bldUtil->mkUnaryOp(OP_NEG, src);
+        return bldUtil->mkUnaryOp(OP_NEG, unaryExpr());
     }
     else if (check(TOKEN_BOOLEAN_NOT))
     {
         match();
-        src = unaryExpr();
-        return bldUtil->mkUnaryOp(OP_BOOL_NOT, src);
+        return bldUtil->mkUnaryOp(OP_BOOL_NOT, unaryExpr());
     }
     else if (check(TOKEN_BITWISE_NOT))
     {
         match();
-        src = unaryExpr();
-        return bldUtil->mkUnaryOp(OP_BIT_NOT, src);
+        return bldUtil->mkUnaryOp(OP_BIT_NOT, unaryExpr());
     }
     else
     {
@@ -1710,19 +1716,18 @@ RValue *Parser::postfixExpr()
     }
 }
 
-RValue *Parser::postfixExpr2(RValue *lhs)
+RValue *Parser::postfixExpr2(RValue *src)
 {
     if (check(TOKEN_LPAREN)) // function call
     {
-        if (lhs->lvalue == NULL)
+        if (!src->lvalue || !src->lvalue->varName)
         {
             printf("Error: Unexpected '('\n");
             // FIXME actually go through the error path
             return bldUtil->undef();
         }
         match();
-        FunctionCall *call = bldUtil->startFunctionCall(lhs->lvalue);
-        lhs->lvalue = NULL;
+        FunctionCall *call = bldUtil->startFunctionCall(src->lvalue->varName);
         argExprList(call);
         check(TOKEN_RPAREN);
         match();
@@ -1730,24 +1735,35 @@ RValue *Parser::postfixExpr2(RValue *lhs)
 
         return postfixExpr2(call->value());
     }
-#if 0 // Structure field reference? WTF? We don't have structures!
     else if (check(TOKEN_FIELD))
     {
-        //cache the token of the field source for assignment expressions.
-        pInstruction = (Instruction *)List_Retrieve(pparser->pIList);
-        pparser->theFieldToken = *(pInstruction->theToken);
-
-        Parser_AddInstructionViaToken(pparser, FIELD, &(pparser->theNextToken), NULL );
         match();
-        check(TOKEN_IDENTIFIER);
-        Parser_AddInstructionViaToken(pparser, LOAD, &(pparser->theNextToken), NULL );
+        if (!check(TOKEN_IDENTIFIER))
+        {
+            printf("Error: expected identifier after '.'\n");
+            Parser_Error(this, postfix_expr2);
+            return src;
+        }
+        RValue *fieldName = bldUtil->mkConstString(theNextToken.theSource);
         match();
-        postfixExpr2();
+        return postfixExpr2(bldUtil->mkGet(src, fieldName));
     }
-#endif
+    else if (check(TOKEN_LBRACKET))
+    {
+        match();
+        RValue *fieldName = expr();
+        if (!check(TOKEN_RBRACKET))
+        {
+            printf("Error: expected ']' to match preceding '['\n");
+            Parser_Error(this, postfix_expr2);
+            return src;
+        }
+        match();
+        return postfixExpr2(bldUtil->mkGet(src, fieldName));
+    }
     else if (check(TOKEN_INC_OP) || check(TOKEN_DEC_OP))
     {
-        if (lhs->lvalue == NULL)
+        if (!src->lvalue)
         {
             printf("Error: trying to increment or decrement a non-lvalue\n");
             // FIXME actually go through the error path
@@ -1755,14 +1771,15 @@ RValue *Parser::postfixExpr2(RValue *lhs)
         }
         OpCode op = check(TOKEN_INC_OP) ? OP_ADD : OP_SUB;
         match();
-        RValue *postfixed = bldUtil->mkBinaryOp(op, lhs, bldUtil->mkConstInt(1));
-        bldUtil->writeVariable(lhs->lvalue, postfixed);
-        lhs->lvalue = NULL;
-        return postfixExpr2(lhs);
+        RValue *postfixed = bldUtil->mkBinaryOp(op, src, bldUtil->mkConstInt(1));
+        bldUtil->mkAssignment(src->lvalue, postfixed);
+        src->lvalue = NULL;
+        // return the value from before the increment/decrement
+        return postfixExpr2(src);
     }
     else if (parserSet.follow(Productions::postfix_expr2, theNextToken.theType))
     {
-        return lhs;
+        return src;
     }
     else
     {
@@ -1811,9 +1828,11 @@ void Parser::argExprList2(FunctionCall *call)
 
 RValue *Parser::primaryExpr()
 {
-    if (parserSet.first(Productions::lvalue, theNextToken.theType))
+    if (check(TOKEN_IDENTIFIER))
     {
-        return lvalue();
+        RValue *value = bldUtil->readVariable(theNextToken.theSource);
+        match();
+        return value;
     }
     else if (parserSet.first(Productions::object, theNextToken.theType))
     {
@@ -1875,61 +1894,6 @@ RValue *Parser::object()
     else
     {
         Parser_Error(this, object);
-        return bldUtil->undef();
-    }
-}
-
-RValue *Parser::lvalue()
-{
-    if (check(TOKEN_IDENTIFIER))
-    {
-        RValue *value = bldUtil->readVariable(theNextToken.theSource);
-        value->lvalue = ralloc_strdup(value, theNextToken.theSource);
-        match();
-        return lvalue2(value);
-    }
-    else
-    {
-        Parser_Error(this, lvalue);
-        return bldUtil->undef();
-    }
-}
-
-RValue *Parser::lvalue2(RValue *lhs)
-{
-    if (check(TOKEN_FIELD))
-    {
-        match();
-        if (!check(TOKEN_IDENTIFIER))
-        {
-            printf("Error: expected identifier after '.'\n");
-            Parser_Error(this, lvalue2);
-            return lhs;
-        }
-        RValue *fieldName = bldUtil->mkConstString(theNextToken.theSource);
-        match();
-        return lvalue2(bldUtil->mkBinaryOp(OP_GET, lhs, fieldName));
-    }
-    else if (check(TOKEN_LBRACKET))
-    {
-        match();
-        RValue *fieldName = expr();
-        if (!check(TOKEN_RBRACKET))
-        {
-            printf("Error: expected ']' to match preceding '['\n");
-            Parser_Error(this, lvalue2);
-            return lhs;
-        }
-        match();
-        return lvalue2(bldUtil->mkBinaryOp(OP_GET, lhs, fieldName));
-    }
-    else if (parserSet.follow(Productions::lvalue2, theNextToken.theType))
-    {
-        return lhs;
-    }
-    else
-    {
-        Parser_Error(this, lvalue2);
         return bldUtil->undef();
     }
 }

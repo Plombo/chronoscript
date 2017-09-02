@@ -607,6 +607,13 @@ RValue *SSABuildUtil::mkObject()
     return inst->value();
 }
 
+RValue *SSABuildUtil::mkGet(RValue *object, RValue *key)
+{
+    RValue *value = mkBinaryOp(OP_GET, object, key);
+    value->lvalue = new(builder->memCtx) LValue(object, key);
+    return value;
+}
+
 Instruction *SSABuildUtil::mkSet(RValue *object, RValue *key, RValue *value)
 {
     Instruction *inst = new(builder->memCtx) Instruction(OP_SET);
@@ -672,6 +679,20 @@ bool SSABuildUtil::writeVariable(const char *varName, RValue *value)
     }
 }
 
+bool SSABuildUtil::mkAssignment(LValue *lhs, RValue *rhs)
+{
+    if (lhs->varName)
+    {
+        return writeVariable(lhs->varName, rhs);
+    }
+    else
+    {
+        assert(lhs->parent && lhs->key);
+        mkSet(lhs->parent, lhs->key, rhs);
+        return true;
+    }
+}
+
 // returns an Undef if varName is invalid in current scope
 RValue *SSABuildUtil::readVariable(const char *varName)
 {
@@ -681,14 +702,26 @@ RValue *SSABuildUtil::readVariable(const char *varName)
     if (found)
     {
         RValue *value = builder->readVariable(varName, currentBlock);
+        value->lvalue = new(builder->memCtx) LValue(varName);
         return value;
     }
     else
     {
         // it's either a global variable or undefined
         GlobalVarRef *global = globalState->readGlobalVariable(varName, builder->memCtx);
-        if (global) return mkMove(global);
-        else return undef();
+        if (global)
+        {
+            RValue *value = mkMove(global);
+            value->lvalue = new(builder->memCtx) LValue(varName);
+            return value;
+        }
+        else
+        {
+            // TODO: fix parser so we don't have to set this
+            RValue *value = undef();
+            value->lvalue = new(builder->memCtx) LValue(varName);
+            return value;
+        }
     }
 }
 

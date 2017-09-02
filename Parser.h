@@ -74,6 +74,7 @@ private:
     inline RValue *expr() { return assignmentExpr(); }
     OpCode assignmentOp();
     RValue *assignmentExpr();
+    RValue *assignmentExpr2(RValue *lhs);
     RValue *condExpr();
     RValue *condExpr2(RValue *lhs);
     RValue *logOrExpr();
@@ -103,13 +104,11 @@ private:
     RValue *multExpr2(RValue *lhs);
     RValue *unaryExpr();
     RValue *postfixExpr();
-    RValue *postfixExpr2(RValue *lhs);
+    RValue *postfixExpr2(RValue *src);
     void argExprList(FunctionCall *call);
     void argExprList2(FunctionCall *call);
     RValue *primaryExpr();
     RValue *object();
-    RValue *lvalue();
-    RValue *lvalue2(RValue *lhs);
     RValue *constant();
 
     void error(PRODUCTION offender, const char *offenderStr);
