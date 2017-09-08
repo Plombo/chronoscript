@@ -131,9 +131,12 @@ void ScriptObject::makePersistent()
 void ScriptObject::print()
 {
     char buf[256];
+    bool first = true;
     printf("{");
     foreach_list(map, ScriptVariant, iter)
     {
+        if (!first) printf(", ");
+        first = false;
         printf("\"%s\": ", iter.name());
         ScriptVariant *var = iter.value();
         if (var->vt == VT_OBJECT) ObjectHeap_Get(var->objVal)->print();
@@ -142,7 +145,6 @@ void ScriptObject::print()
             ScriptVariant_ToString(var, buf, sizeof(buf));
             printf("%s", buf);
         }
-        printf(", ");
     }
     printf("}");
 }
@@ -151,14 +153,16 @@ void ScriptObject::toString(char *dst, int dstsize)
 {
 #define SNPRINTF(...) { int n = snprintf(dst, dstsize, __VA_ARGS__); dst += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
     char buf[256];
+    bool first = true;
     SNPRINTF("{");
     foreach_list(map, ScriptVariant, iter)
     {
+        if (!first) SNPRINTF(", ");
+        first = false;
         SNPRINTF("\"%s\": ", iter.name());
         ScriptVariant *var = iter.value();
         ScriptVariant_ToString(var, buf, sizeof(buf));
         SNPRINTF("%s", buf);
-        SNPRINTF(", ");
     }
     SNPRINTF("}");
 #undef SNPRINTF
