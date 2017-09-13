@@ -5,7 +5,6 @@ else:
 
 c_sources = [
     'List',
-    'Stack',
     'ralloc',
     'cfuhash',
     'ScriptUtils',

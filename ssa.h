@@ -3,7 +3,6 @@
 
 #include "ralloc.h"
 #include "List.h"
-#include "Stack.h"
 #include "ScriptVariant.h"
 #include "SymbolTable.h"
 #include "RegAllocUtil.h"

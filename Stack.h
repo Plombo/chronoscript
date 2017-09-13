@@ -31,9 +31,23 @@ template <typename T>
 class CStack : public CList<T>
 {
 public:
-    inline void push(T *e) { Stack_Push(&this->list, e); }
-    inline void pop() { Stack_Pop(&this->list); }
-    inline T *top() { return static_cast<T*>(Stack_Top(&this->list)); }
+    inline void push(T *e)
+    {
+        this->gotoFirst();
+        this->insertBefore(e, NULL);
+    }
+
+    inline void pop()
+    {
+        this->gotoFirst();
+        this->remove();
+    }
+
+    inline T *top()
+    {
+        this->gotoFirst();
+        return this->retrieve();
+    }
 };
 
 };
