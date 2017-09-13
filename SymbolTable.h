@@ -9,27 +9,29 @@
 #ifndef SYMBOLTABLE_H
 #define SYMBOLTABLE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "ScriptVariant.h"
 #include "List.h"
 #include "Stack.h"
 
-typedef struct Symbol
+struct Symbol
 {
     char  name[MAX_STR_LEN + 1];
     ScriptVariant var;
-} Symbol;
+};
 
 // symbol table for a single scope
-typedef struct SymbolTable
+class SymbolTable
 {
-    List SymbolList;
+public:
+    CList<Symbol> symbolList;
     int  nextSymbolCount;
     char name[MAX_STR_LEN + 1];
-} SymbolTable;
+
+    SymbolTable(const char *theName);
+    ~SymbolTable();
+    bool findSymbol(const char *symbolName, Symbol **pp_theSymbol);
+    void addSymbol(Symbol *p_theSymbol);
+};
 
 void Symbol_Init(Symbol *symbol, const char *theName, ScriptVariant *pvar);
 void SymbolTable_Init(SymbolTable *stable, const char *theName);
@@ -38,11 +40,20 @@ BOOL SymbolTable_FindSymbol(SymbolTable *stable, const char *symbolName, Symbol 
 void SymbolTable_AddSymbol(SymbolTable *stable, Symbol *p_theSymbol);
 
 // stack of symbol tables for all scopes
-typedef struct StackedSymbolTable
+class StackedSymbolTable
 {
-    Stack SymbolTableStack;
+public:
+    CStack<SymbolTable> symbolTableStack;
     int nextScopeNum;
-} StackedSymbolTable;
+
+    StackedSymbolTable();
+    ~StackedSymbolTable();
+    void pushScope();
+    SymbolTable *topScope();
+    void popScope();
+    bool findSymbol(const char *symbolName, Symbol **pp_theSymbol, char *p_scopedName);
+    void addSymbol(Symbol *p_theSymbol);
+};
 
 void StackedSymbolTable_Init(StackedSymbolTable *sstable);
 void StackedSymbolTable_Clear(StackedSymbolTable *sstable);
@@ -52,9 +63,5 @@ void StackedSymbolTable_PopScope(StackedSymbolTable *sstable);
 BOOL StackedSymbolTable_FindSymbol(StackedSymbolTable *sstable, const char *symbolName,
                                    Symbol **pp_theSymbol, char *p_scopedName);
 void StackedSymbolTable_AddSymbol(StackedSymbolTable *sstable, Symbol *p_theSymbol);
-
-#ifdef __cplusplus
-}; // extern "C"
-#endif
 
 #endif

@@ -6,7 +6,6 @@ else:
 c_sources = [
     'List',
     'Stack',
-    'SymbolTable',
     'ralloc',
     'cfuhash',
     'ScriptUtils',
@@ -27,6 +26,7 @@ cpp_sources = [
     'StrCache',
     'ScriptObject',
     'ImportCache',
+    'SymbolTable',
     'script/Lexer',
     'script/ParserSet',
     'script/pp_parser',

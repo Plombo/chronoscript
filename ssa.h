@@ -467,7 +467,6 @@ public:
     CStack<BasicBlock> continueTargets;
     
     SSABuildUtil(SSABuilder *builder, GlobalState *globalState);
-    ~SSABuildUtil();
     inline void setCurrentBlock(BasicBlock *block) { currentBlock = block; }
     
     // declare a parameter to this function

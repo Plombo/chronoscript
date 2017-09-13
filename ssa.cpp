@@ -438,14 +438,7 @@ GlobalVarRef *GlobalState::readGlobalVariable(const char *varName, void *memCtx)
 SSABuildUtil::SSABuildUtil(SSABuilder *builder, GlobalState *globalState)
     : builder(builder), globalState(globalState), currentBlock(NULL)
 {
-    StackedSymbolTable_Init(&symbolTable);
     currentLoop = NULL;
-}
-
-SSABuildUtil::~SSABuildUtil()
-{
-    // this will free all of the symbols we've allocated
-    StackedSymbolTable_Clear(&symbolTable);
 }
 
 // declare a parameter to this function
@@ -652,7 +645,7 @@ void SSABuildUtil::declareVariable(const char *varName)
 {
     Symbol *sym = (Symbol *) malloc(sizeof(Symbol));
     Symbol_Init(sym, varName, NULL);
-    StackedSymbolTable_AddSymbol(&symbolTable, sym);
+    symbolTable.addSymbol(sym);
     // TODO duplicate declarations?
 }
 
@@ -661,7 +654,7 @@ bool SSABuildUtil::writeVariable(const char *varName, RValue *value)
 {
     char scopedName[MAX_STR_LEN * 2 + 1];
     Symbol *sym;
-    bool found = StackedSymbolTable_FindSymbol(&symbolTable, varName, &sym, scopedName);
+    bool found = symbolTable.findSymbol(varName, &sym, scopedName);
     if (found)
     {
         builder->writeVariable(varName, currentBlock, value);
@@ -698,7 +691,7 @@ RValue *SSABuildUtil::readVariable(const char *varName)
 {
     char scopedName[MAX_STR_LEN * 2 + 1];
     Symbol *sym;
-    bool found = StackedSymbolTable_FindSymbol(&symbolTable, varName, &sym, scopedName);
+    bool found = symbolTable.findSymbol(varName, &sym, scopedName);
     if (found)
     {
         RValue *value = builder->readVariable(varName, currentBlock);
@@ -727,12 +720,12 @@ RValue *SSABuildUtil::readVariable(const char *varName)
 
 void SSABuildUtil::pushScope()
 {
-    StackedSymbolTable_PushScope(&symbolTable);
+    symbolTable.pushScope();
 }
 
 void SSABuildUtil::popScope()
 {
-    StackedSymbolTable_PopScope(&symbolTable);
+    symbolTable.popScope();
 }
 
 void SSABuildUtil::pushLoop(Loop *loop)

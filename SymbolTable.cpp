@@ -30,34 +30,32 @@ void Symbol_Init(Symbol *symbol, const char *theName, ScriptVariant *pvar)
 //------------------------------------------------------------------
 
 
-void SymbolTable_Init(SymbolTable *stable, const char *theName)
+SymbolTable::SymbolTable(const char *theName)
 {
-    List_Init(&(stable->SymbolList));
-    stable->nextSymbolCount = 0;
-    if(theName)
+    nextSymbolCount = 0;
+    if (theName)
     {
-        strcpy(stable->name, theName);
+        strcpy(this->name, theName);
     }
     else
     {
-        stable->name[0] = 0;
+        this->name[0] = 0;
     }
 }
 
 
-void SymbolTable_Clear(SymbolTable *stable)
+SymbolTable::~SymbolTable()
 {
-    Symbol *psymbol = NULL;
-    int i, size;
-    FOREACH( stable->SymbolList,
-             psymbol = (Symbol *)List_Retrieve(&(stable->SymbolList));
-             if(psymbol)
-{
-    ScriptVariant_Clear(&(psymbol->var));
-        free(psymbol);
+    foreach_list(symbolList, Symbol, iter)
+    {
+        Symbol *psymbol = iter.value();
+        if (psymbol)
+        {
+            ScriptVariant_Clear(&(psymbol->var));
+            free(psymbol);
+        }
     }
-           );
-    List_Clear(&(stable->SymbolList));
+    symbolList.clear();
 }
 
 
@@ -71,16 +69,16 @@ void SymbolTable_Clear(SymbolTable *stable)
 *  Returns: true if the symbol is found.
 *           false otherwise.
 ******************************************************************************/
-BOOL SymbolTable_FindSymbol(SymbolTable *stable, const char *symbolName, Symbol **pp_theSymbol )
+bool SymbolTable::findSymbol(const char *symbolName, Symbol **pp_theSymbol)
 {
-    if (symbolName && List_FindByName(&(stable->SymbolList), (char *) symbolName ))
+    if (symbolName && symbolList.findByName(symbolName))
     {
-        *pp_theSymbol = (Symbol *)List_Retrieve(&(stable->SymbolList));
-        return TRUE;
+        *pp_theSymbol = symbolList.retrieve();
+        return true;
     }
     else
     {
-        return FALSE;
+        return false;
     }
 }
 
@@ -90,9 +88,9 @@ BOOL SymbolTable_FindSymbol(SymbolTable *stable, const char *symbolName, Symbol 
 *                             table.
 *  Returns:
 ******************************************************************************/
-void SymbolTable_AddSymbol(SymbolTable *stable, Symbol *p_theSymbol )
+void SymbolTable::addSymbol(Symbol *p_theSymbol)
 {
-    List_InsertAfter( &(stable->SymbolList), (void *)p_theSymbol, p_theSymbol->name);
+    symbolList.insertAfter(p_theSymbol, p_theSymbol->name);
 }
 
 
@@ -105,21 +103,19 @@ void SymbolTable_AddSymbol(SymbolTable *stable, Symbol *p_theSymbol )
 *  Initialize -- This method intializes the stacked symbol table with its name
 *  and creates a new stack for the symbol tables.
 ******************************************************************************/
-void StackedSymbolTable_Init(StackedSymbolTable *sstable)
+StackedSymbolTable::StackedSymbolTable()
 {
-    List_Init(&(sstable->SymbolTableStack));
-    sstable->nextScopeNum = 0;
-    StackedSymbolTable_PushScope(sstable);
+    nextScopeNum = 0;
+    pushScope();
 }
 
-void StackedSymbolTable_Clear(StackedSymbolTable *sstable)
+StackedSymbolTable::~StackedSymbolTable()
 {
-    while(!Stack_IsEmpty(&(sstable->SymbolTableStack)))
+    while (!symbolTableStack.isEmpty())
     {
-        StackedSymbolTable_PopScope(sstable);
+        popScope();
     }
-    List_Clear(&(sstable->SymbolTableStack));
-    sstable->nextScopeNum = 0;
+    nextScopeNum = 0;
 }
 
 /******************************************************************************
@@ -127,18 +123,17 @@ void StackedSymbolTable_Clear(StackedSymbolTable *sstable)
 *  symbol table stack.  The top symbol table on the stack represents the
 *  innermost symbol scope.
 ******************************************************************************/
-void StackedSymbolTable_PushScope(StackedSymbolTable *sstable)
+void StackedSymbolTable::pushScope()
 {
     SymbolTable *newSymbolTable = NULL;
     char scopeName[32];
 
-    newSymbolTable = (SymbolTable *)malloc(sizeof(SymbolTable));
     //Name this scope with a unique (sequential) number
-    snprintf(scopeName, sizeof(scopeName), "%i", sstable->nextScopeNum++);
-    SymbolTable_Init(newSymbolTable, scopeName);
+    snprintf(scopeName, sizeof(scopeName), "%i", nextScopeNum++);
+    newSymbolTable = new SymbolTable(scopeName);
 
     //Add the new symboltable to the stack
-    Stack_Push(&(sstable->SymbolTableStack), (void *)newSymbolTable);
+    symbolTableStack.push(newSymbolTable);
 }
 
 
@@ -146,9 +141,9 @@ void StackedSymbolTable_PushScope(StackedSymbolTable *sstable)
 *  TopScope -- This method retrieves the topmost symbol table from the symbol
 *  table stack, and passes it back to the caller without removing it.
 ******************************************************************************/
-SymbolTable *StackedSymbolTable_TopScope(StackedSymbolTable *sstable)
+SymbolTable *StackedSymbolTable::topScope()
 {
-    return (SymbolTable *)Stack_Top(&(sstable->SymbolTableStack));
+    return symbolTableStack.top();
 }
 
 /******************************************************************************
@@ -156,15 +151,13 @@ SymbolTable *StackedSymbolTable_TopScope(StackedSymbolTable *sstable)
 *  destroying it in the process.  Any symbols in this table have gone out of
 *  scope and should not be found in a symbol search.
 ******************************************************************************/
-void StackedSymbolTable_PopScope(StackedSymbolTable *sstable)
+void StackedSymbolTable::popScope()
 {
-    SymbolTable *pSymbolTable = NULL;
-    pSymbolTable = (SymbolTable *)Stack_Top(&(sstable->SymbolTableStack));
-    Stack_Pop(&(sstable->SymbolTableStack));
-    if(pSymbolTable)
+    SymbolTable *pSymbolTable = symbolTableStack.top();
+    symbolTableStack.pop();
+    if (pSymbolTable)
     {
-        SymbolTable_Clear(pSymbolTable);
-        free((void *)pSymbolTable);
+        delete pSymbolTable;
     }
 }
 
@@ -178,26 +171,25 @@ void StackedSymbolTable_PopScope(StackedSymbolTable *sstable)
 *  Returns: true if the symbol is found.
 *           false otherwise.
 ******************************************************************************/
-BOOL StackedSymbolTable_FindSymbol(StackedSymbolTable *sstable, const char *symbolName,
-                                   Symbol **pp_theSymbol, char *p_scopedName)
+bool StackedSymbolTable::findSymbol(const char *symbolName, Symbol **pp_theSymbol, char *p_scopedName)
 {
     SymbolTable *currentSymbolTable = NULL;
-    BOOL bFound = FALSE;
-    int i, size;
-    FOREACH( sstable->SymbolTableStack,
-             currentSymbolTable = (SymbolTable *)List_Retrieve(&(sstable->SymbolTableStack));
-             bFound = SymbolTable_FindSymbol(currentSymbolTable, symbolName, pp_theSymbol );
+    bool found = false;
+    foreach_list(symbolTableStack, SymbolTable, iter)
+    {
+        currentSymbolTable = iter.value();
+        found = currentSymbolTable->findSymbol(symbolName, pp_theSymbol);
 
-             if(bFound)
-             {
-                 sprintf(p_scopedName, "%s$%s", symbolName, currentSymbolTable->name);
-                 break;
-             }
-           );
+        if (found)
+        {
+            sprintf(p_scopedName, "%s$%s", symbolName, currentSymbolTable->name);
+            break;
+        }
+    }
 
     //Restore the stack so push and pop work correctly.
-    List_Reset(&(sstable->SymbolTableStack));
-    return bFound;
+    symbolTableStack.gotoFirst();
+    return found;
 }
 
 /******************************************************************************
@@ -207,9 +199,8 @@ BOOL StackedSymbolTable_FindSymbol(StackedSymbolTable *sstable, const char *symb
 *                             table.
 *  Returns:
 ******************************************************************************/
-void StackedSymbolTable_AddSymbol(StackedSymbolTable *sstable, Symbol *p_theSymbol )
+void StackedSymbolTable::addSymbol(Symbol *p_theSymbol)
 {
-    SymbolTable *topSymbolTable = NULL;
-    topSymbolTable = (SymbolTable *)Stack_Top(&(sstable->SymbolTableStack));
-    SymbolTable_AddSymbol(topSymbolTable, p_theSymbol );
+    symbolTableStack.top()->addSymbol(p_theSymbol);
 }
+
