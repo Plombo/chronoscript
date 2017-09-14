@@ -17,6 +17,7 @@ Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
     labelCount = 0;
     theNextToken.theType = END_OF_TOKENS;
     rewound = false;
+    bld = NULL;
     bldUtil = NULL;
     execBuilder = builder;
     errorFound = false;

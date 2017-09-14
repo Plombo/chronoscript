@@ -18,7 +18,7 @@ void BasicBlock::addPred(BasicBlock *newPred)
 // returns true if last instruction in block is an unconditional jump (JMP/RETURN)
 bool BasicBlock::endsWithJump()
 {
-    Instruction *lastInstruction = static_cast<Instruction*>(end->prev->value);
+    Instruction *lastInstruction = end->prev->value;
     return (lastInstruction->isJump() || lastInstruction->op == OP_RETURN);
 }
 
@@ -291,10 +291,10 @@ void SSABuilder::prepareForRegAlloc()
     foreach_list(basicBlockList, BasicBlock, iter)
     {
         BasicBlock *block = iter.value();
-        Node *instNode = block->start;
+        Node<Instruction*> *instNode = block->start;
         while ((instNode = instNode->next))
         {
-            Instruction *inst = (Instruction*) instNode->value;
+            Instruction *inst = instNode->value;
             if (inst->op != OP_PHI) break; // only process phis, which are always at start of block
             Phi *phi = (Phi*) inst;
             // phi->print();
@@ -304,10 +304,10 @@ void SSABuilder::prepareForRegAlloc()
             {
                 RValue *phiSrc = srcIter.value();
                 BasicBlock *srcBlock = phi->sourceBlocks[i++];
-                Node *insertPoint = srcBlock->end->prev;
+                Node<Instruction*> *insertPoint = srcBlock->end->prev;
                 Expression *move = new(memCtx) Expression(OP_MOV, valueId(), phiSrc);
                 move->block = srcBlock;
-                while (((Instruction*)insertPoint->value)->isJump()) insertPoint = insertPoint->prev;
+                while (insertPoint->value->isJump()) insertPoint = insertPoint->prev;
                 instructionList.setCurrent(insertPoint);
                 instructionList.insertAfter(move, NULL);
                 // replace reference
@@ -380,10 +380,10 @@ void SSABuilder::prepareForRegAlloc()
     foreach_list(basicBlockList, BasicBlock, iter)
     {
         BasicBlock *block = iter.value();
-        Node *instNode = block->start;
+        Node<Instruction*> *instNode = block->start;
         while ((instNode = instNode->next))
         {
-            Instruction *inst = (Instruction*) instNode->value;
+            Instruction *inst = instNode->value;
             if (inst->op != OP_PHI) break; // only process phis, which are always at start of block
             Phi *phi = (Phi*) inst;
             // update phiDefs with phi definition

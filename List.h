@@ -1,160 +1,332 @@
-
-
 #ifndef LIST_H
 #define LIST_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// this switch enables the capability to create a hashmap for quick index lookups
-// speeds up search for "contains" and "getindex" type of queries.
-// it only consumes more ram if CreateIndices is actually called
-// but it can be disabled to reduce binary size and mem usage. however the mentioned
-// methods will be much slower.
-//#define USE_INDEX
-
-// this switch enables the capability to create a hashmap for quick string searches
-// speeds up search for "findByname" type of queries.
-// it will always be used, so memory usage will be slightly increased.
-#define USE_STRING_HASHES
-
-#define UNIT_TEST
-#ifndef UNIT_TEST
-//#include "depends.h"
-#endif
-
-#include <stddef.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
-#include <stdio.h>
+#include <assert.h>
 #include "ralloc.h"
 
-//A macro to simplify iterating through all this lists.
-#define FOREACH( x, y ) { \
-	  size = List_GetSize(&x); \
-	  List_Reset(&x); \
-	  for (i = 0; i < size; i++){ \
-		 y \
-		 List_GotoNext(&x); \
-	  } \
-   }
+#pragma pack(push, 4)
 
-#define PFOREACH( x, y ) {\
-   size = List_GetSize(x); \
-   List_Reset(x); \
-   for (i = 0; i < size; i++){ \
-		 y \
-		 List_GotoNext(x); \
-	  } \
-   }
+/* hash table flags */
+#define HASH_TABLE_FROZEN 1      /* do not rehash when the size thresholds are reached */
+#define HASH_TABLE_FROZEN_UNTIL_GROWS (1 << 1) /* do not shrink the hash until it has grown */
 
-#define NAME(s) ((s==NULL)?NULL:(strcpy((char*)malloc(strlen(s)+1),s)))
+class HashNode {
+public:
+    char *name;
+    HashNode *next_in_bucket;
+};
 
-typedef struct Node
+class HashTable {
+public:
+    HashNode **buckets;
+    unsigned int num_buckets;
+    unsigned int entries; /* Total number of entries in the table. */
+    uint32_t flags;
+    float high;
+    float low;
+    unsigned int resized_count;
+
+public:
+    HashTable(size_t size, uint32_t flags);
+    inline HashTable() : HashTable(8, HASH_TABLE_FROZEN_UNTIL_GROWS) {}
+    inline ~HashTable() { free(buckets); }
+
+    HashNode *get(const char *name);
+    void put(HashNode *entry);
+    void remove(HashNode *entry);
+    void clear(); // TODO remove; List will take care of it
+
+private:
+    void rehash();
+};
+
+template <typename T>
+class Node : public HashNode
 {
-    struct Node *prev;          //pointer to previous Node
-    struct Node *next;          //pointer to next Node
-    void *value;                //data stored in a Node
-    char *name;                //optional name of the Node
-} Node;
+public:
+    Node<T> *prev;
+    Node<T> *next;
+    T value;
 
-#ifdef USE_INDEX
-typedef struct LIndex
+    inline Node(T data, const char *name)
+    {
+        this->name = name ? strdup(name) : NULL;
+        this->next_in_bucket = NULL;
+        this->value = data;
+    }
+
+    inline ~Node()
+    {
+        free(this->name);
+    }
+};
+
+template <typename T> class ListIterator;
+
+// doubly linked list class, with a hash table to access elements by name
+// TODO make a non-templated BaseList class to avoid inlining large functions
+template <typename T>
+class List
 {
-    size_t size;
-    size_t used;
-    Node **nodes;
-    ptrdiff_t *indices;
-} LIndex;
+public: // these should really be private
+    Node<T> *current;
+    Node<T> *first;
+    Node<T> *last;
+
+private:
+    HashTable hashTable;
+    unsigned int theSize;
+
+    inline Node<T> *createNode(T value, const char *name)
+    {
+        Node<T> *node = new Node<T>(value, name);
+        if (name) hashTable.put(node);
+        node->prev = node->next = NULL;
+        return node;
+    }
+
+public:
+    inline List()
+      : current(NULL),
+        first(NULL),
+        last(NULL),
+        hashTable(32, HASH_TABLE_FROZEN_UNTIL_GROWS),
+        theSize(0)
+    {}
+
+    inline ~List() { clear(); }
+
+    // removes all nodes from the list
+    inline void clear()
+    {
+        hashTable.clear();
+        Node<T> *cur = first;
+        while (cur)
+        {
+            Node<T> *next = cur->next;
+            delete cur;
+            cur = next;
+        }
+        first = last = current = NULL;
+        theSize = 0;
+    }
+
+    // adds a new item to the list before the given node
+    // returns the newly created node
+    inline Node<T> *insertBeforeNode(Node<T> *otherNode, T value, const char *name = NULL)
+    {
+        Node<T> *node = createNode(value, name);
+        Node<T> *prev = otherNode->prev;
+        node->prev = prev;
+        if (prev)
+            prev->next = node;
+        node->next = otherNode;
+        otherNode->prev = node;
+        theSize++;
+        if (first == otherNode)
+            first = node;
+        return node;
+    }
+
+    // adds a new item to the list after the given node
+    inline Node<T> *insertAfterNode(Node<T> *otherNode, T value, const char *name = NULL)
+    {
+        Node<T> *node = createNode(value, name);
+        Node<T> *next = otherNode->next;
+        node->next = next;
+        if (next)
+            next->prev = node;
+        otherNode->next = node;
+        node->prev = otherNode;
+        theSize++;
+        if (last == otherNode)
+            last = node;
+        return node;
+    }
+
+    // adds a new item to the list before the current item
+    inline void insertBefore(T value, const char *name = NULL)
+    {
+        if (current)
+        {
+            current = insertBeforeNode(current, value, name);
+        }
+        else // list is empty
+        {
+            Node<T> *node = createNode(value, name);
+            current = first = last = node;
+            theSize++;
+        }
+    }
+
+    // adds a new item to the list after the current item
+    inline void insertAfter(T value, const char *name = NULL)
+    {
+        if (current)
+        {
+            current = insertAfterNode(current, value, name);
+        }
+        else // list is empty
+        {
+            Node<T> *node = createNode(value, name);
+            current = first = last = node;
+            theSize++;
+        }
+    }
+
+    // removes a node from the list
+    // it would be nice if we didn't have to inline this
+    inline void removeNode(Node<T> *node)
+    {
+        if (node->prev)
+        {
+            node->prev->next = node->next;
+        }
+        else
+        {
+            assert(node == first);
+            first = node->next;
+        }
+
+        if (node->next)
+        {
+            node->next->prev = node->prev;
+        }
+        else
+        {
+            assert(node == last);
+            last = node->prev;
+        }
+
+        if (current == node)
+        {
+            current = node->prev ? node->prev : node->next;
+        }
+
+        if (node->name)
+        {
+            hashTable.remove(node);
+        }
+
+        delete node;
+        theSize--;
+    }
+
+    // removes the current item from the list
+    inline void remove()
+    {
+        if (current)
+        {
+            removeNode(current);
+        }
+    }
+
+    inline void gotoNext()
+    {
+        if (current != last)
+        {
+            current = current->next;
+        }
+    }
+
+    inline void gotoPrevious()
+    {
+        if (current != first)
+        {
+            current = current->prev;
+        }
+    }
+
+    inline void gotoLast() { current = last; }
+    inline void gotoFirst() { current = first; }
+
+    // get the data value of the current list item
+    inline T retrieve() { return current->value; }
+
+    // set the data value of current list item to a new value
+    inline void update(T newValue) { current->value = newValue; }
+
+    // this is slow, don't use it
+    // sets this->current to value if found
+    inline bool includes(T e);
+
+    // if found, sets this->current to item with given name
+    inline bool findByName(const char *name)
+    {
+        if (name)
+        {
+            Node<T> *foundNode = static_cast<Node<T>*>(hashTable.get(name));
+            if (foundNode)
+            {
+                this->current = foundNode;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // returns name of current list item (can be NULL)
+    inline const char *getName() { return current->name; }
+
+    // returns number of items in list
+    inline int size() { return theSize; }
+
+    inline bool isEmpty() { return (theSize == 0); }
+
+    inline Node<T> *currentNode() { return current; }
+    inline void setCurrent(Node<T> *node) { current = node; }
+
+    // this is slow, don't use it
+    inline int getIndex()
+    {
+        int i = 0;
+        Node<T> *node = first;
+        while (node != current)
+        {
+            ++i;
+            node = node->next;
+            assert(node);
+        }
+        return i;
+    }
+
+    // this is slow, don't use it
+    inline bool gotoIndex(unsigned int index)
+    {
+        if (index >= theSize) return false;
+
+        Node<T> *node = first;
+        for (unsigned int i = 0; i < index; i++)
+        {
+            node = node->next;
+        }
+        current = node;
+        return true;
+    }
+
+#if 0
+    inline void copyFrom(const List<T> *src) {}
 #endif
 
-#ifdef USE_STRING_HASHES
-typedef struct Bucket
-{
-    size_t size;
-    size_t used;
-    Node **nodes;
-} Bucket;
-#endif
+    inline ListIterator<T> iterator() { return ListIterator<T>(this); }
+};
 
-typedef struct List
-{
-    //Data members
-    Node *first;
-    Node *current;
-    Node *last;
-    void **solidlist;
-    int index;
-    int size;
-#ifdef USE_INDEX
-    LIndex **mindices;
-#endif
-#ifdef USE_STRING_HASHES
-    Bucket **buckets;
-#endif
-#ifdef DEBUG
-    int initdone;
-#endif
-
-} List;
-
-void List_SetCurrent(List *list, Node *current);
-void Node_Clear(Node *node);
-void List_Init(List *list);
-void List_Solidify(List *list);
-int List_GetIndex(List *list);
-void List_Copy(List *listdest, const List *listsrc);
-void List_Clear(List *list);
-void List_InsertBefore(List *list, void *e, const char *theName);
-void List_InsertAfter(List *list, void *e, const char *theName);
-void List_Remove(List *list);
-int List_GotoNext(List *list);
-int List_GotoPrevious(List *list);
-int List_GotoLast(List *list);
-int List_GotoFirst(List *list);
-void *List_Retrieve(const List *list);
-void *List_GetFirst(const List *list);
-void *List_GetLast(const List *list);
-void List_Update(List *list, void *e);
-int List_Includes(List *list, void *e);
-int List_FindByName(List *list, const char *name);
-char *List_GetName(const List *list);
-void List_Reset(List *list);
-int List_GetSize(const List *list);
-int List_GotoIndex(List *list, int index);
-
-Node *List_GetNodeByName(List *list, const char *Name);
-Node *List_GetNodeByValue(List *list, void *e);
-Node *List_GetCurrentNode(List *list);
-int List_GetNodeIndex(List *list, Node *node);
-#ifdef USE_INDEX
-void List_AddIndex(List *list, Node *node, size_t index);
-void List_RemoveLastIndex(List *list);
-void List_CreateIndices(List *list);
-void List_FreeIndices(List *list);
-unsigned char ptrhash(void *value); // need to export that as well for unittest.
-#endif
-
-#ifdef __cplusplus
-}; // extern "C"
-extern "C++" {
-
-template <typename T> class CList;
-
-// only works on non-solid lists
 template <typename T>
 class ListIterator {
 private:
-    CList<T> *list;
-    Node *current;
+    List<T> *list;
+    Node<T> *current;
     bool removed;
 public:
-    inline ListIterator(CList<T> *list) : list(list), current(list->list.first), removed(false) {}
-    inline Node *node() { return current; }
-    inline char *name() { return current->name; }
-    inline T *value() { return static_cast<T*>(current->value); }
-    inline void update(T *newValue) { current->value = newValue; }
+    inline ListIterator(List<T> *list) : list(list), current(list->first), removed(false) {}
+    inline Node<T> *node() { return current; }
+    inline const char *name() { return current->name; }
+    inline T value() { return current->value; }
+    inline T* valuePtr() { return &current->value; }
+    inline void update(T newValue) { current->value = newValue; }
     inline bool isFinished() { return (current == NULL); }
     //inline ListIterator<T> next() { return ListIterator<T>(current->next); }
     inline bool hasNext() { return current && current->next; }
@@ -167,59 +339,49 @@ public:
     }
     inline void remove()
     {
-        assert(this->current);
-        Node *next = this->current->next,
-             *savedCurrent = list->currentNode();
-        list->setCurrent(this->current);
+        assert(current);
+        Node<T> *next = current->next,
+                *savedCurrent = list->currentNode();
+        list->setCurrent(current);
         list->remove();
         if (current != savedCurrent)
             list->setCurrent(savedCurrent);
-        this->current = next;
+        current = next;
         removed = true;
     }
 };
 
-// thin OOP wrapper around List, should have the same performance
 template <typename T>
-class CList
+bool List<T>::includes(T e)
+{
+    for (ListIterator<T> iter = iterator(); !iter.isFinished(); iter.gotoNext())
+    {
+        if (iter.value() == e) return true;
+    }
+    return false;
+}
+
+#if 1 // TODO: replace all CList<T> uses with List<T*>, and remove CList
+template <typename T>
+class CList : public List<T*>
 {
     DECLARE_RALLOC_CXX_OPERATORS(CList);
-public:
-    List list;
-    inline CList() { List_Init(&list); }
-    inline ~CList() { clear(); }
-    inline void clear() { List_Clear(&list); }
-    inline void copyFrom(const List *src) { List_Copy(&list, src); }
-    inline void copyFrom(const CList<T> *src) { List_Copy(&list, &src->list); }
-    inline int getIndex() { return List_GetIndex(&list); }
-    inline void insertBefore(T *e, const char *theName) { List_InsertBefore(&list, e, theName); }
-    inline void insertAfter(T *e, const char *theName = NULL) { List_InsertAfter(&list, e, theName); }
-    inline void remove() { List_Remove(&list); }
-    inline void gotoNext() { List_GotoNext(&list); }
-    inline void gotoPrevious() { List_GotoPrevious(&list); }
-    inline void gotoLast() { List_GotoLast(&list); }
-    inline void gotoFirst() { List_GotoFirst(&list); }
-    inline T *retrieve() { return static_cast<T*>(List_Retrieve(&list)); }
-    inline void update(T *e) { List_Update(&list, e); }
-    inline bool includes(T *e) { return List_Includes(&list, e); }
-    inline bool findByName(const char *name) { return List_FindByName(&list, name); }
-    inline char *getName() { return List_GetName(&list); }
-    inline int size() { return List_GetSize(&list); }
-    inline bool isEmpty() { return 0 == List_GetSize(&list); }
-    inline Node *currentNode() { return List_GetCurrentNode(&list); }
-    inline void setCurrent(Node *node) { List_SetCurrent(&list, node); }
-    inline bool gotoIndex(int index) { return List_GotoIndex(&list, index); }
-    inline ListIterator<T> iterator() { return ListIterator<T>(this); }
 };
 
+#define foreach_list(list, type, var) \
+    for(ListIterator<type*> var = list.iterator(); !var.isFinished(); var.gotoNext())
+
+#define foreach_plist(list, type, var) \
+    for(ListIterator<type*> var = list->iterator(); !var.isFinished(); var.gotoNext())
+#else
 #define foreach_list(list, type, var) \
     for(ListIterator<type> var = list.iterator(); !var.isFinished(); var.gotoNext())
 
 #define foreach_plist(list, type, var) \
     for(ListIterator<type> var = list->iterator(); !var.isFinished(); var.gotoNext())
-
-};
-#endif // __cplusplus
-
 #endif
+
+#pragma pack(pop)
+
+#endif // !defined(LIST_H)
 

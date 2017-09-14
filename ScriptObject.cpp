@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "List.h"
 #include "ScriptVariant.h"
 #include "StrCache.h"

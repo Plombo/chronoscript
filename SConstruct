@@ -4,9 +4,7 @@ else:
     env = Environment(CPPPATH=['.', 'script'], CCFLAGS='-g -Wall -O2', CXXFLAGS='-std=c++11')
 
 c_sources = [
-    'List',
     'ralloc',
-    'cfuhash',
     'ScriptUtils',
     'script/pp_lexer',
 ]
@@ -26,6 +24,7 @@ cpp_sources = [
     'ScriptObject',
     'ImportCache',
     'SymbolTable',
+    'HashTable',
     'script/Lexer',
     'script/ParserSet',
     'script/pp_parser',

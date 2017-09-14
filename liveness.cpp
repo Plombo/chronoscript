@@ -35,10 +35,10 @@ void dagDFS(BasicBlock *block)
     // printf("liveOut %i: ", block->id); block->liveOut.print(); printf("\n");
     
     // for each program point p in B, backward do
-    Node *last = block->end->prev;
+    Node<Instruction*> *last = block->end->prev;
     while (last != block->start)
     {
-        Instruction *inst = (Instruction*) last->value;
+        Instruction *inst = last->value;
         if (inst->op == OP_PHI) break; // a phi is not a program point
         // remove variables defined at p from Live
         if (inst->isExpression())
@@ -150,8 +150,8 @@ void LivenessAnalyzer::computeLiveIntervals()
             }
         }
         
-        Node *instNode = block->end->prev;
-        Instruction *inst = (Instruction*) instNode->value;
+        Node<Instruction*> *instNode = block->end->prev;
+        Instruction *inst = instNode->value;
         while (inst->op != OP_PHI && inst->op != OP_BB_START)
         {
             if (inst->isExpression())
@@ -179,7 +179,7 @@ void LivenessAnalyzer::computeLiveIntervals()
             // go to previous instruction
             assert(instNode->prev);
             instNode = instNode->prev;
-            inst = (Instruction*) instNode->value;
+            inst = instNode->value;
         }
     }
 }
@@ -222,8 +222,8 @@ void LivenessAnalyzer::coalesce()
     {
         BasicBlock *block = iter.value();
         
-        Node *instNode = block->start->next;
-        Instruction *inst = (Instruction*) instNode->value;
+        Node<Instruction*> *instNode = block->start->next;
+        Instruction *inst = instNode->value;
         while (inst->op == OP_PHI)
         {
             Phi *phi = inst->asPhi();
@@ -246,7 +246,7 @@ void LivenessAnalyzer::coalesce()
             }
             
             instNode = instNode->next;
-            inst = (Instruction*) instNode->value;
+            inst = instNode->value;
         }
     }
 }

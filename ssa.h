@@ -332,8 +332,8 @@ public:
     CList<Phi> incompletePhis;
     
     // these point to nodes in SSABuilder->instructionList
-    Node *start;
-    Node *end;
+    Node<Instruction*> *start;
+    Node<Instruction*> *end;
     
     // loop that this basic block is part of
     Loop *loop;

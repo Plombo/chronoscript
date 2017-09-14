@@ -6,6 +6,9 @@
  * Copyright (c) 2004 - 2014 OpenBOR Team
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "SymbolTable.h"
 
 

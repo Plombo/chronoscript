@@ -22,10 +22,6 @@
 #include "List.h"
 #include "depends.h" // #include "types.h"
 
-#ifdef __cplusplus
-#include "HashMap.h"
-#endif
-
 #define MACRO_CONTENTS_SIZE		512
 
 /*
@@ -58,8 +54,8 @@ typedef union
 struct pp_context
 {
 public:
-    HashMap<char*> macros;             // list of currently defined non-function macros
-    HashMap<CList<char>*> func_macros; // list of currently defined function-style macros
+    List<char*> macros;             // list of currently defined non-function macros
+    List<CList<char>*> func_macros; // list of currently defined function-style macros
     CList<void> imports;               // list of files for the interpreter to "import"
     conditional_stack conditionals;    // the conditional stack
     int num_conditionals;              // current size of the conditional stack

@@ -27,6 +27,7 @@ typedef enum VariantType
     VT_OBJECT   = 7,    //ScriptObject*
 } VARTYPE;
 
+#pragma pack(push, 4) // make this structure 12 bytes and not 16 on 64-bit architectures
 typedef struct ScriptVariant
 {
     union//value
@@ -39,6 +40,7 @@ typedef struct ScriptVariant
     };
     VARTYPE vt;//variatn type
 } ScriptVariant;
+#pragma pack(pop)
 
 void ScriptVariant_Clear(ScriptVariant *var);
 
