@@ -23,7 +23,7 @@ struct Symbol
 class SymbolTable
 {
 public:
-    CList<Symbol> symbolList;
+    List<Symbol*> symbolList;
     int  nextSymbolCount;
     char name[MAX_STR_LEN + 1];
 
@@ -43,7 +43,7 @@ void SymbolTable_AddSymbol(SymbolTable *stable, Symbol *p_theSymbol);
 class StackedSymbolTable
 {
 public:
-    CStack<SymbolTable> symbolTableStack;
+    Stack<SymbolTable*> symbolTableStack;
     int nextScopeNum;
 
     StackedSymbolTable();

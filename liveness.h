@@ -13,7 +13,7 @@ public:
     int id;
     Interval livei;
     InterferenceNode *parent;
-    CList<InterferenceNode> interferesWith;
+    List<InterferenceNode*> interferesWith;
     
     // for MCS
     int weight;
@@ -49,9 +49,9 @@ public:
 
 private:
     void *memCtx;
-    CList<Temporary> *temporaries;
-    CList<BasicBlock> *basicBlocks;
-    CList<Instruction> *instructions;
+    List<Temporary*> *temporaries;
+    List<BasicBlock*> *basicBlocks;
+    List<Instruction*> *instructions;
 public:
     InterferenceNode **nodeForTemp; // indexed by temporary id
     InterferenceNode **values; // indexed by node id

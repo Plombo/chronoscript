@@ -49,7 +49,7 @@ SymbolTable::SymbolTable(const char *theName)
 
 SymbolTable::~SymbolTable()
 {
-    foreach_list(symbolList, Symbol, iter)
+    foreach_list(symbolList, Symbol*, iter)
     {
         Symbol *psymbol = iter.value();
         if (psymbol)
@@ -178,7 +178,7 @@ bool StackedSymbolTable::findSymbol(const char *symbolName, Symbol **pp_theSymbo
 {
     SymbolTable *currentSymbolTable = NULL;
     bool found = false;
-    foreach_list(symbolTableStack, SymbolTable, iter)
+    foreach_list(symbolTableStack, SymbolTable*, iter)
     {
         currentSymbolTable = iter.value();
         found = currentSymbolTable->findSymbol(symbolName, pp_theSymbol);

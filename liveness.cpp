@@ -16,7 +16,7 @@ void dagDFS(BasicBlock *block)
            temp(block->liveOut.getSize(), false);
     live = block->phiUses;
     // printf("live %i: ", block->id); live.print(); printf("\n");
-    foreach_list(block->succs, BasicBlock, iter)
+    foreach_list(block->succs, BasicBlock*, iter)
     {
         BasicBlock *succ = iter.value();
         // skip this edge if it is a loop edge
@@ -47,7 +47,7 @@ void dagDFS(BasicBlock *block)
         }
 
         // add uses at p in Live
-        foreach_list(inst->operands, RValue, iter)
+        foreach_list(inst->operands, RValue*, iter)
         {
             if (!iter.value()->isTemporary()) break;
             live.set(iter.value()->asTemporary()->id);
@@ -69,13 +69,13 @@ void loopTreeDFS(Loop *loop)
     liveLoop = n->liveIn;
     liveLoop.andNot(n->phiDefs);
     // for each M in LoopTree_succs(N) do
-    foreach_list(loop->nodes, BasicBlock, iter)
+    foreach_list(loop->nodes, BasicBlock*, iter)
     {
         BasicBlock *m = iter.value();
         m->liveIn |= liveLoop; // LiveIn(B M ) = LiveIn(B M ) ∪ LiveLoop
         m->liveOut |= liveLoop; // LiveOut(B M ) = LiveOut(B M ) ∪ LiveLoop
     }
-    foreach_list(loop->children, Loop, iter)
+    foreach_list(loop->children, Loop*, iter)
     {
         loopTreeDFS(iter.value());
     }
@@ -87,7 +87,7 @@ void computeLiveSets(SSABuilder *func)
     func->basicBlockList.gotoFirst();
     dagDFS(func->basicBlockList.retrieve());
     // for each root node L of the loop-nesting forest do loopTreeDFS(L)
-    foreach_list(func->loops, Loop, iter)
+    foreach_list(func->loops, Loop*, iter)
     {
         loopTreeDFS(iter.value());
     }
@@ -134,7 +134,7 @@ void LivenessAnalyzer::computeLiveIntervals()
 {
     BitSet liveSet;
     liveSet.allocate(temporaries->size(), true);
-    foreach_plist(basicBlocks, BasicBlock, iter)
+    foreach_plist(basicBlocks, BasicBlock*, iter)
     {
         liveSet.fill(0);
         BasicBlock *block = iter.value();
@@ -164,7 +164,7 @@ void LivenessAnalyzer::computeLiveIntervals()
                     nodeForTemp[dst->id]->livei.extend(inst->seqIndex, inst->seqIndex);
             }
             
-            foreach_list(inst->operands, RValue, srcIter)
+            foreach_list(inst->operands, RValue*, srcIter)
             {
                 if (!srcIter.value()->isTemporary()) // filter out non-temporaries
                     continue;
@@ -218,7 +218,7 @@ bool LivenessAnalyzer::mergeNodes(Temporary *dst, Temporary *src)
 void LivenessAnalyzer::coalesce()
 {
     // coalesce phi sources
-    foreach_plist(basicBlocks, BasicBlock, iter)
+    foreach_plist(basicBlocks, BasicBlock*, iter)
     {
         BasicBlock *block = iter.value();
         
@@ -229,7 +229,7 @@ void LivenessAnalyzer::coalesce()
             Phi *phi = inst->asPhi();
             assert(phi->value()->isTemporary());
             Temporary *dst = phi->value()->asTemporary();
-            foreach_list(inst->operands, RValue, srcIter)
+            foreach_list(inst->operands, RValue*, srcIter)
             {
                 // merge phi dst with phi src (i.e. phi move)
                 assert(srcIter.value()->isTemporary());
@@ -274,13 +274,13 @@ void LivenessAnalyzer::buildInterferenceGraph()
     assert(nextId == uniqueNodes);
 
     // build the interference graph
-    CList<InterferenceNode> active;
+    List<InterferenceNode*> active;
     for(int i = 0; i < uniqueNodes; i++)
     {
         InterferenceNode *cur = values[i];
         // debug_printf("node %i begins at %i\n", cur->id, cur->livei.begin());
         // test for interference with active nodes
-        foreach_list(active, InterferenceNode, iter)
+        foreach_list(active, InterferenceNode*, iter)
         {
             InterferenceNode *n = iter.value();
             if (n->livei.end() <= cur->livei.begin())

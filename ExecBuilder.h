@@ -7,9 +7,9 @@
 // builds ExecFunction/ExecInstruction from SSA IR
 class ExecBuilder {
 public:
-    CList<SSABuilder> ssaFunctions;
-    CList<ExecFunction> execFunctions;
-    CList<ScriptVariant> constants;
+    List<SSABuilder*> ssaFunctions;
+    List<ExecFunction*> execFunctions;
+    List<ScriptVariant*> constants;
     GlobalState globals;
     Interpreter *interpreter;
 public:

@@ -70,7 +70,7 @@ struct ExecFunction {
 
 class Interpreter {
 public:
-    CList<ExecFunction> functions;
+    List<ExecFunction*> functions;
     int numConstants;
     ScriptVariant *constants;
     int numGlobals;

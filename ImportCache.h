@@ -15,7 +15,7 @@
 void ImportCache_Init();
 Interpreter *ImportCache_ImportFile(const char *path);
 void ImportCache_Clear();
-ExecFunction *ImportList_GetFunctionPointer(CList<Interpreter> *list, const char *name);
+ExecFunction *ImportList_GetFunctionPointer(List<Interpreter*> *list, const char *name);
 
 #endif
 

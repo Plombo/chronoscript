@@ -28,7 +28,7 @@ private:
     SSABuilder *bld;
     SSABuildUtil *bldUtil;
     ExecBuilder *execBuilder;
-    CList<SSABuilder> functions;
+    List<SSABuilder*> functions;
 
 public:
     void *memCtx; // TODO: make this a parameter and private

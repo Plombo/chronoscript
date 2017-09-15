@@ -1,5 +1,5 @@
-#ifndef OBJECT_HEAP_H
-#define OBJECT_HEAP_H
+#ifndef SCRIPT_OBJECT_H
+#define SCRIPT_OBJECT_H
 
 #include "List.h"
 #include "ScriptVariant.h"
@@ -7,7 +7,7 @@
 class ScriptObject {
 private:
     bool persistent;
-    CList<ScriptVariant> map;
+    List<ScriptVariant*> map;
 
 public:
     ScriptObject();

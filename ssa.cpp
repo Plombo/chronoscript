@@ -31,7 +31,7 @@ void BasicBlock::print()
 {
     printName();
     printf(" (");
-    foreach_list(preds, BasicBlock, iter)
+    foreach_list(preds, BasicBlock*, iter)
     {
         printf("%i", iter.value()->id);
         if (iter.hasNext()) printf(", ");
@@ -57,7 +57,7 @@ bool BasicBlock::dominates(BasicBlock *b, BasicBlock *without, BitSet *tested)
     if (b == this) return true;
     if (b == without) return false;
     if (b->preds.isEmpty()) return false; // start block
-    foreach_list(b->preds, BasicBlock, iter)
+    foreach_list(b->preds, BasicBlock*, iter)
     {
         if (!this->dominates(iter.value(), without, tested)) return false;
     }
@@ -139,7 +139,7 @@ RValue *SSABuilder::addPhiOperands(const char *variable, BasicBlock *block, Phi 
     // Determine operands from predecessors
     phi->sourceBlocks = ralloc_array(memCtx, BasicBlock*, block->preds.size());
     int i = 0;
-    foreach_list(block->preds, BasicBlock, iter)
+    foreach_list(block->preds, BasicBlock*, iter)
     {
         BasicBlock *pred = iter.value();
         RValue *operand = readVariable(variable, pred);
@@ -153,7 +153,7 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
 {
     // printf("tryRemoveTrivialPhi: "); phi->print();
     RValue *same = NULL;
-    foreach_list(phi->operands, RValue, iter)
+    foreach_list(phi->operands, RValue*, iter)
     {
         RValue *op = iter.value();
         if (op == same || op == phi->value())
@@ -170,8 +170,8 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
     }
     // printf("trivial phi; replace with "); same->printDst(); printf("\n");
     // remember all users except the phi itself
-    CList<Phi> phiUsers;
-    foreach_list(phi->value()->users, Instruction, iter)
+    List<Phi*> phiUsers;
+    foreach_list(phi->value()->users, Instruction*, iter)
     {
         Instruction *use = iter.value();
         if (use->isPhi() && use != phi)
@@ -180,7 +180,7 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
         }
     }
     phi->value()->replaceBy(same); // Reroute all uses of phi to same and remove phi
-    foreach_list(currentDef, RValue, iter)
+    foreach_list(currentDef, RValue*, iter)
     {
         // replace variable value with same
         if (iter.value() == phi->value())
@@ -188,7 +188,7 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
     }
     
     // Try to recursively remove all phi users, which might have become trivial
-    foreach_list(phiUsers, Phi, iter)
+    foreach_list(phiUsers, Phi*, iter)
     {
         tryRemoveTrivialPhi(iter.value());
     }
@@ -197,7 +197,7 @@ RValue *SSABuilder::tryRemoveTrivialPhi(Phi *phi)
 
 void SSABuilder::sealBlock(BasicBlock *block)
 {
-    foreach_list(block->incompletePhis, Phi, iter)
+    foreach_list(block->incompletePhis, Phi*, iter)
     {
         addPhiOperands(iter.name(), block, iter.value());
     }
@@ -249,7 +249,7 @@ Constant *SSABuilder::addConstant(ScriptVariant sv)
 
 void SSABuilder::printInstructionList()
 {
-    foreach_list(instructionList, Instruction, iter)
+    foreach_list(instructionList, Instruction*, iter)
     {
         iter.value()->print();
     }
@@ -271,7 +271,7 @@ bool SSABuilder::removeDeadCode()
             if (expr->isDead())
             {
                 // RValue *undefined = new(memCtx) Undef();
-                foreach_list(expr->operands, RValue, iter)
+                foreach_list(expr->operands, RValue*, iter)
                 {
                     iter.value()->unref(expr);
                 }
@@ -288,7 +288,7 @@ bool SSABuilder::removeDeadCode()
 void SSABuilder::prepareForRegAlloc()
 {
     // insert phi moves
-    foreach_list(basicBlockList, BasicBlock, iter)
+    foreach_list(basicBlockList, BasicBlock*, iter)
     {
         BasicBlock *block = iter.value();
         Node<Instruction*> *instNode = block->start;
@@ -300,7 +300,7 @@ void SSABuilder::prepareForRegAlloc()
             // phi->print();
             // insert moves for phi before last jump in src block
             int i = 0;
-            foreach_list(phi->operands, RValue, srcIter)
+            foreach_list(phi->operands, RValue*, srcIter)
             {
                 RValue *phiSrc = srcIter.value();
                 BasicBlock *srcBlock = phi->sourceBlocks[i++];
@@ -319,7 +319,7 @@ void SSABuilder::prepareForRegAlloc()
                 // replace other references if we can, to improve register allocation
                 int numBBs = basicBlockList.size();
                 if (!phiSrc->isTemporary()) continue; // no advantage to this if src isn't a temp
-                foreach_list(phiSrc->users, Instruction, refIter)
+                foreach_list(phiSrc->users, Instruction*, refIter)
                 {
                     Instruction *inst2 = refIter.value();
                     if (inst2->isPhi() || inst2->isPhiMove) continue;
@@ -330,7 +330,7 @@ void SSABuilder::prepareForRegAlloc()
                         (inst2->block != srcBlock && srcBlock->dominates(inst2->block, block, numBBs)))
                     {
                         // replace the reference
-                        foreach_list(inst2->operands, RValue, srcIter2)
+                        foreach_list(inst2->operands, RValue*, srcIter2)
                         {
                             if (srcIter2.value() == phiSrc)
                             {
@@ -345,7 +345,7 @@ void SSABuilder::prepareForRegAlloc()
         }
         
         // build successor lists
-        foreach_list(block->preds, BasicBlock, predIter)
+        foreach_list(block->preds, BasicBlock*, predIter)
         {
             predIter.value()->succs.insertAfter(block, NULL);
         }
@@ -354,7 +354,7 @@ void SSABuilder::prepareForRegAlloc()
     // build temporary list and assign sequential indices to instructions
     assert(temporaries.isEmpty());
     int tempCount = 0, instCount = 0;
-    foreach_list(instructionList, Instruction, iter)
+    foreach_list(instructionList, Instruction*, iter)
     {
         iter.value()->seqIndex = instCount++;
         if (!iter.value()->isExpression()) continue;
@@ -366,7 +366,7 @@ void SSABuilder::prepareForRegAlloc()
     }
 
     // build basic block live sets
-    foreach_list(basicBlockList, BasicBlock, iter)
+    foreach_list(basicBlockList, BasicBlock*, iter)
     {
         BasicBlock *block = iter.value();
         block->liveIn.allocate(tempCount, true);
@@ -377,7 +377,7 @@ void SSABuilder::prepareForRegAlloc()
     }
 
     // build phiUses and phiDefs sets
-    foreach_list(basicBlockList, BasicBlock, iter)
+    foreach_list(basicBlockList, BasicBlock*, iter)
     {
         BasicBlock *block = iter.value();
         Node<Instruction*> *instNode = block->start;
@@ -388,7 +388,7 @@ void SSABuilder::prepareForRegAlloc()
             Phi *phi = (Phi*) inst;
             // update phiDefs with phi definition
             block->phiDefs.set(phi->value()->asTemporary()->id);
-            foreach_list(phi->operands, RValue, srcIter)
+            foreach_list(phi->operands, RValue*, srcIter)
             {
                 // update phiUses for each phi operand
                 Temporary *phiSrc = srcIter.value()->asTemporary();

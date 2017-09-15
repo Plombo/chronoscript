@@ -54,9 +54,9 @@ typedef union
 struct pp_context
 {
 public:
-    List<char*> macros;             // list of currently defined non-function macros
-    List<CList<char>*> func_macros; // list of currently defined function-style macros
-    CList<void> imports;               // list of files for the interpreter to "import"
+    List<char*> macros;                // list of currently defined non-function macros
+    List<List<char*>*> func_macros;    // list of currently defined function-style macros
+    List<void*> imports;               // list of files for the interpreter to "import"
     conditional_stack conditionals;    // the conditional stack
     int num_conditionals;              // current size of the conditional stack
 public:
@@ -85,7 +85,7 @@ public:
     pp_lexer lexer;
     const char *filename;
     char *sourceCode;
-    CList<char>* params;
+    List<char*>* params;
     int numParams;                     // parameter macros defined for a function macro parser
     char *macroName;
     bool freeFilename;

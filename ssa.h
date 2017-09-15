@@ -96,7 +96,7 @@ class RValue
 {
     DECLARE_RALLOC_CXX_OPERATORS(RValue);
 public:
-    CList<Instruction> users; // instructions that use this value
+    List<Instruction*> users; // instructions that use this value
     LValue *lvalue; // non-NULL means this is an lvalue
 
     inline RValue() : lvalue(NULL) {}
@@ -218,7 +218,7 @@ class Instruction
     DECLARE_RALLOC_CXX_OPERATORS(Instruction);
 public:
     OpCode op; // opcode
-    CList<RValue> operands; // sources
+    List<RValue*> operands; // sources
     BasicBlock *block; // basic block
     int seqIndex; // for live ranges in register allocation
     bool isPhiMove; // this instruction is a move used by a phi in a successor block
@@ -328,8 +328,8 @@ class BasicBlock
 public:
     int id;
     bool isSealed;
-    CList<BasicBlock> preds; // predecessors
-    CList<Phi> incompletePhis;
+    List<BasicBlock*> preds; // predecessors
+    List<Phi*> incompletePhis;
     
     // these point to nodes in SSABuilder->instructionList
     Node<Instruction*> *start;
@@ -339,7 +339,7 @@ public:
     Loop *loop;
     
     // for liveness analysis
-    CList<BasicBlock> succs; // successors
+    List<BasicBlock*> succs; // successors
     bool processed; // processed by depth-first search
     BitSet liveIn;
     BitSet liveOut;
@@ -371,9 +371,9 @@ class Loop
     DECLARE_RALLOC_CXX_OPERATORS(Loop);
 public:
     BasicBlock *header;
-    CList<BasicBlock> nodes;
+    List<BasicBlock*> nodes;
     Loop *parent;
-    CList<Loop> children;
+    List<Loop*> children;
     
     Loop(BasicBlock *header, Loop *parent = NULL);
 };
@@ -382,18 +382,18 @@ class SSABuilder // SSA form of a script function
 {
     DECLARE_RALLOC_CXX_OPERATORS(SSABuilder);
 public:
-    CList<Instruction> instructionList;
-    CList<BasicBlock> basicBlockList;
-    CList<Loop> loops; // loop-nesting forest
-    CList<Temporary> temporaries; // constructed right before regalloc
-    CList<Constant> constantList;
+    List<Instruction*> instructionList;
+    List<BasicBlock*> basicBlockList;
+    List<Loop*> loops; // loop-nesting forest
+    List<Temporary*> temporaries; // constructed right before regalloc
+    List<Constant*> constantList;
     char *functionName; // name of this function
     void *memCtx;
 private:
     int nextBBId; // init to 0
     int nextValueId; // init to 0
     char identBuf[300]; // buffer for getIdentString result
-    CList<RValue> currentDef; // current definitions in each basic block, indexed by "var:block"
+    List<RValue*> currentDef; // current definitions in each basic block, indexed by "var:block"
 
 public:
     int paramCount;
@@ -442,7 +442,7 @@ class GlobalState
     friend class ExecBuilder;
 private:
     // name=var name, value=initial value (or NULL if uninitialized)
-    CList<ScriptVariant> globalVariables;
+    List<ScriptVariant*> globalVariables;
 public:
     inline GlobalState() {}
     inline ~GlobalState() {}
@@ -462,8 +462,8 @@ private:
     Constant *applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *src1); // used for constant folding
 public:
     BasicBlock *currentBlock;
-    CStack<BasicBlock> breakTargets;
-    CStack<BasicBlock> continueTargets;
+    Stack<BasicBlock*> breakTargets;
+    Stack<BasicBlock*> continueTargets;
     
     SSABuildUtil(SSABuilder *builder, GlobalState *globalState);
     inline void setCurrentBlock(BasicBlock *block) { currentBlock = block; }

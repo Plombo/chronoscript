@@ -176,7 +176,7 @@ bool Temporary::isBoolValue()
             return true;
         case OP_PHI:
             if (!expr->block->isSealed) return false;
-            foreach_list(expr->operands, RValue, iter)
+            foreach_list(expr->operands, RValue*, iter)
             {
                 if (!iter.value()->isBoolValue())
                     return false;
@@ -220,7 +220,7 @@ void Instruction::setSrc(int index, RValue *val)
 
 void Instruction::printOperands()
 {
-    foreach_list(operands, RValue, iter)
+    foreach_list(operands, RValue*, iter)
     {
         iter.value()->printDst();
         if (iter.hasNext()) printf(", ");
@@ -314,7 +314,7 @@ void FunctionCall::print()
     dst->printDst();
     printf(" := ");
     printf("%s %s ", getOpCodeName(op), functionName);
-    foreach_list(operands, RValue, iter)
+    foreach_list(operands, RValue*, iter)
     {
         iter.value()->printDst();
         if (iter.hasNext()) printf(", ");

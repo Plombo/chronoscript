@@ -102,7 +102,7 @@ extern "C" void pp_context_destroy(pp_context *self)
     self->func_macros.gotoFirst();
     while (self->func_macros.size() > 0)
     {
-        CList<char> *params = self->func_macros.retrieve();
+        List<char*> *params = self->func_macros.retrieve();
         while (params->size() > 0)
         {
             free(params->retrieve());
@@ -167,7 +167,7 @@ static pp_parser *pp_parser_alloc(pp_parser *parent, const char *filename, char 
  *        when freeing this parser (0 for non-function macros)
  * @return the newly allocated parser
  */
-static pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, CList<char>* params, pp_parser_type type)
+static pp_parser* pp_parser_alloc_macro(pp_parser* parent, char* macroContents, List<char*>* params, pp_parser_type type)
 {
     pp_parser *self = pp_parser_alloc(parent, parent->filename, macroContents, type);
     self->params = params;
@@ -844,7 +844,7 @@ HRESULT pp_parser::parseDirective()
         }
         if (ctx->func_macros.findByName(token.theSource))
         {
-            CList<char> *params = ctx->func_macros.retrieve();
+            List<char*> *params = ctx->func_macros.retrieve();
             while(params->size() > 0)
             {
                 free(params->retrieve());
@@ -961,7 +961,7 @@ HRESULT pp_parser::define(char *name)
 {
     char *contents = NULL;
     bool is_function = false; // true if this is a function-style #define; false otherwise
-    CList<char> *funcParams = new(NULL) CList<char>();
+    List<char*> *funcParams = new(NULL) List<char*>();
 
     // emit an error if the macro is already defined
     if(!strcmp(name, "defined"))
@@ -985,7 +985,7 @@ HRESULT pp_parser::define(char *name)
     }
     if (ctx->func_macros.findByName(name))
     {
-        CList<char> *params2 = ctx->func_macros.retrieve();
+        List<char*> *params2 = ctx->func_macros.retrieve();
         params2->gotoLast();
         pp_warning(this, "'%s' redefined (previously \"%s\")", name, params2->retrieve());
         params2->gotoFirst();
@@ -1216,8 +1216,8 @@ void pp_parser::insertMacro(char *name)
 HRESULT pp_parser::insertFunctionMacro(char *name)
 {
     int numParams, paramCount = 0, paramMacros = 0, parenLevel = 0, type;
-    CList<char> *paramDefs; // note that params is different from self->params
-    CList<char> *funcParams;
+    List<char*> *paramDefs; // note that params is different from self->params
+    List<char*> *funcParams;
     char paramBuffer[1024] = "", *tail;
 
     // find macro and get number of parameters
@@ -1225,7 +1225,7 @@ HRESULT pp_parser::insertFunctionMacro(char *name)
     funcParams = ctx->func_macros.retrieve();
     numParams = funcParams->size() - 1;
 
-    paramDefs = new(NULL) CList<char>();
+    paramDefs = new(NULL) List<char*>();
 
     // read the parameter list and temporarily define a "simple" macro for each parameter
     funcParams->gotoFirst();

@@ -12,10 +12,10 @@
 #include "List.h"
 
 template <typename T>
-class CStack : public CList<T>
+class Stack : public List<T>
 {
 public:
-    inline void push(T *e)
+    inline void push(T e)
     {
         this->gotoFirst();
         this->insertBefore(e, NULL);
@@ -27,7 +27,7 @@ public:
         this->remove();
     }
 
-    inline T *top()
+    inline T top()
     {
         this->gotoFirst();
         return this->retrieve();

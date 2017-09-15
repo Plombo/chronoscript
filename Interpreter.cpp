@@ -270,7 +270,7 @@ Interpreter::~Interpreter()
     delete[] globals;
 
     // free functions
-    foreach_list(functions, ExecFunction, iter)
+    foreach_list(functions, ExecFunction*, iter)
     {
         delete iter.value();
     }

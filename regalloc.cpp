@@ -96,7 +96,7 @@ void RegAlloc::maximumCardinalitySearch()
         // σ(i) ← v
         ordering[i] = v;
         // For all u ∈ V ∩ N(v) do λ(u) ← λ(u) + 1
-        foreach_list(v->interferesWith, InterferenceNode, iter)
+        foreach_list(v->interferesWith, InterferenceNode*, iter)
         {
             InterferenceNode *u = iter.value();
             if (u->ordered) continue; // make sure u is in V
@@ -120,7 +120,7 @@ void RegAlloc::greedyColoring()
     for (int i = 0; i < vertexCount; i++)
     {
         inUse.clrAll();
-        foreach_list(ordering[i]->interferesWith, InterferenceNode, iter)
+        foreach_list(ordering[i]->interferesWith, InterferenceNode*, iter)
         {
             int color = iter.value()->color;
             if (color >= 0) inUse.set(color);

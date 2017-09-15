@@ -37,7 +37,7 @@ public:
     HashNode *get(const char *name);
     void put(HashNode *entry);
     void remove(HashNode *entry);
-    void clear(); // TODO remove; List will take care of it
+    void clear();
 
 private:
     void rehash();
@@ -71,6 +71,7 @@ template <typename T> class ListIterator;
 template <typename T>
 class List
 {
+    DECLARE_RALLOC_CXX_OPERATORS(List);
 public: // these should really be private
     Node<T> *current;
     Node<T> *first;
@@ -249,9 +250,21 @@ public:
     // set the data value of current list item to a new value
     inline void update(T newValue) { current->value = newValue; }
 
-    // this is slow, don't use it
-    // sets this->current to value if found
-    inline bool includes(T e);
+    // searches for value in list (slow)
+    // if found, sets this->current to found node
+    // returns true if value is in list, false if not
+    inline bool includes(T value)
+    {
+        for (Node<T> *node = first; node; node = node->next)
+        {
+            if (node->value == value)
+            {
+                current = node;
+                return true;
+            }
+        }
+        return false;
+    }
 
     // if found, sets this->current to item with given name
     inline bool findByName(const char *name)
@@ -351,35 +364,11 @@ public:
     }
 };
 
-template <typename T>
-bool List<T>::includes(T e)
-{
-    for (ListIterator<T> iter = iterator(); !iter.isFinished(); iter.gotoNext())
-    {
-        if (iter.value() == e) return true;
-    }
-    return false;
-}
-
-#if 1 // TODO: replace all CList<T> uses with List<T*>, and remove CList
-template <typename T>
-class CList : public List<T*>
-{
-    DECLARE_RALLOC_CXX_OPERATORS(CList);
-};
-
-#define foreach_list(list, type, var) \
-    for(ListIterator<type*> var = list.iterator(); !var.isFinished(); var.gotoNext())
-
-#define foreach_plist(list, type, var) \
-    for(ListIterator<type*> var = list->iterator(); !var.isFinished(); var.gotoNext())
-#else
 #define foreach_list(list, type, var) \
     for(ListIterator<type> var = list.iterator(); !var.isFinished(); var.gotoNext())
 
 #define foreach_plist(list, type, var) \
     for(ListIterator<type> var = list->iterator(); !var.isFinished(); var.gotoNext())
-#endif
 
 #pragma pack(pop)
 

@@ -14,7 +14,7 @@ void ExecBuilder::allocateExecFunctions()
 {
     // allocate an ExecFunction for each source function so that when one of
     // these functions calls another, we can properly link the call
-    foreach_list(ssaFunctions, SSABuilder, iter)
+    foreach_list(ssaFunctions, SSABuilder*, iter)
     {
         ExecFunction *execFunc = new ExecFunction;
         execFunc->numParams = iter.value()->paramCount;
@@ -26,7 +26,7 @@ void ExecBuilder::allocateExecFunctions()
 void ExecBuilder::buildExecutable()
 {
     // actually build the ExecFunctions
-    foreach_list(ssaFunctions, SSABuilder, iter)
+    foreach_list(ssaFunctions, SSABuilder*, iter)
     {
         FunctionBuilder builder(iter.value(), this);
         builder.run();
@@ -36,7 +36,7 @@ void ExecBuilder::buildExecutable()
     interpreter->numConstants = constants.size();
     interpreter->constants = new ScriptVariant[interpreter->numConstants];
     int i = 0;
-    foreach_list(constants, ScriptVariant, iter)
+    foreach_list(constants, ScriptVariant*, iter)
     {
         interpreter->constants[i++] = *iter.value();
     }
@@ -106,7 +106,7 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
             func->maxCallParams = numParams;
         inst->paramsIndex = nextParamIndex;
         func->callParams[nextParamIndex++] = numParams;
-        foreach_list(ssaInst->operands, RValue, iter)
+        foreach_list(ssaInst->operands, RValue*, iter)
         {
             func->callParams[nextParamIndex] = createSrc(iter.value());
             ++nextParamIndex;
@@ -147,7 +147,7 @@ void FunctionBuilder::run()
     func->maxCallParams = 0;
 
     int numTemps = 0, numCalls = 0, numParams = 0;
-    foreach_list(ssaFunc->instructionList, Instruction, iter)
+    foreach_list(ssaFunc->instructionList, Instruction*, iter)
     {
         Instruction *inst = iter.value();
         if (inst->isFunctionCall())
@@ -155,7 +155,7 @@ void FunctionBuilder::run()
             numParams += inst->operands.size() + 1;
             if (inst->op != OP_CALL_BUILTIN) ++numCalls;
         }
-        foreach_list(inst->operands, RValue, srcIter)
+        foreach_list(inst->operands, RValue*, srcIter)
         {
             if (srcIter.value()->isTemporary())
             {
@@ -172,7 +172,7 @@ void FunctionBuilder::run()
     func->callTargets = new ExecFunction*[numCalls];
     func->callParams = new u16[numParams];
     func->numTemps = numTemps;
-    foreach_list(ssaFunc->instructionList, Instruction, iter)
+    foreach_list(ssaFunc->instructionList, Instruction*, iter)
     {
         Instruction *inst = iter.value();
         if (inst->seqIndex < 0) continue;
@@ -218,7 +218,7 @@ void ExecBuilder::printInstructions()
     }
     printf("\n");
     // print each function
-    foreach_list(interpreter->functions, ExecFunction, funcIter)
+    foreach_list(interpreter->functions, ExecFunction*, funcIter)
     {
         ExecFunction *func = funcIter.value();
         printf("\n~~~ Function '%s' (%i params) ~~~\n", func->functionName, func->numParams);

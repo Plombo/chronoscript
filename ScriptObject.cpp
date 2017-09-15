@@ -112,7 +112,7 @@ void ScriptObject::makePersistent()
 {
     if (persistent) return;
     persistent = true; // set it up here to avoid infinite recursion in case of cycles
-    foreach_list(map, ScriptVariant, iter)
+    foreach_list(map, ScriptVariant*, iter)
     {
         ScriptVariant *var = iter.value();
         // FIXME need to ref object and string even if they are already persistent
@@ -134,7 +134,7 @@ void ScriptObject::print()
     char buf[256];
     bool first = true;
     printf("{");
-    foreach_list(map, ScriptVariant, iter)
+    foreach_list(map, ScriptVariant*, iter)
     {
         if (!first) printf(", ");
         first = false;
@@ -156,7 +156,7 @@ void ScriptObject::toString(char *dst, int dstsize)
     char buf[256];
     bool first = true;
     SNPRINTF("{");
-    foreach_list(map, ScriptVariant, iter)
+    foreach_list(map, ScriptVariant*, iter)
     {
         if (!first) SNPRINTF(", ");
         first = false;

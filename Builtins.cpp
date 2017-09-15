@@ -4,7 +4,7 @@
 #include "List.h"
 
 static bool builtinsInited = false;
-static CList<void> builtinIndices;
+static List<void*> builtinIndices;
 
 // log([a, [b, [...]]])
 // writes each of its parameters to the log file, separated by a space

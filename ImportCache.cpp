@@ -25,7 +25,7 @@
 
 //#define IC_DEBUG 1
 
-CList<Interpreter> compiledScripts; // names are lowercased, forward-slashed paths
+List<Interpreter*> compiledScripts; // names are lowercased, forward-slashed paths
 
 /**
  * Reads a script file into an allocated buffer.  Be sure to call free() on the
@@ -126,7 +126,7 @@ bool compile(SSABuilder *func)
     computeLiveSets(func);
 #if DEBUG_RA
     printf("\nLive sets:\n");
-    foreach_list(func->basicBlockList, BasicBlock, iter)
+    foreach_list(func->basicBlockList, BasicBlock*, iter)
     {
         BasicBlock *block = iter.value();
         printf("BB %i: in: ", block->id);
@@ -152,7 +152,7 @@ bool compile(SSABuilder *func)
 #endif
     
     // assign registers
-    foreach_list(func->temporaries, Temporary, iter)
+    foreach_list(func->temporaries, Temporary*, iter)
     {
         Temporary *value = iter.value();
         value->reg = livenessAnalyzer.nodeForTemp[value->id]->root()->color;
@@ -166,7 +166,7 @@ bool compile(SSABuilder *func)
 
     // give instructions their final indices
     int nextIndex = 0;
-    foreach_list(func->instructionList, Instruction, iter)
+    foreach_list(func->instructionList, Instruction*, iter)
     {
         Instruction *inst = iter.value();
         if (inst->op == OP_BB_START)
@@ -179,16 +179,16 @@ bool compile(SSABuilder *func)
 
     // print the final instruction list
     printf("\nFinal instruction list:\n");
-    foreach_list(func->instructionList, Instruction, iter)
+    foreach_list(func->instructionList, Instruction*, iter)
     {
         iter.value()->print();
     }
     printf("\n");
 
     // check for uses of undefined values
-    foreach_list(func->instructionList, Instruction, iter)
+    foreach_list(func->instructionList, Instruction*, iter)
     {
-        foreach_list(iter.value()->operands, RValue, rvalue_iter)
+        foreach_list(iter.value()->operands, RValue*, rvalue_iter)
         {
             if (rvalue_iter.value()->isUndefined())
             {
@@ -201,9 +201,9 @@ bool compile(SSABuilder *func)
     return true;
 }
 
-bool link(SSABuilder *func, CList<ExecFunction> *localFunctions, CList<Interpreter> *imports)
+bool link(SSABuilder *func, List<ExecFunction*> *localFunctions, List<Interpreter*> *imports)
 {
-    foreach_list(func->instructionList, Instruction, iter)
+    foreach_list(func->instructionList, Instruction*, iter)
     {
         Instruction *inst = iter.value();
         if (inst->op != OP_CALL) continue;
@@ -234,18 +234,18 @@ bool link(SSABuilder *func, CList<ExecFunction> *localFunctions, CList<Interpret
     return true;
 }
 
-void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
+void linkConstants(SSABuilder *func, List<ScriptVariant*> *constants)
 {
-    foreach_list(func->instructionList, Instruction, instIter)
+    foreach_list(func->instructionList, Instruction*, instIter)
     {
         Instruction *inst = instIter.value();
-        foreach_list(inst->operands, RValue, srcIter)
+        foreach_list(inst->operands, RValue*, srcIter)
         {
             if (!srcIter.value()->isConstant()) continue;
             Constant *c = srcIter.value()->asConstant();
             int i = 0;
             // try to use an existing constant
-            foreach_plist(constants, ScriptVariant, constIter)
+            foreach_plist(constants, ScriptVariant*, constIter)
             {
                 if (c->constValue.vt == constIter.value()->vt &&
                     ScriptVariant_IsTrue(ScriptVariant_Eq(&c->constValue, constIter.value())))
@@ -268,7 +268,7 @@ void linkConstants(SSABuilder *func, CList<ScriptVariant> *constants)
         }
     }
     // get the string cache to free unused string constants
-    foreach_list(func->constantList, Constant, constIter)
+    foreach_list(func->constantList, Constant*, constIter)
     {
         ScriptVariant *var = &constIter.value()->constValue;
         if (var->vt == VT_STR)
@@ -295,7 +295,7 @@ Interpreter *compileFile(const char *filename)
     compiledScripts.insertAfter(execBuilder.interpreter, filename);
 
     // get imports
-    CList<Interpreter> imports;
+    List<Interpreter*> imports;
     int numImports = ppContext.imports.size();
     ppContext.imports.gotoFirst();
     for (int i = 0; i < numImports; i++)
@@ -312,7 +312,7 @@ Interpreter *compileFile(const char *filename)
     }
     pp_context_destroy(&ppContext);
 
-    foreach_list(execBuilder.ssaFunctions, SSABuilder, iter)
+    foreach_list(execBuilder.ssaFunctions, SSABuilder*, iter)
     {
         SSABuilder *func = iter.value();
         if (!link(func, &execBuilder.interpreter->functions, &imports)) goto error;
@@ -343,7 +343,7 @@ error:
  * have priority, so if the author imports two script files with the same
  * function name, the function used will be from the file imported last.
  */
-ExecFunction *ImportList_GetFunctionPointer(CList<Interpreter> *list, const char *name)
+ExecFunction *ImportList_GetFunctionPointer(List<Interpreter*> *list, const char *name)
 {
     list->gotoLast();
     for (int i = list->size(); i > 0; i--)
@@ -419,7 +419,7 @@ Interpreter *ImportCache_ImportFile(const char *path)
  */
 void ImportCache_Clear()
 {
-    foreach_list(compiledScripts, Interpreter, iter)
+    foreach_list(compiledScripts, Interpreter*, iter)
     {
         delete iter.value();
     }
