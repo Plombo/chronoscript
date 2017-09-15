@@ -25,20 +25,13 @@ void ScriptVariant_Init(ScriptVariant *var)
 
 void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt)
 {
-    // Always collect make it safer for string copy
-    // since now reference has been added.
     // String variables should never be changed
     // unless the engine is creating a new one
-    if (var->vt == VT_STR)
-    {
-        StrCache_Collect(var->strVal);
-    }
     if (cvt == VT_STR)
     {
         var->strVal = StrCache_Pop();
     }
     var->vt = cvt;
-
 }
 
 // find an existing constant before copy
