@@ -43,12 +43,17 @@ private:
     void rehash();
 };
 
-template <typename T>
-class Node : public HashNode
+class BaseNode : public HashNode
 {
 public:
-    Node<T> *prev;
-    Node<T> *next;
+    BaseNode *prev;
+    BaseNode *next;
+};
+
+template <typename T>
+class Node : public BaseNode
+{
+public:
     T value;
 
     inline Node(T data, const char *name)
@@ -62,6 +67,28 @@ public:
     {
         free(this->name);
     }
+
+    inline Node<T> *getPrevious() { return static_cast<Node<T>*>(prev); }
+    inline Node<T> *getNext() { return static_cast<Node<T>*>(next); }
+};
+
+class BaseList
+{
+public: // these should be protected
+    BaseNode *current;
+    BaseNode *first;
+    BaseNode *last;
+protected:
+    unsigned int theSize;
+
+protected:
+    inline BaseList() : current(NULL), first(NULL), last(NULL), theSize(0) {}
+
+    void insertNodeBeforeNode(BaseNode *newNode, BaseNode *otherNode);
+    void insertNodeAfterNode(BaseNode *newNode, BaseNode *otherNode);
+    void insertNodeBeforeCurrent(BaseNode *newNode);
+    void insertNodeAfterCurrent(BaseNode *newNode);
+    void baseRemoveNode(BaseNode *node);
 };
 
 template <typename T> class ListIterator;
@@ -69,17 +96,12 @@ template <typename T> class ListIterator;
 // doubly linked list class, with a hash table to access elements by name
 // TODO make a non-templated BaseList class to avoid inlining large functions
 template <typename T>
-class List
+class List : public BaseList
 {
     DECLARE_RALLOC_CXX_OPERATORS(List);
-public: // these should really be private
-    Node<T> *current;
-    Node<T> *first;
-    Node<T> *last;
 
 private:
     HashTable hashTable;
-    unsigned int theSize;
 
     inline Node<T> *createNode(T value, const char *name)
     {
@@ -91,11 +113,8 @@ private:
 
 public:
     inline List()
-      : current(NULL),
-        first(NULL),
-        last(NULL),
-        hashTable(32, HASH_TABLE_FROZEN_UNTIL_GROWS),
-        theSize(0)
+      : BaseList(),
+        hashTable(32, HASH_TABLE_FROZEN_UNTIL_GROWS)
     {}
 
     inline ~List() { clear(); }
@@ -104,10 +123,10 @@ public:
     inline void clear()
     {
         hashTable.clear();
-        Node<T> *cur = first;
+        Node<T> *cur = static_cast<Node<T>*>(first);
         while (cur)
         {
-            Node<T> *next = cur->next;
+            Node<T> *next = cur->getNext();
             delete cur;
             cur = next;
         }
@@ -117,95 +136,38 @@ public:
 
     // adds a new item to the list before the given node
     // returns the newly created node
-    inline Node<T> *insertBeforeNode(Node<T> *otherNode, T value, const char *name = NULL)
+    inline void insertBeforeNode(BaseNode *otherNode, T value, const char *name = NULL)
     {
-        Node<T> *node = createNode(value, name);
-        Node<T> *prev = otherNode->prev;
-        node->prev = prev;
-        if (prev)
-            prev->next = node;
-        node->next = otherNode;
-        otherNode->prev = node;
-        theSize++;
-        if (first == otherNode)
-            first = node;
-        return node;
+        Node<T> *newNode = createNode(value, name);
+        insertNodeBeforeNode(newNode, otherNode);
     }
 
     // adds a new item to the list after the given node
-    inline Node<T> *insertAfterNode(Node<T> *otherNode, T value, const char *name = NULL)
+    inline void insertAfterNode(BaseNode *otherNode, T value, const char *name = NULL)
     {
-        Node<T> *node = createNode(value, name);
-        Node<T> *next = otherNode->next;
-        node->next = next;
-        if (next)
-            next->prev = node;
-        otherNode->next = node;
-        node->prev = otherNode;
-        theSize++;
-        if (last == otherNode)
-            last = node;
-        return node;
+        Node<T> *newNode = createNode(value, name);
+        insertNodeAfterNode(newNode, otherNode);
     }
 
     // adds a new item to the list before the current item
     inline void insertBefore(T value, const char *name = NULL)
     {
-        if (current)
-        {
-            current = insertBeforeNode(current, value, name);
-        }
-        else // list is empty
-        {
-            Node<T> *node = createNode(value, name);
-            current = first = last = node;
-            theSize++;
-        }
+        Node<T> *newNode = createNode(value, name);
+        insertNodeBeforeCurrent(newNode);
     }
 
     // adds a new item to the list after the current item
     inline void insertAfter(T value, const char *name = NULL)
     {
-        if (current)
-        {
-            current = insertAfterNode(current, value, name);
-        }
-        else // list is empty
-        {
-            Node<T> *node = createNode(value, name);
-            current = first = last = node;
-            theSize++;
-        }
+        Node<T> *newNode = createNode(value, name);
+        insertNodeAfterCurrent(newNode);
     }
 
     // removes a node from the list
     // it would be nice if we didn't have to inline this
     inline void removeNode(Node<T> *node)
     {
-        if (node->prev)
-        {
-            node->prev->next = node->next;
-        }
-        else
-        {
-            assert(node == first);
-            first = node->next;
-        }
-
-        if (node->next)
-        {
-            node->next->prev = node->prev;
-        }
-        else
-        {
-            assert(node == last);
-            last = node->prev;
-        }
-
-        if (current == node)
-        {
-            current = node->prev ? node->prev : node->next;
-        }
+        baseRemoveNode(node);
 
         if (node->name)
         {
@@ -213,7 +175,6 @@ public:
         }
 
         delete node;
-        theSize--;
     }
 
     // removes the current item from the list
@@ -221,7 +182,7 @@ public:
     {
         if (current)
         {
-            removeNode(current);
+            removeNode(static_cast<Node<T>*>(current));
         }
     }
 
@@ -245,19 +206,19 @@ public:
     inline void gotoFirst() { current = first; }
 
     // get the data value of the current list item
-    inline T retrieve() { return current->value; }
+    inline T retrieve() const { return static_cast<Node<T>*>(current)->value; }
 
     // set the data value of current list item to a new value
-    inline void update(T newValue) { current->value = newValue; }
+    inline void update(T newValue) { static_cast<Node<T>*>(current)->value = newValue; }
 
     // searches for value in list (slow)
     // if found, sets this->current to found node
     // returns true if value is in list, false if not
     inline bool includes(T value)
     {
-        for (Node<T> *node = first; node; node = node->next)
+        for (BaseNode *node = first; node; node = node->next)
         {
-            if (node->value == value)
+            if (static_cast<Node<T>*>(node)->value == value)
             {
                 current = node;
                 return true;
@@ -282,21 +243,23 @@ public:
     }
 
     // returns name of current list item (can be NULL)
-    inline const char *getName() { return current->name; }
+    inline const char *getName() const { return current->name; }
 
     // returns number of items in list
-    inline int size() { return theSize; }
+    inline int size() const { return theSize; }
 
-    inline bool isEmpty() { return (theSize == 0); }
+    inline bool isEmpty() const { return (theSize == 0); }
 
-    inline Node<T> *currentNode() { return current; }
+    inline Node<T> *firstNode() const { return static_cast<Node<T>*>(first); }
+    inline Node<T> *lastNode() const { return static_cast<Node<T>*>(last); }
+    inline Node<T> *currentNode() const { return static_cast<Node<T>*>(current); }
     inline void setCurrent(Node<T> *node) { current = node; }
 
     // this is slow, don't use it
     inline int getIndex()
     {
         int i = 0;
-        Node<T> *node = first;
+        BaseNode *node = first;
         while (node != current)
         {
             ++i;
@@ -311,7 +274,7 @@ public:
     {
         if (index >= theSize) return false;
 
-        Node<T> *node = first;
+        BaseNode *node = first;
         for (unsigned int i = 0; i < index; i++)
         {
             node = node->next;
@@ -334,7 +297,7 @@ private:
     Node<T> *current;
     bool removed;
 public:
-    inline ListIterator(List<T> *list) : list(list), current(list->first), removed(false) {}
+    inline ListIterator(List<T> *list) : list(list), current(list->firstNode()), removed(false) {}
     inline Node<T> *node() { return current; }
     inline const char *name() { return current->name; }
     inline T value() { return current->value; }
@@ -347,13 +310,13 @@ public:
     {
         // if we just removed a node, we're already on the next node
         if (current && !removed)
-            current = current->next;
+            current = current->getNext();
         removed = false;
     }
     inline void remove()
     {
         assert(current);
-        Node<T> *next = current->next,
+        Node<T> *next = current->getNext(),
                 *savedCurrent = list->currentNode();
         list->setCurrent(current);
         list->remove();

@@ -18,7 +18,7 @@ void BasicBlock::addPred(BasicBlock *newPred)
 // returns true if last instruction in block is an unconditional jump (JMP/RETURN)
 bool BasicBlock::endsWithJump()
 {
-    Instruction *lastInstruction = end->prev->value;
+    Instruction *lastInstruction = end->getPrevious()->value;
     return (lastInstruction->isJump() || lastInstruction->op == OP_RETURN);
 }
 
@@ -292,7 +292,7 @@ void SSABuilder::prepareForRegAlloc()
     {
         BasicBlock *block = iter.value();
         Node<Instruction*> *instNode = block->start;
-        while ((instNode = instNode->next))
+        while ((instNode = instNode->getNext()))
         {
             Instruction *inst = instNode->value;
             if (inst->op != OP_PHI) break; // only process phis, which are always at start of block
@@ -304,10 +304,11 @@ void SSABuilder::prepareForRegAlloc()
             {
                 RValue *phiSrc = srcIter.value();
                 BasicBlock *srcBlock = phi->sourceBlocks[i++];
-                Node<Instruction*> *insertPoint = srcBlock->end->prev;
+                Node<Instruction*> *insertPoint = srcBlock->end->getPrevious();
                 Expression *move = new(memCtx) Expression(OP_MOV, valueId(), phiSrc);
                 move->block = srcBlock;
-                while (insertPoint->value->isJump()) insertPoint = insertPoint->prev;
+                while (insertPoint->value->isJump())
+                    insertPoint = insertPoint->getPrevious();
                 instructionList.setCurrent(insertPoint);
                 instructionList.insertAfter(move, NULL);
                 // replace reference
@@ -381,7 +382,7 @@ void SSABuilder::prepareForRegAlloc()
     {
         BasicBlock *block = iter.value();
         Node<Instruction*> *instNode = block->start;
-        while ((instNode = instNode->next))
+        while ((instNode = instNode->getNext()))
         {
             Instruction *inst = instNode->value;
             if (inst->op != OP_PHI) break; // only process phis, which are always at start of block

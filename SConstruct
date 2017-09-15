@@ -25,6 +25,7 @@ cpp_sources = [
     'ImportCache',
     'SymbolTable',
     'HashTable',
+    'List',
     'script/Lexer',
     'script/ParserSet',
     'script/pp_parser',

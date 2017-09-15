@@ -35,7 +35,7 @@ void dagDFS(BasicBlock *block)
     // printf("liveOut %i: ", block->id); block->liveOut.print(); printf("\n");
     
     // for each program point p in B, backward do
-    Node<Instruction*> *last = block->end->prev;
+    Node<Instruction*> *last = block->end->getPrevious();
     while (last != block->start)
     {
         Instruction *inst = last->value;
@@ -52,7 +52,7 @@ void dagDFS(BasicBlock *block)
             if (!iter.value()->isTemporary()) break;
             live.set(iter.value()->asTemporary()->id);
         }
-        last = last->prev;
+        last = last->getPrevious();
     }
 
     // printf("live %i: ", block->id); live.print(); printf("\n");
@@ -150,7 +150,7 @@ void LivenessAnalyzer::computeLiveIntervals()
             }
         }
         
-        Node<Instruction*> *instNode = block->end->prev;
+        Node<Instruction*> *instNode = block->end->getPrevious();
         Instruction *inst = instNode->value;
         while (inst->op != OP_PHI && inst->op != OP_BB_START)
         {
@@ -177,8 +177,8 @@ void LivenessAnalyzer::computeLiveIntervals()
             }
 
             // go to previous instruction
-            assert(instNode->prev);
-            instNode = instNode->prev;
+            instNode = instNode->getPrevious();
+            assert(instNode);
             inst = instNode->value;
         }
     }
@@ -222,7 +222,7 @@ void LivenessAnalyzer::coalesce()
     {
         BasicBlock *block = iter.value();
         
-        Node<Instruction*> *instNode = block->start->next;
+        Node<Instruction*> *instNode = block->start->getNext();
         Instruction *inst = instNode->value;
         while (inst->op == OP_PHI)
         {
@@ -245,7 +245,7 @@ void LivenessAnalyzer::coalesce()
                     mergeNodes(src, movSrc->asTemporary());
             }
             
-            instNode = instNode->next;
+            instNode = instNode->getNext();
             inst = instNode->value;
         }
     }
