@@ -1108,7 +1108,7 @@ RValue *Parser::condExpr()
 RValue *Parser::condExpr2(RValue *lhs)
 {
     char varName[64];
-    sprintf(varName, "?:%i", labelCount++);
+    snprintf(varName, sizeof(varName), "?:%i", labelCount++);
     if (check(TOKEN_CONDITIONAL))
     {
         match();
@@ -1183,7 +1183,7 @@ RValue *Parser::logOrExpr2(RValue *lhs)
     {
         match();
         char varName[64];
-        sprintf(varName, "||%i", labelCount++);
+        snprintf(varName, sizeof(varName), "||%i", labelCount++);
         bldUtil->declareVariable(varName);
         bldUtil->writeVariable(varName, lhs);
         Jump *jumpFromFirst = bldUtil->mkJump(OP_BRANCH_TRUE, NULL, lhs);
@@ -1235,7 +1235,7 @@ RValue *Parser::logAndExpr2(RValue *lhs)
     {
         match();
         char varName[64];
-        sprintf(varName, "&&%i", labelCount++);
+        snprintf(varName, sizeof(varName), "&&%i", labelCount++);
         bldUtil->declareVariable(varName);
         bldUtil->writeVariable(varName, lhs);
         Jump *jumpFromFirst = bldUtil->mkJump(OP_BRANCH_FALSE, NULL, lhs);

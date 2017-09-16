@@ -243,7 +243,7 @@ HRESULT pp_error(pp_parser *self, const char *format, ...)
     va_list arglist;
 
     va_start(arglist, format);
-    vsprintf(buf, format, arglist);
+    vsnprintf(buf, sizeof(buf), format, arglist);
     va_end(arglist);
     pp_message(self, "error", buf);
 
@@ -259,7 +259,7 @@ void pp_warning(pp_parser *self, const char *format, ...)
     va_list arglist;
 
     va_start(arglist, format);
-    vsprintf(buf, format, arglist);
+    vsnprintf(buf, sizeof(buf), format, arglist);
     va_end(arglist);
     pp_message(self, "warning", buf);
 }
@@ -1389,7 +1389,7 @@ void pp_parser::insertBuiltinMacro(const char *name)
         {
             fileroot = fileroot->parent;
         }
-        sprintf(value, "%i", fileroot->token.theTextPosition.row);
+        snprintf(value, sizeof(value), "%i", fileroot->token.theTextPosition.row);
     }
     else
     {
