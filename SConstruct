@@ -1,7 +1,13 @@
+env_options = {
+    'CPPPATH': ['.', 'script'],
+    'CCFLAGS': '-g -Wall -O2 -ffast-math',
+    'CXXFLAGS': '-std=c++11 -fno-exceptions -fno-rtti',
+}
+
 if Platform().name == 'win32':
-    env = Environment(tools=['mingw'], CPPPATH=['.', 'script'], CCFLAGS='-g -Wall')
-else:
-    env = Environment(CPPPATH=['.', 'script'], CCFLAGS='-g -Wall -O2', CXXFLAGS='-std=c++11')
+    env_options['tools'] = ['mingw']
+
+env = Environment(**env_options)
 
 c_sources = [
     'ralloc',
