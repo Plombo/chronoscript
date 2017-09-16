@@ -51,7 +51,7 @@ public:
     void pushScope();
     SymbolTable *topScope();
     void popScope();
-    bool findSymbol(const char *symbolName, Symbol **pp_theSymbol, char *p_scopedName);
+    bool findSymbol(const char *symbolName, Symbol **pp_theSymbol);
     void addSymbol(Symbol *p_theSymbol);
 };
 

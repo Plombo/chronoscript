@@ -174,7 +174,7 @@ void StackedSymbolTable::popScope()
 *  Returns: true if the symbol is found.
 *           false otherwise.
 ******************************************************************************/
-bool StackedSymbolTable::findSymbol(const char *symbolName, Symbol **pp_theSymbol, char *p_scopedName)
+bool StackedSymbolTable::findSymbol(const char *symbolName, Symbol **pp_theSymbol)
 {
     SymbolTable *currentSymbolTable = NULL;
     bool found = false;
@@ -183,11 +183,7 @@ bool StackedSymbolTable::findSymbol(const char *symbolName, Symbol **pp_theSymbo
         currentSymbolTable = iter.value();
         found = currentSymbolTable->findSymbol(symbolName, pp_theSymbol);
 
-        if (found)
-        {
-            sprintf(p_scopedName, "%s$%s", symbolName, currentSymbolTable->name);
-            break;
-        }
+        if (found) break;
     }
 
     //Restore the stack so push and pop work correctly.

@@ -111,9 +111,10 @@ private:
     RValue *object();
     RValue *constant();
 
-    void error(PRODUCTION offender, const char *offenderStr);
+    void handleError(PRODUCTION offender);
+    void errorDefault(PRODUCTION offender, const char *offenderStr);
 };
 
-#define Parser_Error(pa, pr) pa->error(Productions::pr, #pr)
+#define Parser_Error(pa, pr) pa->errorDefault(Productions::pr, #pr)
 
 #endif

@@ -427,7 +427,6 @@ bool GlobalState::declareGlobalVariable(const char *varName)
 
 GlobalVarRef *GlobalState::readGlobalVariable(const char *varName, void *memCtx)
 {
-    printf("Try to read global variable '%s'\n", varName);
     if (globalVariables.findByName(varName))
     {
         return new(memCtx) GlobalVarRef(globalVariables.getIndex());
@@ -642,20 +641,26 @@ Undef *SSABuildUtil::undef() // get an undefined value
     return new(builder->memCtx) Undef();
 }
 
-void SSABuildUtil::declareVariable(const char *varName)
+// returns true on success, false if varName is already defined
+bool SSABuildUtil::declareVariable(const char *varName)
 {
+    // see if there is already a variable defined with this name (error)
+    Symbol *existingSymbol;
+    if (symbolTable.findSymbol(varName, &existingSymbol))
+        return false;
+
+    // variable is not defined, so create symbol and add it to symbol table
     Symbol *sym = (Symbol *) malloc(sizeof(Symbol));
     Symbol_Init(sym, varName, NULL);
     symbolTable.addSymbol(sym);
-    // TODO duplicate declarations?
+    return true;
 }
 
 // returns true if varName is valid in current scope
 bool SSABuildUtil::writeVariable(const char *varName, RValue *value)
 {
-    char scopedName[MAX_STR_LEN * 2 + 1];
     Symbol *sym;
-    bool found = symbolTable.findSymbol(varName, &sym, scopedName);
+    bool found = symbolTable.findSymbol(varName, &sym);
     if (found)
     {
         builder->writeVariable(varName, currentBlock, value);
@@ -690,9 +695,8 @@ bool SSABuildUtil::mkAssignment(LValue *lhs, RValue *rhs)
 // returns an Undef if varName is invalid in current scope
 RValue *SSABuildUtil::readVariable(const char *varName)
 {
-    char scopedName[MAX_STR_LEN * 2 + 1];
     Symbol *sym;
-    bool found = symbolTable.findSymbol(varName, &sym, scopedName);
+    bool found = symbolTable.findSymbol(varName, &sym);
     if (found)
     {
         RValue *value = builder->readVariable(varName, currentBlock);

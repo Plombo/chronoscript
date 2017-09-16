@@ -449,6 +449,11 @@ public:
     bool declareGlobalVariable(const char *varName);
     // bool writeGlobalVariable(const char *variable, RValue *value);
     GlobalVarRef *readGlobalVariable(const char *varName, void *memCtx);
+
+    inline bool globalVariableExists(const char *varName)
+    {
+        return globalVariables.findByName(varName);
+    }
 };
 
 class SSABuildUtil
@@ -494,7 +499,7 @@ public:
 
     Undef *undef(); // get an undefined value
 
-    void declareVariable(const char *name);
+    bool declareVariable(const char *name);
     bool writeVariable(const char *variable, RValue *value);
     bool mkAssignment(LValue *lhs, RValue *rhs);
     RValue *readVariable(const char *variable);

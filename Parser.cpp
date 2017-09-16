@@ -8,6 +8,11 @@
 
 #include "Parser.h"
 
+#define errorWithMessage(pr, ...) {                  \
+    pp_error(&(theLexer.preprocessor), __VA_ARGS__); \
+    handleError(Productions::pr);                    \
+}
+
 Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
                int startingLineNumber, const char *path)
  : theLexer(pcontext, path, scriptText, {startingLineNumber, 1})
@@ -124,10 +129,10 @@ void Parser::externalDecl2(bool variableonly)
 {
     Token token = theNextToken;
     //ignore the type of this declaration
-    if(!check(TOKEN_IDENTIFIER))
+    if (!check(TOKEN_IDENTIFIER))
     {
-        printf("Identifier expected before '%s'.\n", token.theSource);
-        Parser_Error(this, external_decl);
+        errorWithMessage(external_decl, "identifier expected before '%s'", token.theSource);
+        return;
     }
     match();
 
@@ -174,15 +179,27 @@ void Parser::externalDecl2(bool variableonly)
     // semicolon, end expression.
     if (check(TOKEN_SEMICOLON))
     {
-        match();
         // declare the variable
-        execBuilder->globals.declareGlobalVariable(token.theSource);
+        if (execBuilder->globals.globalVariableExists(token.theSource))
+        {
+            errorWithMessage(external_decl,
+                "there is already a global variable named '%s'", token.theSource);
+            return;
+        }
+        else execBuilder->globals.declareGlobalVariable(token.theSource);
+        match();
     }
     // still comma? there should be another identifier so declare the variable and go for the next
     else if (check(TOKEN_COMMA))
     {
+        if (execBuilder->globals.globalVariableExists(token.theSource))
+        {
+            errorWithMessage(external_decl,
+                "there is already a global variable named '%s'", token.theSource);
+            return;
+        }
+        else execBuilder->globals.declareGlobalVariable(token.theSource);
         match();
-        execBuilder->globals.declareGlobalVariable(token.theSource);
         externalDecl2(true);
     }
 
@@ -278,22 +295,32 @@ void Parser::decl()
 void Parser::decl2()
 {
     Token token = theNextToken;
-    if(!check(TOKEN_IDENTIFIER))
+    if (!check(TOKEN_IDENTIFIER))
     {
-        printf("Identifier expected before '%s'.\n", token.theSource);
-        Parser_Error(this, decl );
+        errorWithMessage(decl, "identifier expected before '%s'", token.theSource);
+        return;
     }
+
+    // it's an error if there's already a variable, global or local, with the same name
+    if (execBuilder->globals.globalVariableExists(token.theSource))
+    {
+        errorWithMessage(decl, "there is already a global variable named '%s'", token.theSource);
+        return;
+    }
+    else if (!bldUtil->declareVariable(token.theSource))
+    {
+        errorWithMessage(decl, "there is already a variable named '%s'", token.theSource);
+        return;
+    }
+
     match();
 
     // =
     if (parserSet.first(Productions::initializer, theNextToken.theType))
     {
-        // Parser_AddInstructionViaToken(pparser, DATA, &token, NULL );
-        bldUtil->declareVariable(token.theSource);
-
         //Get the initializer;
         RValue *initialValue = initializer();
-        if(check(TOKEN_SEMICOLON ))
+        if (check(TOKEN_SEMICOLON))
         {
             match();
             //Save the initializer
@@ -302,7 +329,7 @@ void Parser::decl2()
                 bldUtil->writeVariable(token.theSource, initialValue);
             }
         }
-        else if(check(TOKEN_COMMA ))
+        else if (check(TOKEN_COMMA))
         {
             match();
             if (initialValue)
@@ -314,22 +341,19 @@ void Parser::decl2()
         else
         {
             match();
-            printf("Semicolon or comma expected before '%s'\n", theNextToken.theSource);
-            Parser_Error(this, decl );
+            errorWithMessage(decl, "semicolon or comma expected before '%s'", theNextToken.theSource);
         }
     }
     // ,
     else if (check(TOKEN_COMMA))
     {
         match();
-        bldUtil->declareVariable(token.theSource);
         decl2();
     }
     // ;
     else if (check(TOKEN_SEMICOLON))
     {
         match();
-        bldUtil->declareVariable(token.theSource);
     }
     else
     {
@@ -1962,15 +1986,8 @@ const char  *_production_error_message(Parser *pparser, PRODUCTION offender)
     }
 }
 
-
-void Parser::error(PRODUCTION offender, const char *offenderStr)
+void Parser::handleError(PRODUCTION offender)
 {
-    //Report the offending token to the error handler, along with the production
-    //it offended in.
-    if (offender != Productions::error)
-        pp_error(&(theLexer.preprocessor), "%s '%s' (in production '%s')",
-                 _production_error_message(this, offender), theNextToken.theSource, offenderStr);
-
     errorFound = true;
 
     if (offender == Productions::error)
@@ -1989,3 +2006,15 @@ void Parser::error(PRODUCTION offender, const char *offenderStr)
     }
     while (!parserSet.follow(offender, theNextToken.theType));
 }
+
+void Parser::errorDefault(PRODUCTION offender, const char *offenderStr)
+{
+    //Report the offending token to the error handler, along with the production
+    //it offended in.
+    if (offender != Productions::error)
+        pp_error(&(theLexer.preprocessor), "%s '%s' (in production '%s')",
+                 _production_error_message(this, offender), theNextToken.theSource, offenderStr);
+
+    handleError(offender);
+}
+
