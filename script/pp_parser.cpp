@@ -84,37 +84,36 @@ pp_context::pp_context()
 /**
  * Frees the memory associated with a preprocessor context.  This function can
  * safely be called multiple times on the same context with no negative
- * consequences.  However, it does assume that the context has been initialized
- * at least once.
+ * consequences.
  */
-extern "C" void pp_context_destroy(pp_context *self)
+void pp_context::clear()
 {
     // undefine and free all non-function macros
-    self->macros.gotoFirst();
-    while (self->macros.size() > 0)
+    macros.gotoFirst();
+    while (macros.size() > 0)
     {
-        free(self->macros.retrieve());
-        self->macros.remove();
+        free(macros.retrieve());
+        macros.remove();
     }
-    self->macros.clear();
+    macros.clear();
 
     // undefine and free all function-style macros
-    self->func_macros.gotoFirst();
-    while (self->func_macros.size() > 0)
+    func_macros.gotoFirst();
+    while (func_macros.size() > 0)
     {
-        List<char*> *params = self->func_macros.retrieve();
+        List<char*> *params = func_macros.retrieve();
         while (params->size() > 0)
         {
             free(params->retrieve());
             params->remove();
         }
         delete params;
-        self->func_macros.remove();
+        func_macros.remove();
     }
-    self->func_macros.clear();
+    func_macros.clear();
 
     // free the import list
-    self->imports.clear();
+    imports.clear();
 }
 
 /**

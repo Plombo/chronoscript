@@ -25,7 +25,7 @@ Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
     bld = NULL;
     bldUtil = NULL;
     execBuilder = builder;
-    errorFound = false;
+    errorCount = 0;
 }
 
 /******************************************************************************
@@ -1988,7 +1988,7 @@ const char  *_production_error_message(Parser *pparser, PRODUCTION offender)
 
 void Parser::handleError(PRODUCTION offender)
 {
-    errorFound = true;
+    errorCount++;
 
     if (offender == Productions::error)
         return;

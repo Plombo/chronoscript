@@ -286,31 +286,32 @@ Interpreter *compileFile(const char *filename)
 
     ExecBuilder execBuilder;
     pp_context ppContext;
-    Parser parser(&ppContext, &execBuilder, scriptText, 1, filename);
+    List<Interpreter*> imports;
+    int numImports;
 
+    Parser parser(&ppContext, &execBuilder, scriptText, 1, filename);
     parser.parseText();
+    if (parser.errorFound()) goto error;
 
     execBuilder.allocateExecFunctions();
     compiledScripts.gotoLast();
     compiledScripts.insertAfter(execBuilder.interpreter, filename);
 
     // get imports
-    List<Interpreter*> imports;
-    int numImports = ppContext.imports.size();
+    numImports = ppContext.imports.size();
     ppContext.imports.gotoFirst();
     for (int i = 0; i < numImports; i++)
     {
         Interpreter *importedScript = ImportCache_ImportFile(ppContext.imports.getName());
         if (importedScript == NULL)
         {
-            pp_context_destroy(&ppContext);
             goto error;
         }
         printf("imported script %s => %p\n", ppContext.imports.getName(), importedScript);
         imports.insertAfter(importedScript);
         ppContext.imports.gotoNext();
     }
-    pp_context_destroy(&ppContext);
+    ppContext.clear();
 
     foreach_list(execBuilder.ssaFunctions, SSABuilder*, iter)
     {
@@ -327,7 +328,8 @@ Interpreter *compileFile(const char *filename)
     return execBuilder.interpreter;
 
 error:
-    printf("An error occurred when compiling %s\n", filename);
+    printf("Failed to compile script '%s'.\n", filename);
+    delete execBuilder.interpreter;
     if (compiledScripts.findByName(filename))
     {
         compiledScripts.remove();

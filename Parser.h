@@ -24,7 +24,7 @@ private:
     Token theNextNextToken;            //The token after the next one (used for overread)
     bool rewound;                      //If true, use theNextNextToken instead of lexing another
     int labelCount;                   //A counter to track the number of labels
-    bool errorFound;
+    int errorCount;
     SSABuilder *bld;
     SSABuildUtil *bldUtil;
     ExecBuilder *execBuilder;
@@ -36,6 +36,7 @@ public:
     Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
            int startingLineNumber, const char *path);
     void parseText();
+    bool errorFound() { return !!errorCount; }
 
 private:
     bool check(MY_TOKEN_TYPE theType);

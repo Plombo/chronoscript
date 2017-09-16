@@ -64,6 +64,18 @@ struct ExecFunction {
     int numInstructions;
     ExecInstruction *instructions;
 
+    inline ExecFunction()
+        : functionName(NULL),
+          interpreter(NULL),
+          numParams(0),
+          numTemps(0),
+          callTargets(NULL),
+          callParams(NULL),
+          maxCallParams(0),
+          numInstructions(0),
+          instructions(NULL)
+    {}
+
     // destructor to free all of the above
     ~ExecFunction();
 };
@@ -75,6 +87,9 @@ public:
     ScriptVariant *constants;
     int numGlobals;
     ScriptVariant *globals;
+
+    inline Interpreter() : numConstants(0), constants(NULL), numGlobals(0), globals(NULL)
+    {}
 
     // destructor to free all of the above
     ~Interpreter();

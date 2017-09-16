@@ -61,6 +61,9 @@ public:
     int num_conditionals;              // current size of the conditional stack
 public:
     pp_context();
+    inline ~pp_context() { clear(); }
+
+    void clear();
 };
 #else
 typedef struct pp_context pp_context;
@@ -124,8 +127,6 @@ typedef struct pp_parser pp_parser;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void pp_context_destroy(pp_context *self);
 
 HRESULT pp_error(pp_parser *self, const char *format, ...);
 void pp_warning(pp_parser *self, const char *format, ...);
