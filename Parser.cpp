@@ -13,6 +13,29 @@
     handleError(Productions::pr);                    \
 }
 
+#define checkAndMatchOrErrorReturn(token_type, pr, ret_expr)    \
+    if (check(token_type)) match();                             \
+    else { errorWithMessage(pr, "expected '%s'", tokenName(token_type)); return ret_expr; }
+
+#define checkAndMatchOrError(token_type, pr) checkAndMatchOrErrorReturn(token_type, pr, )
+
+static const char *tokenName(MY_TOKEN_TYPE type)
+{
+    switch (type)
+    {
+        case TOKEN_LPAREN:    return "(";
+        case TOKEN_RPAREN:    return ")";
+        case TOKEN_LCURLY:    return "{";
+        case TOKEN_RCURLY:    return "}";
+        case TOKEN_LBRACKET:  return "[";
+        case TOKEN_RBRACKET:  return "]";
+        case TOKEN_COLON:     return ":";
+        case TOKEN_SEMICOLON: return ";";
+        case TOKEN_WHILE:     return "while";
+        default:              return "(unknown token)";
+    }
+}
+
 Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
                int startingLineNumber, const char *path)
  : theLexer(pcontext, path, scriptText, {startingLineNumber, 1})
@@ -573,8 +596,7 @@ void Parser::compStmt()
         compStmt2();
         compStmt3();
         bldUtil->popScope();
-        check(TOKEN_RCURLY);
-        match();
+        checkAndMatchOrError(TOKEN_RCURLY, comp_stmt);
     }
     else
     {
@@ -614,11 +636,9 @@ void Parser::selectStmt()
     {
         // condition
         match();
-        check(TOKEN_LPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_LPAREN, select_stmt);
         RValue *condition = expr();
-        check(TOKEN_RPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_RPAREN, select_stmt);
 
         // body
         BasicBlock *startBlock = bldUtil->currentBlock,
@@ -668,20 +688,16 @@ void Parser::selectStmt()
     else if (check(TOKEN_SWITCH))
     {
         match();
-        check(TOKEN_LPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_LPAREN, select_stmt);
         RValue *baseVal = expr();
-        check(TOKEN_RPAREN);
-        match();
-        check(TOKEN_LCURLY);
-        match();
+        checkAndMatchOrError(TOKEN_RPAREN, select_stmt);
+        checkAndMatchOrError(TOKEN_LCURLY, select_stmt);
 
         //Parse body of switch, and consume the closing brace
         bldUtil->pushScope();
         switchBody(baseVal);
         bldUtil->popScope();
-        check(TOKEN_RCURLY);
-        match();
+        checkAndMatchOrError(TOKEN_RCURLY, select_stmt);
     }
     else
     {
@@ -723,15 +739,13 @@ void Parser::switchBody(RValue *baseVal)
                 bldUtil->currentBlock = jumps;
                 RValue *caseVal = constant();
                 bldUtil->mkJump(OP_BRANCH_EQUAL, body, baseVal, caseVal);
-                check(TOKEN_COLON);
-                match();
+                checkAndMatchOrError(TOKEN_COLON, switch_body);
             }
             else
             {
                 check(TOKEN_DEFAULT);
                 match();
-                check(TOKEN_COLON);
-                match();
+                checkAndMatchOrError(TOKEN_COLON, switch_body);
                 defaultTarget = body;
             }
         }
@@ -789,11 +803,9 @@ void Parser::iterStmt()
         // loop header (condition)
         bldUtil->setCurrentBlock(header);
         match();
-        check(TOKEN_LPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_LPAREN, iter_stmt);
         RValue *condition = expr();
-        check(TOKEN_RPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_RPAREN, iter_stmt);
         bldUtil->mkJump(OP_BRANCH_FALSE, after, condition);
 
         // note that bldUtil->currentBlock might not be the same as header
@@ -849,16 +861,12 @@ void Parser::iterStmt()
 
         // condition
         bldUtil->currentBlock = footer;
-        check(TOKEN_WHILE);
-        match();
-        check(TOKEN_LPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_WHILE, iter_stmt);
+        checkAndMatchOrError(TOKEN_LPAREN, iter_stmt);
         RValue *condition = expr();
-        check(TOKEN_RPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_RPAREN, iter_stmt);
         bldUtil->mkJump(OP_BRANCH_TRUE, bodyStart, condition);
-        check(TOKEN_SEMICOLON);
-        match();
+        checkAndMatchOrError(TOKEN_SEMICOLON, iter_stmt);
         
         // now we can finally seal these blocks
         after->addPred(bldUtil->currentBlock);
@@ -879,10 +887,9 @@ void Parser::iterStmt()
         bodyStart = bldUtil->createBBAfter(header, loop);
         footer = bldUtil->createBBAfter(bodyStart, loop);
         after = bldUtil->createBBAfter(footer, NULL);
-        
+
         match();
-        check(TOKEN_LPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_LPAREN, iter_stmt);
 
         //Add any initializer code
         optExprStmt();
@@ -894,8 +901,7 @@ void Parser::iterStmt()
         RValue *condition = optExpr();
         if (condition)
             bldUtil->mkJump(OP_BRANCH_FALSE, after, condition);
-        check(TOKEN_SEMICOLON);
-        match();
+        checkAndMatchOrError(TOKEN_SEMICOLON, iter_stmt);
         bodyStart->addPred(bldUtil->currentBlock);
         bld->sealBlock(bodyStart);
         after->addPred(bldUtil->currentBlock);
@@ -914,8 +920,7 @@ void Parser::iterStmt()
         bldUtil->mkJump(OP_JMP, header, NULL);
         header->addPred(bldUtil->currentBlock);
         bld->sealBlock(header);
-        check(TOKEN_RPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_RPAREN, iter_stmt);
 
         // loop body
         bldUtil->currentBlock = bodyStart;
@@ -929,7 +934,7 @@ void Parser::iterStmt()
         {
             footer->addPred(bodyEnd);
         }
-        
+
         // now we can seal the rest of the blocks
         bld->sealBlock(footer);
         bld->sealBlock(after);
@@ -968,9 +973,14 @@ void Parser::jumpStmt()
     BasicBlock *jumpTarget;
     if (check(TOKEN_BREAK))
     {
+        if (bldUtil->breakTargets.isEmpty())
+        {
+            errorWithMessage(jump_stmt, "'break' outside of a loop");
+            return;
+        }
+
         match();
-        check(TOKEN_SEMICOLON);
-        match();
+        checkAndMatchOrError(TOKEN_SEMICOLON, jump_stmt);
 
         jumpTarget = bldUtil->breakTargets.top();
         bldUtil->mkJump(OP_JMP, jumpTarget, NULL);
@@ -978,9 +988,14 @@ void Parser::jumpStmt()
     }
     else if (check(TOKEN_CONTINUE))
     {
+        if (bldUtil->continueTargets.isEmpty())
+        {
+            errorWithMessage(jump_stmt, "'continue' outside of a loop");
+            return;
+        }
+
         match();
-        check(TOKEN_SEMICOLON);
-        match();
+        checkAndMatchOrError(TOKEN_SEMICOLON, jump_stmt);
 
         jumpTarget = bldUtil->continueTargets.top();
         bldUtil->mkJump(OP_JMP, jumpTarget, NULL);
@@ -990,8 +1005,7 @@ void Parser::jumpStmt()
     {
         match();
         RValue *value = optExpr();
-        check(TOKEN_SEMICOLON);
-        match();
+        checkAndMatchOrError(TOKEN_SEMICOLON, jump_stmt);
 
         bldUtil->mkReturn(value == NULL ? bldUtil->mkNull() : value);
     }
@@ -1148,32 +1162,27 @@ RValue *Parser::condExpr2(RValue *lhs)
         RValue *trueVal = expr();
         bldUtil->writeVariable(varName, trueVal);
         Jump *jumpAfterTrue = bldUtil->mkJump(OP_JMP, NULL, NULL);
-        if (check(TOKEN_COLON))
-        {
-            match();
-            BasicBlock *lastTrueBlock = bldUtil->currentBlock,
-                       *falseBlock = bldUtil->createBBAfter(lastTrueBlock);
-            falseBlock->addPred(firstBlock);
-            bld->sealBlock(falseBlock);
-            branch->target = falseBlock;
-            bldUtil->currentBlock = falseBlock;
-            RValue *falseVal = condExpr();
-            bldUtil->writeVariable(varName, falseVal);
-            // assert(!(bldUtil->currentBlock->endsWithJump());
 
-            BasicBlock *afterBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
-            jumpAfterTrue->target = afterBlock;
-            afterBlock->addPred(lastTrueBlock);
-            afterBlock->addPred(bldUtil->currentBlock);
-            bld->sealBlock(afterBlock);
-            bldUtil->currentBlock = afterBlock;
-            return bldUtil->readVariable(varName);
-        }
-        else
-        {
-            Parser_Error(this, cond_expr2);
-            return bldUtil->undef();
-        }
+        checkAndMatchOrErrorReturn(TOKEN_COLON, cond_expr2, bldUtil->undef());
+
+        // evaluate other expression
+        BasicBlock *lastTrueBlock = bldUtil->currentBlock,
+                   *falseBlock = bldUtil->createBBAfter(lastTrueBlock);
+        falseBlock->addPred(firstBlock);
+        bld->sealBlock(falseBlock);
+        branch->target = falseBlock;
+        bldUtil->currentBlock = falseBlock;
+        RValue *falseVal = condExpr();
+        bldUtil->writeVariable(varName, falseVal);
+        // assert(!(bldUtil->currentBlock->endsWithJump());
+
+        BasicBlock *afterBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
+        jumpAfterTrue->target = afterBlock;
+        afterBlock->addPred(lastTrueBlock);
+        afterBlock->addPred(bldUtil->currentBlock);
+        bld->sealBlock(afterBlock);
+        bldUtil->currentBlock = afterBlock;
+        return bldUtil->readVariable(varName);
     }
     else if (parserSet.follow(Productions::cond_expr2, theNextToken.theType))
     {
@@ -1692,7 +1701,7 @@ RValue *Parser::unaryExpr()
         RValue *src = postfixExpr();
         if (!src->lvalue)
         {
-            printf("Error: trying to increment or decrement a non-lvalue\n");
+            errorWithMessage(unary_expr, "cannot increment or decrement a non-lvalue");
             // FIXME actually go through the error path
             return bldUtil->undef();
         }
@@ -1747,15 +1756,13 @@ RValue *Parser::postfixExpr2(RValue *src)
     {
         if (!src->lvalue || !src->lvalue->varName)
         {
-            printf("Error: Unexpected '('\n");
-            // FIXME actually go through the error path
+            errorWithMessage(postfix_expr2, "unexpected '('");
             return bldUtil->undef();
         }
         match();
         FunctionCall *call = bldUtil->startFunctionCall(src->lvalue->varName);
         argExprList(call);
-        check(TOKEN_RPAREN);
-        match();
+        checkAndMatchOrErrorReturn(TOKEN_RPAREN, postfix_expr2, bldUtil->undef());
         bldUtil->insertFunctionCall(call);
 
         return postfixExpr2(call->value());
@@ -1765,8 +1772,7 @@ RValue *Parser::postfixExpr2(RValue *src)
         match();
         if (!check(TOKEN_IDENTIFIER))
         {
-            printf("Error: expected identifier after '.'\n");
-            Parser_Error(this, postfix_expr2);
+            errorWithMessage(postfix_expr2, "expected identifier after '.'");
             return src;
         }
         RValue *fieldName = bldUtil->mkConstString(theNextToken.theSource);
@@ -1777,21 +1783,14 @@ RValue *Parser::postfixExpr2(RValue *src)
     {
         match();
         RValue *fieldName = expr();
-        if (!check(TOKEN_RBRACKET))
-        {
-            printf("Error: expected ']' to match preceding '['\n");
-            Parser_Error(this, postfix_expr2);
-            return src;
-        }
-        match();
+        checkAndMatchOrErrorReturn(TOKEN_RBRACKET, postfix_expr2, bldUtil->undef());
         return postfixExpr2(bldUtil->mkGet(src, fieldName));
     }
     else if (check(TOKEN_INC_OP) || check(TOKEN_DEC_OP))
     {
         if (!src->lvalue)
         {
-            printf("Error: trying to increment or decrement a non-lvalue\n");
-            // FIXME actually go through the error path
+            errorWithMessage(postfix_expr2, "cannot increment or decrement a non-lvalue");
             return bldUtil->undef();
         }
         OpCode op = check(TOKEN_INC_OP) ? OP_ADD : OP_SUB;
@@ -1808,7 +1807,6 @@ RValue *Parser::postfixExpr2(RValue *src)
     }
     else
     {
-        fprintf(stderr, "error token '%s'\n", this->theNextToken.theSource);
         Parser_Error(this, postfix_expr2);
         return bldUtil->undef();
     }
@@ -1871,8 +1869,7 @@ RValue *Parser::primaryExpr()
     {
         match();
         RValue *value = expr();
-        check(TOKEN_RPAREN);
-        match();
+        checkAndMatchOrErrorReturn(TOKEN_RPAREN, primary_expr, bldUtil->undef());
         return value;
     }
     else
@@ -1896,12 +1893,7 @@ RValue *Parser::object()
     while (parserSet.first(Productions::expr, theNextToken.theType))
     {
         RValue *key = expr();
-        if (!check(TOKEN_COLON))
-        {
-            Parser_Error(this, kv_pair);
-            return bldUtil->undef();
-        }
-        match();
+        checkAndMatchOrErrorReturn(TOKEN_COLON, kv_pair, bldUtil->undef());
         RValue *value = expr();
         bldUtil->mkSet(object, key, value);
         if (check(TOKEN_COMMA))
@@ -1911,16 +1903,8 @@ RValue *Parser::object()
         else break;
     }
 
-    if (check(TOKEN_RCURLY))
-    {
-        match();
-        return object;
-    }
-    else
-    {
-        Parser_Error(this, object);
-        return bldUtil->undef();
-    }
+    checkAndMatchOrErrorReturn(TOKEN_RCURLY, object, bldUtil->undef());
+    return object;
 }
 
 RValue *Parser::constant()
