@@ -54,16 +54,12 @@ private:
     void parmDecl();
     void paramList();
     void paramList2();
-    void declList();
-    void declList2();
     void stmtList();
-    void stmtList2();
     
     void stmt();
     void exprStmt();
     void compStmt();
     void compStmt2();
-    void compStmt3();
     
     void selectStmt();
     void switchBody(RValue *baseVal);

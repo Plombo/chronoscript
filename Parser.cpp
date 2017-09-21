@@ -496,71 +496,33 @@ void Parser::paramList2()
     }
 }
 
-void Parser::declList()
-{
-    if (parserSet.first(Productions::decl, theNextToken.theType))
-    {
-        decl();
-        declList2();
-    }
-    else
-    {
-        Parser_Error(this, decl_list );
-    }
-}
-
-void Parser::declList2()
-{
-    if (parserSet.first(Productions::decl, theNextToken.theType))
-    {
-        decl();
-        declList2();
-    }
-    if (parserSet.first(Productions::stmt, theNextToken.theType))
-    {
-        stmt();
-        stmtList2();
-    }
-    else if (parserSet.follow(Productions::decl_list2, theNextToken.theType)) {}
-    else
-    {
-        Parser_Error(this, decl_list2 );
-    }
-}
-
 /******************************************************************************
 *  Statement evaluation -- These methods translate statements into
 *  appropriate instructions.
 ******************************************************************************/
 void Parser::stmtList()
 {
-    if (parserSet.first(Productions::stmt, theNextToken.theType))
+    // Use iteration instead of recursion here to guard against stack overflows.
+    while (true)
     {
-        stmt();
-        stmtList2();
+        if (parserSet.first(Productions::stmt, theNextToken.theType))
+        {
+            stmt();
+        }
+        else if (parserSet.first(Productions::decl, theNextToken.theType))
+        {
+            decl();
+        }
+        else
+        {
+            break;
+        }
     }
-    else
-    {
-        Parser_Error(this, stmt_list );
-    }
-}
 
-void Parser::stmtList2()
-{
-    if (parserSet.first(Productions::stmt, theNextToken.theType))
-    {
-        stmt();
-        stmtList2();
-    }
-    else if (parserSet.first(Productions::decl, theNextToken.theType))
-    {
-        decl();
-        declList2();
-    }
-    else if (parserSet.follow(Productions::stmt_list2, theNextToken.theType)) {}
+    if (parserSet.follow(Productions::stmt_list, theNextToken.theType)) {}
     else
     {
-        Parser_Error(this, stmt_list2);
+        Parser_Error(this, stmt_list);
     }
 }
 
@@ -612,7 +574,6 @@ void Parser::compStmt()
         match();
         bldUtil->pushScope();
         compStmt2();
-        compStmt3();
         bldUtil->popScope();
         checkAndMatchOrError(TOKEN_RCURLY, comp_stmt);
     }
@@ -624,27 +585,14 @@ void Parser::compStmt()
 
 void Parser::compStmt2()
 {
-    if (parserSet.first(Productions::decl_list, theNextToken.theType))
+    if (parserSet.first(Productions::stmt_list, theNextToken.theType))
     {
-        declList();
+        stmtList();
     }
     else if (parserSet.follow(Productions::comp_stmt2, theNextToken.theType)) {}
     else
     {
         Parser_Error(this, comp_stmt2);
-    }
-}
-
-void Parser::compStmt3()
-{
-    if (parserSet.first(Productions::stmt_list, theNextToken.theType))
-    {
-        stmtList();
-    }
-    else if (parserSet.follow(Productions::comp_stmt3, theNextToken.theType)) {}
-    else
-    {
-        Parser_Error(this, comp_stmt3);
     }
 }
 
@@ -737,7 +685,7 @@ void Parser::switchBody(RValue *baseVal)
 
     //Using a loop here instead of recursion goes against the idea of a
     //recursive descent parser, but it keeps us from having 200 stack frames.
-    while(1)
+    while (true)
     {
         bldUtil->currentBlock = body;
         if (parserSet.first(Productions::case_label, theNextToken.theType))
@@ -766,15 +714,9 @@ void Parser::switchBody(RValue *baseVal)
                 defaultTarget = body;
             }
         }
-        else if (parserSet.first(Productions::stmt, theNextToken.theType))
+        else if (parserSet.first(Productions::stmt_list, theNextToken.theType))
         {
-            stmt();
-            stmtList2();
-        }
-        else if (parserSet.first(Productions::decl, theNextToken.theType))
-        {
-            decl();
-            declList2();
+            stmtList();
         }
         else if (parserSet.follow(Productions::switch_body, theNextToken.theType))
         {
