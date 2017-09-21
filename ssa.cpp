@@ -406,19 +406,12 @@ Loop::Loop(BasicBlock *header, Loop *parent)
     this->parent = parent;
 }
 
-// returns true on success, false if name already in use
-bool GlobalState::declareGlobalVariable(const char *varName)
+void GlobalState::declareGlobalVariable(const char *varName)
 {
-    if (globalVariables.findByName(varName))
-    {
-        // name already defined
-        printf("Error: global variable %s redefined\n", varName);
-        return false;
-    }
+    assert(!globalVariables.findByName(varName));
     globalVariables.gotoLast();
     globalVariables.insertAfter(NULL, varName);
-    printf("Declare global variable '%s'\n", varName);
-    return true;
+    //printf("Declare global variable '%s'\n", varName);
 }
 
 // bool GlobalState::initializeGlobalVariable(const char *varName, ScriptVariant *value)

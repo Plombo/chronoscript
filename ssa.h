@@ -446,7 +446,7 @@ private:
 public:
     inline GlobalState() {}
     inline ~GlobalState() {}
-    bool declareGlobalVariable(const char *varName);
+    void declareGlobalVariable(const char *varName);
     // bool writeGlobalVariable(const char *variable, RValue *value);
     GlobalVarRef *readGlobalVariable(const char *varName, void *memCtx);
 
