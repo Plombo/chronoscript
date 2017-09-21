@@ -4,7 +4,7 @@
 #include "List.h"
 
 static bool builtinsInited = false;
-static List<void*> builtinIndices;
+static List<unsigned int> builtinIndices;
 
 // log([a, [b, [...]]])
 // writes each of its parameters to the log file, separated by a space
@@ -42,9 +42,9 @@ static void initBuiltins()
     if (builtinsInited) return;
     size_t numBuiltins = sizeof(builtinsArray) / sizeof(Builtin);
 
-    for (size_t i = 0; i < numBuiltins; i++)
+    for (unsigned int i = 0; i < numBuiltins; i++)
     {
-        builtinIndices.insertAfter((void*)i, builtinsArray[i].name);
+        builtinIndices.insertAfter(i, builtinsArray[i].name);
     }
 
     builtinsInited = true;
@@ -55,7 +55,7 @@ int getBuiltinIndex(const char *functionName)
 {
     if (!builtinsInited) initBuiltins();
     if (builtinIndices.findByName(functionName))
-        return (int)(size_t)builtinIndices.retrieve();
+        return builtinIndices.retrieve();
     else return -1;
 }
 
