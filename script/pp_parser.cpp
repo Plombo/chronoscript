@@ -74,6 +74,12 @@ pp_context::pp_context()
     strcat(buf, "\"");
     macros.insertAfter(strdup(buf), "__TIME__");
 
+    // add some builtin macros for boolean values
+    macros.insertAfter(strdup("0"), "false");
+    macros.insertAfter(strdup("0"), "FALSE");
+    macros.insertAfter(strdup("1"), "true");
+    macros.insertAfter(strdup("1"), "TRUE");
+
 #if PP_TEST
     macros.insertAfter(strdup("1"), "__STDC__");
     macros.insertAfter(strdup("1"), "__STDC_HOSTED__");
