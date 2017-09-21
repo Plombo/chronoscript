@@ -411,8 +411,7 @@ void Parser::funcDeclare1()
     if (parserSet.first(Productions::param_list, theNextToken.theType))
     {
         paramList();
-        check(TOKEN_RPAREN);
-        match();
+        checkAndMatchOrError(TOKEN_RPAREN, funcDecl1);
     }
     else if (check(TOKEN_RPAREN))
     {
@@ -450,10 +449,22 @@ void Parser::parmDecl()
             bldUtil->addParam(theNextToken.theSource);
             match();
         }
+        else if (isKeyword(theNextToken.theType))
+        {
+            errorWithMessage(parm_decl,
+                "'%s' is a keyword, so it can't be used as a parameter name",
+                theNextToken.theSource);
+        }
+        else
+        {
+            errorWithMessage(parm_decl,
+                "expected parameter name (identifier) before '%s'",
+                theNextToken.theSource);
+        }
     }
     else
     {
-        Parser_Error(this, parm_decl );
+        Parser_Error(this, parm_decl);
     }
 }
 
@@ -586,8 +597,7 @@ void Parser::exprStmt()
     if (parserSet.first(Productions::expr, theNextToken.theType))
     {
         expr();
-        check(TOKEN_SEMICOLON);
-        match();
+        checkAndMatchOrError(TOKEN_SEMICOLON, expr_stmt);
     }
     else
     {
@@ -751,8 +761,7 @@ void Parser::switchBody(RValue *baseVal)
             }
             else
             {
-                check(TOKEN_DEFAULT);
-                match();
+                checkAndMatchOrError(TOKEN_DEFAULT, switch_body);
                 checkAndMatchOrError(TOKEN_COLON, switch_body);
                 defaultTarget = body;
             }
@@ -2055,6 +2064,7 @@ static const char *tokenName(MY_TOKEN_TYPE type)
         case TOKEN_COLON:     return ":";
         case TOKEN_SEMICOLON: return ";";
         case TOKEN_WHILE:     return "while";
+        case TOKEN_DEFAULT:   return "default";
         default:              return "(unknown token)";
     }
 }
