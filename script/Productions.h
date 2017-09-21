@@ -45,6 +45,8 @@ typedef enum PRODUCTION
     jump_stmt,
     opt_expr,
     expr,
+    comma_expr,
+    comma_expr2,
     assignment_op,
     assignment_expr,
     assignment_expr2,

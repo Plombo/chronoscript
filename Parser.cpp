@@ -1037,6 +1037,39 @@ RValue *Parser::optExpr()
     }
 }
 
+RValue *Parser::commaExpr()
+{
+    if (parserSet.first(Productions::assignment_expr, theNextToken.theType))
+    {
+        RValue *lhs = assignmentExpr();
+        return commaExpr2(lhs);
+    }
+    else
+    {
+        Parser_Error(this, comma_expr);
+        return bldUtil->undef();
+    }
+}
+
+RValue *Parser::commaExpr2(RValue *lhs)
+{
+    if (check(TOKEN_COMMA))
+    {
+        match();
+        RValue *rhs = assignmentExpr();
+        return commaExpr2(rhs);
+    }
+    else if (parserSet.follow(Productions::comma_expr2, theNextToken.theType))
+    {
+        return lhs;
+    }
+    else
+    {
+        Parser_Error(this, comma_expr2);
+        return bldUtil->undef();
+    }
+}
+
 OpCode Parser::assignmentOp()
 {
     if (check(TOKEN_ASSIGN))
@@ -1701,8 +1734,7 @@ RValue *Parser::unaryExpr()
         RValue *src = postfixExpr();
         if (!src->lvalue)
         {
-            errorWithMessage(unary_expr, "cannot increment or decrement a non-lvalue");
-            // FIXME actually go through the error path
+            errorWithMessage(unary_expr, "cannot increment or decrement an unassignable value");
             return bldUtil->undef();
         }
         RValue *prefixed = bldUtil->mkBinaryOp(op, src, bldUtil->mkConstInt(1));
@@ -1790,7 +1822,7 @@ RValue *Parser::postfixExpr2(RValue *src)
     {
         if (!src->lvalue)
         {
-            errorWithMessage(postfix_expr2, "cannot increment or decrement a non-lvalue");
+            errorWithMessage(postfix_expr2, "cannot increment or decrement an unassignable value");
             return bldUtil->undef();
         }
         OpCode op = check(TOKEN_INC_OP) ? OP_ADD : OP_SUB;
@@ -1892,9 +1924,13 @@ RValue *Parser::object()
     */
     while (parserSet.first(Productions::expr, theNextToken.theType))
     {
-        RValue *key = expr();
+        /* We could, in theory, use expr() instead of assignmentExpr() here. But it's
+           hard to imagine a valid use for a comma operator in a key, and easier to
+           imagine a comma being in one by mistake. So limit keys to assignment
+           expressions for now. */
+        RValue *key = assignmentExpr();
         checkAndMatchOrErrorReturn(TOKEN_COLON, kv_pair, bldUtil->undef());
-        RValue *value = expr();
+        RValue *value = assignmentExpr();
         bldUtil->mkSet(object, key, value);
         if (check(TOKEN_COMMA))
         {
@@ -1959,10 +1995,6 @@ const char  *_production_error_message(Parser *pparser, PRODUCTION offender)
         return "Invalid external declaration";
     case Productions::decl_spec:
         return "Invalid identifier";
-    case Productions::kv_pair:
-        return "Expected ':' after key";
-    case Productions::object:
-        return "Expected '}' at end of object declaration";
     case Productions::decl:
         return "Invalid declaration(expected comma, semicolon or initializer?)";
     default:

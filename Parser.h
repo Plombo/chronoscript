@@ -72,7 +72,9 @@ private:
     void jumpStmt();
     
     RValue *optExpr();
-    inline RValue *expr() { return assignmentExpr(); }
+    inline RValue *expr() { return commaExpr(); }
+    RValue *commaExpr();
+    RValue *commaExpr2(RValue *lhs);
     OpCode assignmentOp();
     RValue *assignmentExpr();
     RValue *assignmentExpr2(RValue *lhs);
