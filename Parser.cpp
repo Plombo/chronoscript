@@ -850,6 +850,9 @@ void Parser::iterStmt()
         match();
         checkAndMatchOrError(TOKEN_LPAREN, iter_stmt);
 
+        // create a scope for declarations in the loop header
+        bldUtil->pushScope();
+
         //Add any initializer code
         optExprStmt();
         header->addPred(before);
@@ -898,6 +901,7 @@ void Parser::iterStmt()
         bld->sealBlock(footer);
         bld->sealBlock(after);
         bldUtil->currentBlock = after;
+        bldUtil->popScope();
         bldUtil->popLoop();
     }
     else
