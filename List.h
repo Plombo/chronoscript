@@ -94,7 +94,6 @@ protected:
 template <typename T> class ListIterator;
 
 // doubly linked list class, with a hash table to access elements by name
-// TODO make a non-templated BaseList class to avoid inlining large functions
 template <typename T>
 class List : public BaseList
 {
