@@ -975,7 +975,7 @@ void Parser::jumpStmt()
     {
         if (bldUtil->breakTargets.isEmpty())
         {
-            errorWithMessage(jump_stmt, "'break' outside of a loop");
+            errorWithMessage(jump_stmt, "'break' outside of a loop or switch");
             return;
         }
 
