@@ -709,7 +709,8 @@ void Parser::switchBody(RValue *baseVal)
             }
             else
             {
-                checkAndMatchOrError(TOKEN_DEFAULT, switch_body);
+                assert(check(TOKEN_DEFAULT));
+                match();
                 checkAndMatchOrError(TOKEN_COLON, switch_body);
                 defaultTarget = body;
             }
