@@ -435,7 +435,7 @@ RValue *Parser::initializer()
     {
         Parser_Error(this, initializer);
     }
-    return NULL;
+    return bldUtil->undef();
 }
 
 void Parser::parmDecl()
