@@ -19,22 +19,8 @@
 
 #define checkAndMatchOrError(token_type, pr) checkAndMatchOrErrorReturn(token_type, pr, )
 
-static const char *tokenName(MY_TOKEN_TYPE type)
-{
-    switch (type)
-    {
-        case TOKEN_LPAREN:    return "(";
-        case TOKEN_RPAREN:    return ")";
-        case TOKEN_LCURLY:    return "{";
-        case TOKEN_RCURLY:    return "}";
-        case TOKEN_LBRACKET:  return "[";
-        case TOKEN_RBRACKET:  return "]";
-        case TOKEN_COLON:     return ":";
-        case TOKEN_SEMICOLON: return ";";
-        case TOKEN_WHILE:     return "while";
-        default:              return "(unknown token)";
-    }
-}
+static const char *tokenName(MY_TOKEN_TYPE type);
+static bool isKeyword(MY_TOKEN_TYPE type);
 
 Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
                int startingLineNumber, const char *path)
@@ -151,10 +137,21 @@ void Parser::externalDecl()
 void Parser::externalDecl2(bool variableonly)
 {
     Token token = theNextToken;
-    //ignore the type of this declaration
+
     if (!check(TOKEN_IDENTIFIER))
     {
-        errorWithMessage(external_decl, "identifier expected before '%s'", token.theSource);
+        if (isKeyword(token.theType))
+        {
+            errorWithMessage(external_decl,
+                "'%s' is a keyword, so it can't be used as a variable or function name",
+                token.theSource);
+        }
+        else
+        {
+            errorWithMessage(external_decl,
+                "variable or function name (identifier) expected before '%s'",
+                token.theSource);
+        }
         return;
     }
     match();
@@ -320,7 +317,18 @@ void Parser::decl2()
     Token token = theNextToken;
     if (!check(TOKEN_IDENTIFIER))
     {
-        errorWithMessage(decl, "identifier expected before '%s'", token.theSource);
+        if (isKeyword(token.theType))
+        {
+            errorWithMessage(decl,
+                "'%s' is a keyword, so it can't be used as a variable name",
+                token.theSource);
+        }
+        else
+        {
+            errorWithMessage(decl,
+                "variable name (identifier) expected before '%s'",
+                token.theSource);
+        }
         return;
     }
 
@@ -364,7 +372,7 @@ void Parser::decl2()
         else
         {
             match();
-            errorWithMessage(decl, "semicolon or comma expected before '%s'", theNextToken.theSource);
+            errorWithMessage(decl, "expected ';' or ',' before '%s'", theNextToken.theSource);
         }
     }
     // ,
@@ -2032,5 +2040,64 @@ void Parser::errorDefault(PRODUCTION offender, const char *offenderStr)
                  _production_error_message(this, offender), theNextToken.theSource, offenderStr);
 
     handleError(offender);
+}
+
+static const char *tokenName(MY_TOKEN_TYPE type)
+{
+    switch (type)
+    {
+        case TOKEN_LPAREN:    return "(";
+        case TOKEN_RPAREN:    return ")";
+        case TOKEN_LCURLY:    return "{";
+        case TOKEN_RCURLY:    return "}";
+        case TOKEN_LBRACKET:  return "[";
+        case TOKEN_RBRACKET:  return "]";
+        case TOKEN_COLON:     return ":";
+        case TOKEN_SEMICOLON: return ";";
+        case TOKEN_WHILE:     return "while";
+        default:              return "(unknown token)";
+    }
+}
+
+// return true if this is a keyword that looks like an identifier
+static bool isKeyword(MY_TOKEN_TYPE type)
+{
+    switch (type)
+    {
+        case TOKEN_TYPEDEF:
+        case TOKEN_EXTERN:
+        case TOKEN_STATIC:
+        case TOKEN_AUTO:
+        case TOKEN_REGISTER:
+        case TOKEN_CHAR:
+        case TOKEN_SHORT:
+        case TOKEN_INT:
+        case TOKEN_LONG:
+        case TOKEN_SIGNED:
+        case TOKEN_UNSIGNED:
+        case TOKEN_FLOAT:
+        case TOKEN_DOUBLE:
+        case TOKEN_CONST:
+        case TOKEN_VOLATILE:
+        case TOKEN_VOID:
+        case TOKEN_STRUCT:
+        case TOKEN_UNION:
+        case TOKEN_ENUM:
+        case TOKEN_CASE:
+        case TOKEN_DEFAULT:
+        case TOKEN_IF:
+        case TOKEN_ELSE:
+        case TOKEN_SWITCH:
+        case TOKEN_WHILE:
+        case TOKEN_DO:
+        case TOKEN_FOR:
+        case TOKEN_GOTO:
+        case TOKEN_CONTINUE:
+        case TOKEN_BREAK:
+        case TOKEN_RETURN:
+            return true;
+        default:
+            return false;
+    }
 }
 
