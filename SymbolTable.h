@@ -19,6 +19,8 @@ struct Symbol
     ScriptVariant var;
 };
 
+void Symbol_Init(Symbol *symbol, const char *theName, ScriptVariant *pvar);
+
 // symbol table for a single scope
 class SymbolTable
 {
@@ -32,12 +34,6 @@ public:
     bool findSymbol(const char *symbolName, Symbol **pp_theSymbol);
     void addSymbol(Symbol *p_theSymbol);
 };
-
-void Symbol_Init(Symbol *symbol, const char *theName, ScriptVariant *pvar);
-void SymbolTable_Init(SymbolTable *stable, const char *theName);
-void SymbolTable_Clear(SymbolTable *stable);
-BOOL SymbolTable_FindSymbol(SymbolTable *stable, const char *symbolName, Symbol **pp_theSymbol);
-void SymbolTable_AddSymbol(SymbolTable *stable, Symbol *p_theSymbol);
 
 // stack of symbol tables for all scopes
 class StackedSymbolTable
@@ -54,14 +50,5 @@ public:
     bool findSymbol(const char *symbolName, Symbol **pp_theSymbol);
     void addSymbol(Symbol *p_theSymbol);
 };
-
-void StackedSymbolTable_Init(StackedSymbolTable *sstable);
-void StackedSymbolTable_Clear(StackedSymbolTable *sstable);
-void StackedSymbolTable_PushScope(StackedSymbolTable *sstable);
-SymbolTable *StackedSymbolTable_TopScope(StackedSymbolTable *sstable);
-void StackedSymbolTable_PopScope(StackedSymbolTable *sstable);
-BOOL StackedSymbolTable_FindSymbol(StackedSymbolTable *sstable, const char *symbolName,
-                                   Symbol **pp_theSymbol, char *p_scopedName);
-void StackedSymbolTable_AddSymbol(StackedSymbolTable *sstable, Symbol *p_theSymbol);
 
 #endif
