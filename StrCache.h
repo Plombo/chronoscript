@@ -11,7 +11,7 @@ extern "C" {
 void StrCache_Clear();
 void StrCache_Collect(int index);
 void StrCache_Grab(int index);
-int StrCache_Pop();
+int StrCache_Pop(int length);
 char *StrCache_Get(int index);
 int StrCache_Len(int index);
 void StrCache_Copy(int index, char *str);

@@ -25,12 +25,6 @@ void ScriptVariant_Init(ScriptVariant *var)
 
 void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt)
 {
-    // String variables should never be changed
-    // unless the engine is creating a new one
-    if (cvt == VT_STR)
-    {
-        var->strVal = StrCache_Pop();
-    }
     var->vt = cvt;
 }
 
@@ -43,11 +37,13 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
         var->vt = VT_STR;
         var->strVal = index;
         StrCache_Grab(index);
-        return;
     }
-
-    ScriptVariant_ChangeType(var, VT_STR);
-    StrCache_Copy(var->strVal, str);
+    else
+    {
+        var->strVal = StrCache_Pop(strlen(str));
+        var->vt = VT_STR;
+        StrCache_Copy(var->strVal, str);
+    }
 }
 
 HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, int32_t *pVal)
@@ -104,31 +100,38 @@ bool ScriptVariant_IsTrue(ScriptVariant *svar)
     }
 }
 
-void ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize)
+// returns size of output string (or desired size, if greater than bufsize)
+int ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize)
 {
     switch (svar->vt)
     {
     case VT_EMPTY:
-        snprintf(buffer, bufsize, "<VT_EMPTY>   Unitialized");
-        break;
+        return snprintf(buffer, bufsize, "<VT_EMPTY>   Unitialized");
     case VT_INTEGER:
-        snprintf(buffer, bufsize, "%d", svar->lVal);
-        break;
+        return snprintf(buffer, bufsize, "%d", svar->lVal);
     case VT_DECIMAL:
-        snprintf(buffer, bufsize, "%lf", svar->dblVal);
-        break;
+        return snprintf(buffer, bufsize, "%lf", svar->dblVal);
     case VT_PTR:
-        snprintf(buffer, bufsize, "%p", svar->ptrVal);
-        break;
+        return snprintf(buffer, bufsize, "%p", svar->ptrVal);
     case VT_STR:
-        snprintf(buffer, bufsize, "%s", StrCache_Get(svar->strVal));
-        break;
+        return snprintf(buffer, bufsize, "%s", StrCache_Get(svar->strVal));
     case VT_OBJECT:
-        ObjectHeap_Get(svar->objVal)->toString(buffer, bufsize);
-        break;
+        return ObjectHeap_Get(svar->objVal)->toString(buffer, bufsize);
     default:
-        snprintf(buffer, bufsize, "<Unprintable VARIANT type.>");
-        break;
+        return snprintf(buffer, bufsize, "<Unprintable VARIANT type.>");
+    }
+}
+
+// returns the length of svar converted to a string
+static int ScriptVariant_LengthAsString(ScriptVariant *svar)
+{
+    if (svar->vt == VT_STR)
+    {
+        return StrCache_Len(svar->strVal);
+    }
+    else
+    {
+        return ScriptVariant_ToString(svar, NULL, 0);
     }
 }
 
@@ -473,7 +476,6 @@ ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
-    char buf[MAX_STR_VAR_LEN + 1];
     if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
@@ -490,11 +492,14 @@ ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
     }
     else if (svar->vt == VT_STR || rightChild->vt == VT_STR)
     {
-        ScriptVariant_ChangeType(&retvar, VT_STR);
-        char *dst = StrCache_Get(retvar.strVal);
-        ScriptVariant_ToString(svar, dst, StrCache_Len(retvar.strVal) + 1);
-        ScriptVariant_ToString(rightChild, buf, sizeof(buf));
-        strncat(dst, buf, StrCache_Len(retvar.strVal) - strlen(dst));
+        int length = ScriptVariant_LengthAsString(svar) + ScriptVariant_LengthAsString(rightChild);
+        int strVal = StrCache_Pop(length);
+        char *dst = StrCache_Get(strVal);
+        int offset = ScriptVariant_ToString(svar, dst, length + 1);
+        ScriptVariant_ToString(rightChild, dst + offset, length - offset + 1);
+
+        retvar.strVal = strVal;
+        retvar.vt = VT_STR;
     }
     else
     {

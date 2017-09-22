@@ -150,11 +150,12 @@ void ScriptObject::print()
     printf("}");
 }
 
-void ScriptObject::toString(char *dst, int dstsize)
+int ScriptObject::toString(char *dst, int dstsize)
 {
-#define SNPRINTF(...) { int n = snprintf(dst, dstsize, __VA_ARGS__); dst += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
+#define SNPRINTF(...) { int n = snprintf(dst, dstsize, __VA_ARGS__); dst += n; length += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
     char buf[256];
     bool first = true;
+    int length = 0;
     SNPRINTF("{");
     foreach_list(map, ScriptVariant*, iter)
     {
@@ -167,6 +168,7 @@ void ScriptObject::toString(char *dst, int dstsize)
     }
     SNPRINTF("}");
 #undef SNPRINTF
+    return length;
 }
 
 class ObjectHeap {

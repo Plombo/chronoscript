@@ -50,7 +50,7 @@ public:
     void collect(int index);
 
     // get an index for a new string
-    int pop();
+    int pop(int length);
 
     // get the string with this index
     char *get(int index);
@@ -81,8 +81,8 @@ void StrCache::init()
     strcache_index = (int*) calloc(STRCACHE_INC, sizeof(*strcache_index));
     for (i = 0; i < STRCACHE_INC; i++)
     {
-        strcache[i].str = (char*) calloc(1, MAX_STR_VAR_LEN + 1);
-        strcache[i].len = MAX_STR_VAR_LEN;
+        strcache[i].str = NULL;
+        strcache[i].len = 0;
         strcache_index[i] = i;
     }
     strcache_size = STRCACHE_INC;
@@ -138,6 +138,7 @@ void StrCache::collect(int index)
     //assert(strcache[index].ref>=0);
     if (!strcache[index].ref)
     {
+        free(strcache[index].str);
         //if (strcache[index].len > MAX_STR_VAR_LEN)
         //	this->resize(index, MAX_STR_VAR_LEN);
         //assert(strcache_top+1<strcache_size);
@@ -146,7 +147,7 @@ void StrCache::collect(int index)
 }
 
 // get an index for a new string
-int StrCache::pop()
+int StrCache::pop(int length)
 {
     int i;
     if (strcache_size == 0)
@@ -160,8 +161,8 @@ int StrCache::pop()
         for (i = 0; i < STRCACHE_INC; i++)
         {
             strcache_index[i] = strcache_size + i;
-            strcache[i + strcache_size].str = (char*) calloc(1, MAX_STR_VAR_LEN + 1);
-            strcache[i + strcache_size].len = MAX_STR_VAR_LEN;
+            strcache[i + strcache_size].str = NULL;
+            strcache[i + strcache_size].len = 0;
         }
 
         //printf("debug: dumping string cache....\n");
@@ -174,6 +175,8 @@ int StrCache::pop()
         //printf("debug: string cache resized to %d \n", strcache_size);
     }
     i = strcache_index[strcache_top--];
+    strcache[i].str = (char*) malloc(length + 1);
+    strcache[i].len = length;
     strcache[i].ref = 1;
     return i;
 }
@@ -263,9 +266,9 @@ void StrCache_Collect(int index)
     }
 }
 
-int StrCache_Pop()
+int StrCache_Pop(int length)
 {
-    return isExecuting ? ~(executionCache.pop()) : constantCache.pop();
+    return isExecuting ? ~(executionCache.pop(length)) : constantCache.pop(length);
 }
 
 void StrCache_Copy(int index, char *str)
@@ -306,7 +309,7 @@ void StrCache_Grab(int index)
 int StrCache_MakePersistent(int index)
 {
     if (index >= 0) return index;
-    int newIndex = constantCache.pop();
+    int newIndex = constantCache.pop(executionCache.len(~index));
     constantCache.copy(newIndex, executionCache.get(~index));
     return newIndex;
 }

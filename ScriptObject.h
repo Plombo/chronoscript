@@ -17,7 +17,7 @@ public:
     void set(const char *key, ScriptVariant value);
     void makePersistent(); // make all values in map persistent
     void print();
-    void toString(char *dst, int dstsize);
+    int toString(char *dst, int dstsize);
 };
 
 // public API

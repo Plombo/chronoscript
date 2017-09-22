@@ -53,7 +53,7 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
 HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, int32_t *pVal);
 HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal);
 bool ScriptVariant_IsTrue(ScriptVariant *svar);
-void ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize);
+int ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize);
 
 ScriptVariant *ScriptVariant_Or(ScriptVariant *svar, ScriptVariant *rightChild);
 ScriptVariant *ScriptVariant_And(ScriptVariant *svar, ScriptVariant *rightChild);
