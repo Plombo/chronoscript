@@ -54,9 +54,9 @@ ExecFunction *ExecBuilder::getFunctionNamed(const char *name)
         return NULL;
 }
 
-static u16 createSrc(RValue *src)
+static uint16_t createSrc(RValue *src)
 {
-    u8 file = FILE_NONE, index = 0;
+    uint8_t file = FILE_NONE, index = 0;
     if (src->isTemporary())
     {
         file = FILE_TEMP;
@@ -170,7 +170,7 @@ void FunctionBuilder::run()
     func->instructions = new ExecInstruction[func->numInstructions];
     memset(func->instructions, 0, func->numInstructions * sizeof(ExecInstruction));
     func->callTargets = new ExecFunction*[numCalls];
-    func->callParams = new u16[numParams];
+    func->callParams = new uint16_t[numParams];
     func->numTemps = numTemps;
     foreach_list(ssaFunc->instructionList, Instruction*, iter)
     {
@@ -180,7 +180,7 @@ void FunctionBuilder::run()
     }
 }
 
-static void printSrc(u16 src)
+static void printSrc(uint16_t src)
 {
     int file = src >> 8, index = src & 0xff;
     if (file == FILE_NONE) return;
@@ -249,7 +249,7 @@ void ExecBuilder::printInstructions()
                     ? getBuiltinName(inst->callTarget)
                     : func->callTargets[inst->callTarget]->functionName;
                 printf("%s ", functionName);
-                u16 paramCount16 = func->callParams[inst->paramsIndex];
+                uint16_t paramCount16 = func->callParams[inst->paramsIndex];
                 assert(paramCount16 >> 8 == FILE_NONE);
                 int paramCount = paramCount16 & 0xff;
                 for (int j = 0; j < paramCount; j++)

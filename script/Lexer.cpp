@@ -101,7 +101,7 @@ static inline int hex_digit_value(int c)
 }
 
 //Constructor
-void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, u32 charOffset)
+void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, unsigned int charOffset)
 {
     ptoken->theType = theType;
     ptoken->theTextPosition = theTextPosition;

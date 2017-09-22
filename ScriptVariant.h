@@ -10,6 +10,8 @@
 #define SCRIPTVARIANT_H
 
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "depends.h"
 #include "StrCache.h"
 
@@ -32,7 +34,7 @@ typedef struct ScriptVariant
 {
     union//value
     {
-        s32           lVal;
+        int32_t       lVal;
         void         *ptrVal;
         double        dblVal;
         int           strVal;
@@ -48,9 +50,9 @@ void ScriptVariant_Init(ScriptVariant *var);
 void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild); // faster in some situations
 void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt);
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
-HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, s32 *pVal);
+HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, int32_t *pVal);
 HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal);
-BOOL ScriptVariant_IsTrue(ScriptVariant *svar);
+bool ScriptVariant_IsTrue(ScriptVariant *svar);
 void ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize);
 
 ScriptVariant *ScriptVariant_Or(ScriptVariant *svar, ScriptVariant *rightChild);

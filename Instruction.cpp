@@ -107,7 +107,7 @@ Constant::Constant(ScriptVariant val)
     constValue = val;
 }
 
-Constant::Constant(s32 intVal)
+Constant::Constant(int32_t intVal)
 {
     id = -1;
     constValue.vt = VT_INTEGER;

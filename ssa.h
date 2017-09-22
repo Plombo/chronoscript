@@ -172,7 +172,7 @@ public:
     int id;
     ScriptVariant constValue;
     Constant(ScriptVariant val);
-    Constant(s32 intVal);
+    Constant(int32_t intVal);
     // Constant(double dblVal);
     // Constant(const char *strVal);
     virtual bool isConstant();
@@ -479,7 +479,7 @@ public:
     // these make an instruction, insert it at the end of the current block, and return it
     RValue *mkUnaryOp(OpCode op, RValue *src);
     RValue *mkBinaryOp(OpCode op, RValue *src0, RValue *src1);
-    Constant *mkConstInt(s32 val);
+    Constant *mkConstInt(int32_t val);
     Constant *mkConstString(char *val);
     Constant *mkConstFloat(double val);
     Constant *mkNull();

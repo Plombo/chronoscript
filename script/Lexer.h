@@ -50,7 +50,7 @@ typedef struct Token
     MY_TOKEN_TYPE theType;
     char theSource[MAX_TOKEN_LENGTH + 1];
     TEXTPOS theTextPosition;
-    u32 charOffset;
+    unsigned int charOffset;
 } Token;
 
 /******************************************************************************
@@ -78,7 +78,7 @@ typedef struct Lexer Lexer;
 
 
 //Constructor
-void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, u32 charOffset);
+void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, unsigned int charOffset);
 
 #ifdef __cplusplus
 }; // extern "C"

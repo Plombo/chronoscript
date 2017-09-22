@@ -37,19 +37,19 @@ New ExecInstruction:
     8 bytes on all platforms
 */
 struct ExecInstruction {
-    u8 opCode;
-    u8 dst; // index of temporary to store result in (or global if opCode == OP_EXPORT)
+    uint8_t opCode;
+    uint8_t dst; // index of temporary to store result in (or global if opCode == OP_EXPORT)
     union {
-        u16 src0; // first src
-        u16 paramsIndex; // for functions
+        uint16_t src0; // first src
+        uint16_t paramsIndex; // for functions
     };
     union {
-        u16 src1; // second src
-        u16 callTarget; // for functions: index in callTargets (CALL) or builtins (CALL_BUILTIN)
+        uint16_t src1; // second src
+        uint16_t callTarget; // for functions: index in callTargets (CALL) or builtins (CALL_BUILTIN)
     };
     union {
-        u16 src2; // third src
-        u16 jumpTarget; // for jumps
+        uint16_t src2; // third src
+        uint16_t jumpTarget; // for jumps
     };
 };
 
@@ -59,7 +59,7 @@ struct ExecFunction {
     int numParams;
     int numTemps;
     ExecFunction **callTargets;
-    u16 *callParams; // each "param" is actually 8 bits of src file and 8 bits of src index
+    uint16_t *callParams; // each "param" is actually 8 bits of src file and 8 bits of src index
     int maxCallParams; // largest number of parameters to a single call in this function
     int numInstructions;
     ExecInstruction *instructions;

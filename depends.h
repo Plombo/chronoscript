@@ -11,26 +11,7 @@
 
 #include <stdint.h>
 
-#ifndef COMPILED_SCRIPT
-#define COMPILED_SCRIPT 1
-#endif
-
-typedef uint8_t u8;
-typedef int16_t s16;
-typedef uint16_t u16;
-typedef int32_t s32;
-typedef uint32_t u32;
-typedef uint64_t u64;
-
-typedef s32 HRESULT;
-
-#ifndef WII
-typedef int BOOL;
-#endif
-
-#ifndef NULL
-#define NULL 0
-#endif
+typedef int HRESULT;
 
 #ifdef S_OK
 #undef S_OK

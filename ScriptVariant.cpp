@@ -50,7 +50,7 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
     StrCache_Copy(var->strVal, str);
 }
 
-HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, s32 *pVal)
+HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, int32_t *pVal)
 {
     if (var->vt == VT_INTEGER)
     {
@@ -58,7 +58,7 @@ HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, s32 *pVal)
     }
     else if (var->vt == VT_DECIMAL)
     {
-        *pVal = (s32)var->dblVal;
+        *pVal = (int32_t)var->dblVal;
     }
     else
     {
@@ -87,7 +87,7 @@ HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal)
 }
 
 
-BOOL ScriptVariant_IsTrue(ScriptVariant *svar)
+bool ScriptVariant_IsTrue(ScriptVariant *svar)
 {
     switch (svar->vt)
     {
@@ -100,7 +100,7 @@ BOOL ScriptVariant_IsTrue(ScriptVariant *svar)
     case VT_PTR:
         return svar->ptrVal != 0;
     default:
-        return 0;
+        return false;
     }
 }
 
@@ -184,7 +184,7 @@ ScriptVariant *ScriptVariant_And(ScriptVariant *svar, ScriptVariant *rightChild)
 ScriptVariant *ScriptVariant_Bit_Or(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    s32 l1, l2;
+    int32_t l1, l2;
     if (ScriptVariant_IntegerValue(svar, &l1) == S_OK &&
             ScriptVariant_IntegerValue(rightChild, &l2) == S_OK)
     {
@@ -202,7 +202,7 @@ ScriptVariant *ScriptVariant_Bit_Or(ScriptVariant *svar, ScriptVariant *rightChi
 ScriptVariant *ScriptVariant_Xor(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    s32 l1, l2;
+    int32_t l1, l2;
     if (ScriptVariant_IntegerValue(svar, &l1) == S_OK &&
             ScriptVariant_IntegerValue(rightChild, &l2) == S_OK)
     {
@@ -220,7 +220,7 @@ ScriptVariant *ScriptVariant_Xor(ScriptVariant *svar, ScriptVariant *rightChild)
 ScriptVariant *ScriptVariant_Bit_And(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    s32 l1, l2;
+    int32_t l1, l2;
     if (ScriptVariant_IntegerValue(svar, &l1) == S_OK &&
             ScriptVariant_IntegerValue(rightChild, &l2) == S_OK)
     {
@@ -434,12 +434,12 @@ ScriptVariant *ScriptVariant_Le(ScriptVariant *svar, ScriptVariant *rightChild)
 ScriptVariant *ScriptVariant_Shl(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    s32 l1, l2;
+    int32_t l1, l2;
     if (ScriptVariant_IntegerValue(svar, &l1) == S_OK &&
             ScriptVariant_IntegerValue(rightChild, &l2) == S_OK)
     {
         retvar.vt = VT_INTEGER;
-        retvar.lVal = ((u32)l1) << ((u32)l2);
+        retvar.lVal = ((uint32_t)l1) << ((uint32_t)l2);
     }
     else
     {
@@ -453,12 +453,12 @@ ScriptVariant *ScriptVariant_Shl(ScriptVariant *svar, ScriptVariant *rightChild)
 ScriptVariant *ScriptVariant_Shr(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    s32 l1, l2;
+    int32_t l1, l2;
     if (ScriptVariant_IntegerValue(svar, &l1) == S_OK &&
             ScriptVariant_IntegerValue(rightChild, &l2) == S_OK)
     {
         retvar.vt = VT_INTEGER;
-        retvar.lVal = ((u32)l1) >> ((u32)l2);
+        retvar.lVal = ((uint32_t)l1) >> ((uint32_t)l2);
     }
     else
     {
@@ -485,7 +485,7 @@ ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
         else
         {
             ScriptVariant_ChangeType(&retvar, VT_INTEGER);
-            retvar.lVal = (s32)(dbl1 + dbl2);
+            retvar.lVal = (int32_t)(dbl1 + dbl2);
         }
     }
     else if (svar->vt == VT_STR || rightChild->vt == VT_STR)
@@ -537,7 +537,7 @@ ScriptVariant *ScriptVariant_Sub(ScriptVariant *svar, ScriptVariant *rightChild)
         else
         {
             retvar.vt = VT_INTEGER;
-            retvar.lVal = (s32)(dbl1 - dbl2);
+            retvar.lVal = (int32_t)(dbl1 - dbl2);
         }
     }
     else
@@ -574,7 +574,7 @@ ScriptVariant *ScriptVariant_Mul(ScriptVariant *svar, ScriptVariant *rightChild)
         else
         {
             retvar.vt = VT_INTEGER;
-            retvar.lVal = (s32)(dbl1 * dbl2);
+            retvar.lVal = (int32_t)(dbl1 * dbl2);
         }
     }
     else
@@ -623,7 +623,7 @@ ScriptVariant *ScriptVariant_Div(ScriptVariant *svar, ScriptVariant *rightChild)
         else
         {
             retvar.vt = VT_INTEGER;
-            retvar.lVal = (s32)(dbl1 / dbl2);
+            retvar.lVal = (int32_t)(dbl1 / dbl2);
         }
     }
     else
@@ -638,7 +638,7 @@ ScriptVariant *ScriptVariant_Div(ScriptVariant *svar, ScriptVariant *rightChild)
 ScriptVariant *ScriptVariant_Mod(ScriptVariant *svar, ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-    s32 l1, l2;
+    int32_t l1, l2;
     if (ScriptVariant_IntegerValue(svar, &l1) == S_OK &&
             ScriptVariant_IntegerValue(rightChild, &l2) == S_OK)
     {
@@ -686,7 +686,7 @@ ScriptVariant *ScriptVariant_Boolean_Not(ScriptVariant *svar)
 ScriptVariant *ScriptVariant_Bit_Not(ScriptVariant *svar)
 {
     static ScriptVariant retvar = {{.lVal=0}, VT_INTEGER};
-    s32 l1;
+    int32_t l1;
     if (ScriptVariant_IntegerValue(svar, &l1) == S_OK)
     {
         retvar.lVal = ~l1;

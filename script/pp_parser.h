@@ -37,16 +37,16 @@ enum conditional_state
 };
 
 /**
- * Stack of conditional directives.  The preprocessor can handle up to 16 nested
- * conditionals.  The stack is implemented as a 32-bit integer.
+ * Stack of conditional directives.  The preprocessor can handle up to 32 nested
+ * conditionals.  The stack is implemented as a 64-bit integer.
  */
 typedef union
 {
-    u64 all;
+    uint64_t all;
     struct
     {
-        u64 top: 2;
-        u64 others: 62;
+        uint64_t top:2;
+        uint64_t others:62;
     };
 } conditional_stack;
 
