@@ -600,54 +600,76 @@ void Parser::selectStmt()
 {
     if (check(TOKEN_IF))
     {
-        // condition
-        match();
-        checkAndMatchOrError(TOKEN_LPAREN, select_stmt);
-        RValue *condition = expr();
-        checkAndMatchOrError(TOKEN_RPAREN, select_stmt);
+        BasicBlock *afterIfBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
 
-        // body
-        BasicBlock *startBlock = bldUtil->currentBlock,
-                   *ifBlock = bldUtil->createBBAfter(bldUtil->currentBlock),
-                   *endIfBlock,
-                   *afterIfBlock;
-        ifBlock->addPred(startBlock);
-        bld->sealBlock(ifBlock);
-        Jump *skipIfJump = bldUtil->mkJump(OP_BRANCH_FALSE, NULL, condition);
-        
-        bldUtil->setCurrentBlock(ifBlock);
-        stmt();
-        endIfBlock = bldUtil->currentBlock;
-        
-        if (check(TOKEN_ELSE)) // if-else
+        /* For long if->else if->else if patterns like:
+               if (x == 0) { ... }
+               else if (x == 1) { ... }
+               else if (x == 2) { ... }
+               ...
+               else if (x == 99) { ... }
+               else { ... }
+           Use a loop to handle all of the "else if" without making 100 recursive
+           calls to this function. We also create fewer basic blocks this way. */
+        while (true)
         {
-            match();
-            BasicBlock *elseBlock = bldUtil->createBBAfter(endIfBlock); // comes before afterIfBlock
-            elseBlock->addPred(startBlock);
-            bld->sealBlock(elseBlock);
-            skipIfJump->target = elseBlock;
-            bldUtil->setCurrentBlock(elseBlock);
+            assert(check(TOKEN_IF));
+            match(); // TOKEN_IF
+
+            // condition
+            checkAndMatchOrError(TOKEN_LPAREN, select_stmt);
+            RValue *condition = expr();
+            checkAndMatchOrError(TOKEN_RPAREN, select_stmt);
+
+            // body
+            BasicBlock *startBlock = bldUtil->currentBlock,
+                       *ifBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
+            ifBlock->addPred(startBlock);
+            bld->sealBlock(ifBlock);
+            Jump *skipIfJump = bldUtil->mkJump(OP_BRANCH_FALSE, NULL, condition);
+
+            bldUtil->setCurrentBlock(ifBlock);
             stmt();
-            BasicBlock *endElseBlock = bldUtil->currentBlock;
-            afterIfBlock = bldUtil->createBBAfter(endElseBlock);
-            if (!endElseBlock->endsWithJump())
-                afterIfBlock->addPred(endElseBlock);
-            bldUtil->setCurrentBlock(endIfBlock);
-            if (!endIfBlock->endsWithJump())
+
+            if (check(TOKEN_ELSE)) // if-else
             {
-                bldUtil->mkJump(OP_JMP, afterIfBlock, NULL);
-                afterIfBlock->addPred(endIfBlock);
+                // if the condition was true, jump over the else body
+                if (!bldUtil->currentBlock->endsWithJump())
+                {
+                    bldUtil->mkJump(OP_JMP, afterIfBlock, NULL);
+                    afterIfBlock->addPred(bldUtil->currentBlock);
+                }
+
+                match(); // TOKEN_ELSE
+                BasicBlock *elseBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
+                elseBlock->addPred(startBlock);
+                skipIfJump->target = elseBlock;
+                bld->sealBlock(elseBlock);
+                bldUtil->setCurrentBlock(elseBlock);
+
+                if (check(TOKEN_IF)) // "else if"
+                {
+                    continue;
+                }
+                else // "else" that is not an "else if"
+                {
+                    stmt();
+                    BasicBlock *endElseBlock = bldUtil->currentBlock;
+                    if (!endElseBlock->endsWithJump())
+                        afterIfBlock->addPred(endElseBlock);
+                    break;
+                }
+            }
+            else // standalone if
+            {
+                if (!bldUtil->currentBlock->endsWithJump())
+                    afterIfBlock->addPred(bldUtil->currentBlock);
+                afterIfBlock->addPred(startBlock);
+                skipIfJump->target = afterIfBlock;
+                break;
             }
         }
-        else // standalone if
-        {
-            afterIfBlock = bldUtil->createBBAfter(endIfBlock);
-            if (!endIfBlock->endsWithJump())
-                afterIfBlock->addPred(endIfBlock);
-            afterIfBlock->addPred(startBlock);
-            skipIfJump->target = afterIfBlock;
-        }
-        // common to both if-else and standalone if
+
         bld->sealBlock(afterIfBlock);
         bldUtil->setCurrentBlock(afterIfBlock);
     }
