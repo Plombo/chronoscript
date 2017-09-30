@@ -59,7 +59,6 @@ private:
     void stmt();
     void exprStmt();
     void compStmt();
-    void compStmt2();
     
     void selectStmt();
     void switchBody(RValue *baseVal);

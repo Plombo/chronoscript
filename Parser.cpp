@@ -573,26 +573,13 @@ void Parser::compStmt()
     {
         match();
         bldUtil->pushScope();
-        compStmt2();
+        stmtList();
         bldUtil->popScope();
         checkAndMatchOrError(TOKEN_RCURLY, comp_stmt);
     }
     else
     {
         Parser_Error(this, comp_stmt);
-    }
-}
-
-void Parser::compStmt2()
-{
-    if (parserSet.first(Productions::stmt_list, theNextToken.theType))
-    {
-        stmtList();
-    }
-    else if (parserSet.follow(Productions::comp_stmt2, theNextToken.theType)) {}
-    else
-    {
-        Parser_Error(this, comp_stmt2);
     }
 }
 

@@ -30,7 +30,6 @@ typedef enum PRODUCTION
     stmt,
     expr_stmt,
     comp_stmt,
-    comp_stmt2,
     select_stmt,
     opt_else,
     switch_body,
