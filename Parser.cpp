@@ -611,7 +611,7 @@ void Parser::selectStmt()
                else { ... }
            Use a loop to handle all of the "else if" without making 100 recursive
            calls to this function. We also create fewer basic blocks this way. */
-        while (true)
+        do
         {
             assert(check(TOKEN_IF));
             match(); // TOKEN_IF
@@ -620,14 +620,13 @@ void Parser::selectStmt()
             checkAndMatchOrError(TOKEN_LPAREN, select_stmt);
             RValue *condition = expr();
             checkAndMatchOrError(TOKEN_RPAREN, select_stmt);
-
-            // body
-            BasicBlock *startBlock = bldUtil->currentBlock,
-                       *ifBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
-            ifBlock->addPred(startBlock);
-            bld->sealBlock(ifBlock);
             Jump *skipIfJump = bldUtil->mkJump(OP_BRANCH_FALSE, NULL, condition);
 
+            // body
+            BasicBlock *conditionBlock = bldUtil->currentBlock,
+                       *ifBlock = bldUtil->createBBAfter(conditionBlock);
+            ifBlock->addPred(conditionBlock);
+            bld->sealBlock(ifBlock);
             bldUtil->setCurrentBlock(ifBlock);
             stmt();
 
@@ -642,7 +641,7 @@ void Parser::selectStmt()
 
                 match(); // TOKEN_ELSE
                 BasicBlock *elseBlock = bldUtil->createBBAfter(bldUtil->currentBlock);
-                elseBlock->addPred(startBlock);
+                elseBlock->addPred(conditionBlock);
                 skipIfJump->target = elseBlock;
                 bld->sealBlock(elseBlock);
                 bldUtil->setCurrentBlock(elseBlock);
@@ -654,9 +653,8 @@ void Parser::selectStmt()
                 else // "else" that is not an "else if"
                 {
                     stmt();
-                    BasicBlock *endElseBlock = bldUtil->currentBlock;
-                    if (!endElseBlock->endsWithJump())
-                        afterIfBlock->addPred(endElseBlock);
+                    if (!bldUtil->currentBlock->endsWithJump())
+                        afterIfBlock->addPred(bldUtil->currentBlock);
                     break;
                 }
             }
@@ -664,11 +662,11 @@ void Parser::selectStmt()
             {
                 if (!bldUtil->currentBlock->endsWithJump())
                     afterIfBlock->addPred(bldUtil->currentBlock);
-                afterIfBlock->addPred(startBlock);
+                afterIfBlock->addPred(conditionBlock);
                 skipIfJump->target = afterIfBlock;
                 break;
             }
-        }
+        } while (true);
 
         bld->sealBlock(afterIfBlock);
         bldUtil->setCurrentBlock(afterIfBlock);
