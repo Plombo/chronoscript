@@ -24,10 +24,9 @@ public:
 void ObjectHeap_ClearTemporary();
 void ObjectHeap_ClearAll();
 int ObjectHeap_CreateNewObject();
-void ObjectHeap_Ref(int index);
+int ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);
 ScriptObject *ObjectHeap_Get(int index);
-int ObjectHeap_GetPersistentRef(int index);
 
 #endif
 

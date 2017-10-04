@@ -44,10 +44,10 @@ public:
     void resize(int index, int size);
 
     // increments a string's reference count
-    void grab(int index);
+    void ref(int index);
 
     // unrefs a string
-    void collect(int index);
+    void unref(int index);
 
     // get an index for a new string
     int pop(int length);
@@ -58,10 +58,10 @@ public:
     // get the length of the string at this index
     int len(int index);
 
-    void copy(int index, char *str);
-    void ncopy(int index, char *str, int n);
+    void copy(int index, const char *str);
+    void ncopy(int index, const char *str, int n);
     
-    int findString(char *str);
+    int findString(const char *str);
 };
 
 StrCache::StrCache()
@@ -82,7 +82,6 @@ void StrCache::init()
     for (i = 0; i < STRCACHE_INC; i++)
     {
         strcache[i].str = NULL;
-        strcache[i].len = 0;
         strcache_index[i] = i;
     }
     strcache_size = STRCACHE_INC;
@@ -126,19 +125,21 @@ void StrCache::resize(int index, int size)
 }
 
 // increments a string's reference count
-void StrCache::grab(int index)
+void StrCache::ref(int index)
 {
     strcache[index].ref++;
 }
 
 // unrefs a string
-void StrCache::collect(int index)
+void StrCache::unref(int index)
 {
     strcache[index].ref--;
+    //printf("unref \"%s\" -> %i\n", strcache[index].str, strcache[index].ref);
     //assert(strcache[index].ref>=0);
     if (!strcache[index].ref)
     {
         free(strcache[index].str);
+        strcache[index].str = NULL;
         //if (strcache[index].len > MAX_STR_VAR_LEN)
         //	this->resize(index, MAX_STR_VAR_LEN);
         //assert(strcache_top+1<strcache_size);
@@ -162,7 +163,6 @@ int StrCache::pop(int length)
         {
             strcache_index[i] = strcache_size + i;
             strcache[i + strcache_size].str = NULL;
-            strcache[i + strcache_size].len = 0;
         }
 
         //printf("debug: dumping string cache....\n");
@@ -194,7 +194,7 @@ int StrCache::len(int index)
     return strcache[index].len;
 }
 
-void StrCache::copy(int index, char *str)
+void StrCache::copy(int index, const char *str)
 {
     //assert(index<strcache_size);
     //assert(size>0);
@@ -206,7 +206,7 @@ void StrCache::copy(int index, char *str)
     strcpy(strcache[index].str, str);
 }
 
-void StrCache::ncopy(int index, char *str, int n)
+void StrCache::ncopy(int index, const char *str, int n)
 {
     //assert(index<strcache_size);
     //assert(size>0);
@@ -220,7 +220,7 @@ void StrCache::ncopy(int index, char *str, int n)
 
 // see if a string is already in the cache
 // return its index if it is, or -1 if it isn't
-int StrCache::findString(char *str)
+int StrCache::findString(const char *str)
 {
     int i;
     for (i = 0; i < strcache_size; i++)
@@ -235,90 +235,85 @@ int StrCache::findString(char *str)
 
 extern "C" {
 
-static StrCache constantCache; // global index = index (global index positive)
-static StrCache executionCache; // global index = ~index (global index negative)
-static bool isExecuting = false;
+static StrCache persistentCache; // global index = index (global index positive)
+static StrCache temporaryCache; // global index = ~index (global index negative)
 
-void StrCache_SetExecuting(int executing)
+void StrCache_ClearTemporary()
 {
-    if (executing == isExecuting) return;
-    isExecuting = executing;
-    if (!executing) // stop execution; clear execution cache
-    {
-        executionCache.clear();
-    }
+    temporaryCache.clear();
 }
 
-//clear both string caches
-void StrCache_Clear()
+// clear both string caches
+void StrCache_ClearAll()
 {
-    constantCache.clear();
-    executionCache.clear();
+    persistentCache.clear();
+    temporaryCache.clear();
 }
 
-// only collect strings during compilation, not during execution
-// any strings created during script execution will be dealt with by clear
-void StrCache_Collect(int index)
+// strings in the temporary cache will be dealt with by clear
+void StrCache_Unref(int index)
 {
-    if (!isExecuting)
-    {
-        constantCache.collect(index);
-    }
+    if (index >= 0)
+        persistentCache.unref(index);
 }
 
 int StrCache_Pop(int length)
 {
-    return isExecuting ? ~(executionCache.pop(length)) : constantCache.pop(length);
+    return ~(temporaryCache.pop(length));
 }
 
-void StrCache_Copy(int index, char *str)
+int StrCache_PopPersistent(int length)
 {
-    if (index < 0)
-        executionCache.copy(~index, str);
-    else
-        constantCache.copy(index, str);
+    return persistentCache.pop(length);
 }
 
-void StrCache_NCopy(int index, char *str, int n)
+void StrCache_Copy(int index, const char *str)
 {
     if (index < 0)
-        executionCache.ncopy(~index, str, n);
+        temporaryCache.copy(~index, str);
     else
-        constantCache.ncopy(index, str, n);
+        persistentCache.copy(index, str);
+}
+
+void StrCache_NCopy(int index, const char *str, int n)
+{
+    if (index < 0)
+        temporaryCache.ncopy(~index, str, n);
+    else
+        persistentCache.ncopy(index, str, n);
 }
 
 char *StrCache_Get(int index)
 {
-    return index < 0 ? executionCache.get(~index) : constantCache.get(index);
+    return index < 0 ? temporaryCache.get(~index) : persistentCache.get(index);
 }
 
 int StrCache_Len(int index)
 {
-    return index < 0 ? executionCache.len(~index) : constantCache.len(index);
+    return index < 0 ? temporaryCache.len(~index) : persistentCache.len(index);
 }
 
-void StrCache_Grab(int index)
+int StrCache_Ref(int index)
 {
     if (index < 0)
-        executionCache.grab(~index);
+    {
+        // get a constant reference for this temporary string
+        int newIndex = persistentCache.pop(temporaryCache.len(~index));
+        persistentCache.copy(newIndex, temporaryCache.get(~index));
+        return newIndex;
+    }
     else
-        constantCache.grab(index);
+    {
+        persistentCache.ref(index);
+        return index;
+    }
 }
 
-// make a copy of the string in the constant cache if it isn't already there
-int StrCache_MakePersistent(int index)
-{
-    if (index >= 0) return index;
-    int newIndex = constantCache.pop(executionCache.len(~index));
-    constantCache.copy(newIndex, executionCache.get(~index));
-    return newIndex;
-}
-
-// see if a string is already in the cache
+// see if a string is already in the persistent cache
 // return its index if it is, or -1 if it isn't
-int StrCache_FindString(char *str)
+int StrCache_FindString(const char *str)
 {
-    return constantCache.findString(str);
+    return persistentCache.findString(str);
 }
 
 }; // extern "C"

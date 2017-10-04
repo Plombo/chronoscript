@@ -212,13 +212,8 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
             case OP_EXPORT:
                 dst = &function->interpreter->globals[inst->dst];
                 fetchSrc(src0, inst->src0);
-                ScriptVariant_Clear(dst);
-                *dst = *src0;
-                if (dst->vt == VT_STR)
-                {
-                    dst->strVal = StrCache_MakePersistent(dst->strVal);
-                    StrCache_Grab(dst->strVal);
-                }
+                ScriptVariant_Unref(dst);
+                *dst = *ScriptVariant_Ref(src0);
                 break;
             default:
                 printf("error: unknown opcode %i\n", inst->opCode);
@@ -236,21 +231,13 @@ ExecFunction *Interpreter::getFunctionNamed(const char *name)
 
 HRESULT Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
-    StrCache_SetExecuting(true);
     HRESULT result = execFunction(function, params, retval);
     if (result == S_OK)
     {
-        if (retval->vt == VT_STR)
-        {
-            retval->strVal = StrCache_MakePersistent(retval->strVal);
-        }
-        else if (retval->vt == VT_OBJECT)
-        {
-            retval->objVal = ObjectHeap_GetPersistentRef(retval->objVal);
-        }
+        *retval = *ScriptVariant_Ref(retval);
     }
     ObjectHeap_ClearTemporary();
-    StrCache_SetExecuting(false);
+    StrCache_ClearTemporary();
     return result;
 }
 
@@ -260,11 +247,11 @@ Interpreter::~Interpreter()
     for (int i = 0; i < numConstants; i++)
     {
         // clear variant to prevent string cache leaks
-        ScriptVariant_Clear(&constants[i]);
+        ScriptVariant_Unref(&constants[i]);
     }
     for (int i = 0; i < numGlobals; i++)
     {
-        ScriptVariant_Clear(&globals[i]);
+        ScriptVariant_Unref(&globals[i]);
     }
     delete[] constants;
     delete[] globals;

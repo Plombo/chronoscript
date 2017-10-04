@@ -41,9 +41,10 @@ void ExecBuilder::buildExecutable()
         interpreter->constants[i++] = *iter.value();
     }
 
-    // build the globals array
+    // build the globals array, and initialize all globals to empty value
     interpreter->numGlobals = globals.globalVariables.size();
     interpreter->globals = new ScriptVariant[interpreter->numGlobals];
+    memset(interpreter->globals, 0, interpreter->numGlobals * sizeof(ScriptVariant));
 }
 
 ExecFunction *ExecBuilder::getFunctionNamed(const char *name)

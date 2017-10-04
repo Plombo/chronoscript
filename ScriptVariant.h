@@ -47,13 +47,16 @@ typedef struct ScriptVariant
 void ScriptVariant_Clear(ScriptVariant *var);
 
 void ScriptVariant_Init(ScriptVariant *var);
-void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild); // faster in some situations
+void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild);
 void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt);
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
 HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, int32_t *pVal);
 HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal);
 bool ScriptVariant_IsTrue(ScriptVariant *svar);
 int ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize);
+
+ScriptVariant *ScriptVariant_Ref(ScriptVariant *var);
+void ScriptVariant_Unref(ScriptVariant *var);
 
 ScriptVariant *ScriptVariant_Or(ScriptVariant *svar, ScriptVariant *rightChild);
 ScriptVariant *ScriptVariant_And(ScriptVariant *svar, ScriptVariant *rightChild);
@@ -67,6 +70,7 @@ ScriptVariant *ScriptVariant_Gt(ScriptVariant *svar, ScriptVariant *rightChild);
 ScriptVariant *ScriptVariant_Ge(ScriptVariant *svar, ScriptVariant *rightChild);
 ScriptVariant *ScriptVariant_Le(ScriptVariant *svar, ScriptVariant *rightChild);
 ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_AddFolding(ScriptVariant *svar, ScriptVariant *rightChild); // used for constant folding when compiling a script
 ScriptVariant *ScriptVariant_Sub(ScriptVariant *svar, ScriptVariant *rightChild);
 ScriptVariant *ScriptVariant_Shl(ScriptVariant *svar, ScriptVariant *rightChild);
 ScriptVariant *ScriptVariant_Shr(ScriptVariant *svar, ScriptVariant *rightChild);

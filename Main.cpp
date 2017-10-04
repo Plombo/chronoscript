@@ -27,14 +27,13 @@ void doTest(const char *filename)
             printf("Returned value: ");
             ObjectHeap_Get(retval.objVal)->print();
             printf("\n");
-            ObjectHeap_Unref(retval.objVal);
         }
         else
         {
             ScriptVariant_ToString(&retval, buf, sizeof(buf));
             printf("\nReturned value: %s\n", buf);
         }
-        ScriptVariant_Clear(&retval);
+        ScriptVariant_Unref(&retval);
     }
 }
 
@@ -77,8 +76,8 @@ int main(int argc, char **argv)
     // testFile(argv[1]);
 
     ImportCache_Clear();
-    ObjectHeap_ClearAll();
-    StrCache_Clear();
+    ObjectHeap_ClearTemporary();
+    StrCache_ClearTemporary();
     return 0;
 }
 

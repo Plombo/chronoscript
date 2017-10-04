@@ -466,8 +466,8 @@ Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *s
     case OP_LE: result = ScriptVariant_Le(src0, src1); break;
     case OP_SHL: result = ScriptVariant_Shl(src0, src1); break;
     case OP_SHR: result = ScriptVariant_Shr(src0, src1); break;
-    case OP_ADD: result = ScriptVariant_Add(src0, src1); break;
-    case OP_SUB: result = ScriptVariant_Add(src0, src1); break;
+    case OP_ADD: result = ScriptVariant_AddFolding(src0, src1); break;
+    case OP_SUB: result = ScriptVariant_Sub(src0, src1); break;
     case OP_MUL: result = ScriptVariant_Mul(src0, src1); break;
     case OP_DIV: result = ScriptVariant_Div(src0, src1); break;
     case OP_MOD: result = ScriptVariant_Mod(src0, src1); break;

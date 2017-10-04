@@ -28,6 +28,41 @@ void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt)
     var->vt = cvt;
 }
 
+// makes persistent version of variant if needed, and returns it
+ScriptVariant *ScriptVariant_Ref(ScriptVariant *var)
+{
+    static ScriptVariant retval;
+
+    if (var->vt == VT_STR)
+    {
+        retval.strVal = StrCache_Ref(var->strVal);
+        retval.vt = VT_STR;
+    }
+    else if (var->vt == VT_OBJECT)
+    {
+        retval.objVal = ObjectHeap_Ref(var->objVal);
+        retval.vt = VT_OBJECT;
+    }
+    else
+    {
+        retval = *var;
+    }
+
+    return &retval;
+}
+
+void ScriptVariant_Unref(ScriptVariant *var)
+{
+    if (var->vt == VT_STR)
+    {
+        StrCache_Unref(var->strVal);
+    }
+    else if (var->vt == VT_OBJECT)
+    {
+        ObjectHeap_Unref(var->objVal);
+    }
+}
+
 // find an existing constant before copy
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
 {
@@ -35,12 +70,11 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
     if (index >= 0)
     {
         var->vt = VT_STR;
-        var->strVal = index;
-        StrCache_Grab(index);
+        var->strVal = StrCache_Ref(index);
     }
     else
     {
-        var->strVal = StrCache_Pop(strlen(str));
+        var->strVal = StrCache_PopPersistent(strlen(str));
         var->vt = VT_STR;
         StrCache_Copy(var->strVal, str);
     }
@@ -135,36 +169,9 @@ static int ScriptVariant_LengthAsString(ScriptVariant *svar)
     }
 }
 
-// faster if it is not VT_STR
 void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild)
 {
-    // collect the str cache index
-    if (svar->vt == VT_STR)
-    {
-        StrCache_Collect(svar->strVal);
-    }
-    switch (rightChild->vt)
-    {
-    case VT_INTEGER:
-        svar->lVal = rightChild->lVal;
-        break;
-    case VT_DECIMAL:
-        svar->dblVal = rightChild->dblVal;
-        break;
-    case VT_PTR:
-        svar->ptrVal = rightChild->ptrVal;
-        break;
-    case VT_STR:
-        svar->strVal = rightChild->strVal;
-        StrCache_Grab(svar->strVal);
-        break;
-    default:
-        //should not happen unless the variant is not intialized correctly
-        //shutdown(1, "invalid variant type");
-        svar->ptrVal = NULL;
-        break;
-    }
-    svar->vt = rightChild->vt;
+    *svar = *rightChild;
 }
 
 //Logical Operations
@@ -472,7 +479,7 @@ ScriptVariant *ScriptVariant_Shr(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
+inline ScriptVariant *ScriptVariant_AddGeneric(ScriptVariant *svar, ScriptVariant *rightChild, int (*stringPopFunc)(int))
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
@@ -493,7 +500,7 @@ ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
     else if (svar->vt == VT_STR || rightChild->vt == VT_STR)
     {
         int length = ScriptVariant_LengthAsString(svar) + ScriptVariant_LengthAsString(rightChild);
-        int strVal = StrCache_Pop(length);
+        int strVal = stringPopFunc(length);
         char *dst = StrCache_Get(strVal);
         int offset = ScriptVariant_ToString(svar, dst, length + 1);
         ScriptVariant_ToString(rightChild, dst + offset, length - offset + 1);
@@ -507,6 +514,20 @@ ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
     }
 
     return &retvar;
+}
+
+
+// used when running a script
+ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
+{
+    return ScriptVariant_AddGeneric(svar, rightChild, StrCache_Pop);
+}
+
+
+// used for constant folding when compiling a script
+ScriptVariant *ScriptVariant_AddFolding(ScriptVariant *svar, ScriptVariant *rightChild)
+{
+    return ScriptVariant_AddGeneric(svar, rightChild, StrCache_PopPersistent);
 }
 
 

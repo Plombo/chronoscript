@@ -42,48 +42,24 @@ ScriptObject::~ScriptObject()
     while (map.size())
     {
         ScriptVariant *storage = map.retrieve();
-        if (storage->vt == VT_STR)
-        {
-            StrCache_Collect(storage->strVal);
-        }
-        else if (storage->vt == VT_OBJECT)
-        {
-            ObjectHeap_Unref(storage->objVal);
-        }
+        ScriptVariant_Unref(storage);
         delete storage;
         map.remove();
     }
 }
 
+// TODO make this take a const pointer to a ScriptVariant
 void ScriptObject::set(const char *key, ScriptVariant value)
 {
-    if (persistent && value.vt == VT_STR)
+    if (persistent)
     {
-        if (value.strVal < 0)
-        {
-            value.strVal = StrCache_MakePersistent(value.strVal);
-        }
-        else
-        {
-            StrCache_Grab(value.strVal);
-        }
-    }
-    else if (persistent && value.vt == VT_OBJECT)
-    {
-        value.objVal = ObjectHeap_GetPersistentRef(value.objVal);
+        value = *ScriptVariant_Ref(&value);
     }
 
     if (map.findByName(key))
     {
         ScriptVariant *storage = map.retrieve();
-        if (storage->vt == VT_STR)
-        {
-            StrCache_Collect(storage->strVal);
-        }
-        else if (storage->vt == VT_OBJECT)
-        {
-            ObjectHeap_Unref(storage->objVal);
-        }
+        ScriptVariant_Unref(storage);
         *storage = value;
     }
     else
@@ -115,16 +91,15 @@ void ScriptObject::makePersistent()
     foreach_list(map, ScriptVariant*, iter)
     {
         ScriptVariant *var = iter.value();
-        // FIXME need to ref object and string even if they are already persistent
-        if (var->vt == VT_OBJECT && var->objVal < 0)
+        if (var->vt == VT_OBJECT)
         {
             //printf("make object %i persistent\n", var->objVal);
-            var->objVal = ObjectHeap_GetPersistentRef(var->objVal);
+            var->objVal = ObjectHeap_Ref(var->objVal);
         }
-        else if (var->vt == VT_STR && var->strVal < 0)
+        else if (var->vt == VT_STR)
         {
             //printf("make string %i persistent\n", var->strVal);
-            var->strVal = StrCache_MakePersistent(var->strVal);
+            var->strVal = StrCache_Ref(var->strVal);
         }
     }
 }
@@ -295,18 +270,16 @@ void ObjectHeap::ref(int index)
 void ObjectHeap::unref(int index)
 {
     assert(index < size);
-    if (objects[index].type == MEMBER_OBJECT)
+    assert(objects[index].type == MEMBER_OBJECT);
+    assert(objects[index].object.refcount >= 1);
+
+    --objects[index].object.refcount;
+    if (objects[index].object.refcount == 0)
     {
-        assert(objects[index].object.refcount >= 1);
-        --objects[index].object.refcount;
-        if (objects[index].object.refcount == 0)
-        {
-            delete objects[index].object.obj;
-            objects[index].type = MEMBER_FREE;
-            //printf("delete object %i\n", index);
-        }
+        delete objects[index].object.obj;
+        objects[index].type = MEMBER_FREE;
+        //printf("delete object %i\n", index);
     }
-    else assert(objects[index].type == MEMBER_LINK);
 }
 
 ScriptObject *ObjectHeap::get(int index)
@@ -362,30 +335,9 @@ int ObjectHeap_CreateNewObject()
     return ~temporaryHeap.pop(); 
 }
 
-void ObjectHeap_Ref(int index)
-{
-    if (index < 0)
-        temporaryHeap.ref(~index);
-    else
-        persistentHeap.ref(index);
-}
-
-void ObjectHeap_Unref(int index)
-{
-    if (index < 0)
-        temporaryHeap.unref(~index);
-    else
-        persistentHeap.unref(index);
-}
-
-ScriptObject *ObjectHeap_Get(int index)
-{
-    return (index < 0) ? temporaryHeap.get(~index) : persistentHeap.get(index);
-}
-
 // makes temporary object persistent, or refs object if it's already persistent
 // FIXME handle case where index is already a link
-int ObjectHeap_GetPersistentRef(int index)
+int ObjectHeap_Ref(int index)
 {
     if (index >= 0)
     {
@@ -402,5 +354,16 @@ int ObjectHeap_GetPersistentRef(int index)
         //printf("made persistent: %i -> %i\n", index, newIndex);
         return newIndex;
     }
+}
+
+void ObjectHeap_Unref(int index)
+{
+    if (index >= 0)
+        persistentHeap.unref(index);
+}
+
+ScriptObject *ObjectHeap_Get(int index)
+{
+    return (index < 0) ? temporaryHeap.get(~index) : persistentHeap.get(index);
 }
 
