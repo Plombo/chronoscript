@@ -14,18 +14,12 @@
 
 void ScriptVariant_Clear(ScriptVariant *var)
 {
-    ScriptVariant_ChangeType(var, VT_EMPTY);
     memset(var, 0, sizeof(*var));
 }
 
 void ScriptVariant_Init(ScriptVariant *var)
 {
     memset(var, 0, sizeof(*var));
-}
-
-void ScriptVariant_ChangeType(ScriptVariant *var, VARTYPE cvt)
-{
-    var->vt = cvt;
 }
 
 // makes persistent version of variant if needed, and returns it
@@ -488,12 +482,12 @@ inline ScriptVariant *ScriptVariant_AddGeneric(ScriptVariant *svar, ScriptVarian
     {
         if (svar->vt == VT_DECIMAL || rightChild->vt == VT_DECIMAL)
         {
-            ScriptVariant_ChangeType(&retvar, VT_DECIMAL);
+            retvar.vt = VT_DECIMAL;
             retvar.dblVal = dbl1 + dbl2;
         }
         else
         {
-            ScriptVariant_ChangeType(&retvar, VT_INTEGER);
+            retvar.vt = VT_INTEGER;
             retvar.lVal = (int32_t)(dbl1 + dbl2);
         }
     }
