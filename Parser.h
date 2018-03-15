@@ -27,8 +27,9 @@ private:
     int errorCount;
     SSABuilder *bld;
     SSABuildUtil *bldUtil;
+    SSABuilder *initBld;
+    SSABuildUtil *initBldUtil;
     ExecBuilder *execBuilder;
-    List<SSABuilder*> functions;
 
 public:
     void *memCtx; // TODO: make this a parameter and private
@@ -42,6 +43,7 @@ private:
     bool check(MY_TOKEN_TYPE theType);
     void match();
     void rewind(Token *token);
+    void switchToInitFunction();
     void externalDecl();
     void externalDecl2(bool variableonly);
     RValue *initializer();

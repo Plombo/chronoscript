@@ -33,6 +33,8 @@ Parser::Parser(pp_context *pcontext, ExecBuilder *builder, char *scriptText,
     rewound = false;
     bld = NULL;
     bldUtil = NULL;
+    initBld = NULL;
+    initBldUtil = NULL;
     execBuilder = builder;
     errorCount = 0;
 }
@@ -107,6 +109,24 @@ void Parser::rewind(Token *token)
     rewound = true;
 }
 
+/* Sets current function to "@init", creating the "@init" function if it
+   doesn't exist yet */
+void Parser::switchToInitFunction()
+{
+    if (!initBld)
+    {
+        initBld = new(memCtx) SSABuilder(memCtx, "@init");
+        initBldUtil = new SSABuildUtil(initBld, &execBuilder->globals);
+        BasicBlock *startBlock = initBldUtil->createBBAfter(NULL);
+        initBld->sealBlock(startBlock);
+        initBldUtil->setCurrentBlock(startBlock);
+        initBldUtil->pushScope();
+    }
+
+    bld = initBld;
+    bldUtil = initBldUtil;
+}
+
 /******************************************************************************
 *  Productions -- These methods recursively parse the token stream into an
 *  Abstract Syntax Tree.
@@ -157,35 +177,48 @@ void Parser::externalDecl2(bool variableonly)
     match();
 
     // global variable declaration
-#if 0 // global variables with initializer not supported yet
     //type a =
     if (parserSet.first(Productions::initializer, theNextToken.theType))
     {
-        //switch to immediate mode and allocate a variable.
-        execBuilder->globals.declareGlobalVariable(token.theSource);
-        // Parser_AddInstructionViaToken(pparser, IMMEDIATE, (Token *)NULL, NULL );
-        // Parser_AddInstructionViaToken(pparser, DATA, &token, NULL );
+        switchToInitFunction();
 
-        //Get the initializer; type a = expression
+        // get the initializer; type a = expression
         RValue *initialValue = initializer();
-        //type a = expresson;
-        if(check(TOKEN_SEMICOLON))
+        if (!initialValue->isConstant())
         {
-            match();
-
-            //Save the initializer
-            Parser_AddInstructionViaToken(pparser, SAVE, &token, NULL );
-
-            //Switch back to deferred mode
-            Parser_AddInstructionViaToken(pparser, DEFERRED, (Token *)NULL, NULL );
+            // TODO: also make sure @init function stays trivial, so no "global2 = global1 = 3"
+            errorWithMessage(external_decl,
+                "initial value of global variable must be a constant");
+            return;
         }
-        //there's a comma instead of semicolon, so there should be another identifier
-        else if(check(TOKEN_COMMA))
+
+        // end of declaration list
+        if (check(TOKEN_SEMICOLON) || check(TOKEN_COMMA))
         {
-            match();
-            //Save the initializer
-            Parser_AddInstructionViaToken(pparser, SAVE, &token, NULL );
-            externalDecl2(TRUE);
+            // declare the variable
+            if (execBuilder->globals.globalVariableExists(token.theSource))
+            {
+                errorWithMessage(external_decl,
+                    "there is already a global variable named '%s'", token.theSource);
+                return;
+            }
+            else
+            {
+                execBuilder->globals.declareGlobalVariable(token.theSource,
+                    initialValue->asConstant()->constValue);
+            }
+
+            if (check(TOKEN_COMMA))
+            {
+                // there's a comma instead of semicolon, so there should be another identifier
+                match();
+                externalDecl2(true);
+            }
+            else
+            {
+                // otherwise it's a semicolon, so this is the end of the declaration list
+                match();
+            }
         }
         else
         {
@@ -194,10 +227,8 @@ void Parser::externalDecl2(bool variableonly)
             Parser_Error(this, external_decl );
         }
     }
-    else
-#endif
     // semicolon, end expression.
-    if (check(TOKEN_SEMICOLON))
+    else if (check(TOKEN_SEMICOLON))
     {
         // declare the variable
         if (execBuilder->globals.globalVariableExists(token.theSource))
@@ -206,7 +237,7 @@ void Parser::externalDecl2(bool variableonly)
                 "there is already a global variable named '%s'", token.theSource);
             return;
         }
-        else execBuilder->globals.declareGlobalVariable(token.theSource);
+        else execBuilder->globals.declareGlobalVariable(token.theSource, (ScriptVariant){0});
         match();
     }
     // still comma? there should be another identifier so declare the variable and go for the next
@@ -218,7 +249,7 @@ void Parser::externalDecl2(bool variableonly)
                 "there is already a global variable named '%s'", token.theSource);
             return;
         }
-        else execBuilder->globals.declareGlobalVariable(token.theSource);
+        else execBuilder->globals.declareGlobalVariable(token.theSource, (ScriptVariant){0});
         match();
         externalDecl2(true);
     }

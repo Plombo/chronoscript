@@ -406,11 +406,11 @@ Loop::Loop(BasicBlock *header, Loop *parent)
     this->parent = parent;
 }
 
-void GlobalState::declareGlobalVariable(const char *varName)
+void GlobalState::declareGlobalVariable(const char *varName, ScriptVariant initialValue)
 {
     assert(!globalVariables.findByName(varName));
     globalVariables.gotoLast();
-    globalVariables.insertAfter(NULL, varName);
+    globalVariables.insertAfter(initialValue, varName);
     //printf("Declare global variable '%s'\n", varName);
 }
 

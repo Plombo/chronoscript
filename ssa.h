@@ -441,12 +441,12 @@ class GlobalState
 {
     friend class ExecBuilder;
 private:
-    // name=var name, value=initial value (or NULL if uninitialized)
-    List<ScriptVariant*> globalVariables;
+    // name=var name, value=initial value
+    List<ScriptVariant> globalVariables;
 public:
     inline GlobalState() {}
     inline ~GlobalState() {}
-    void declareGlobalVariable(const char *varName);
+    void declareGlobalVariable(const char *varName, ScriptVariant initialValue);
     // bool writeGlobalVariable(const char *variable, RValue *value);
     GlobalVarRef *readGlobalVariable(const char *varName, void *memCtx);
 

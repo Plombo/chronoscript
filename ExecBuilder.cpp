@@ -41,10 +41,16 @@ void ExecBuilder::buildExecutable()
         interpreter->constants[i++] = *iter.value();
     }
 
-    // build the globals array, and initialize all globals to empty value
+    // build the globals array
     interpreter->numGlobals = globals.globalVariables.size();
     interpreter->globals = new ScriptVariant[interpreter->numGlobals];
-    memset(interpreter->globals, 0, interpreter->numGlobals * sizeof(ScriptVariant));
+
+    // set all globals to their initial values
+    i = 0;
+    foreach_list(globals.globalVariables, ScriptVariant, iter)
+    {
+        interpreter->globals[i++] = iter.value();
+    }
 }
 
 ExecFunction *ExecBuilder::getFunctionNamed(const char *name)
