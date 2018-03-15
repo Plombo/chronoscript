@@ -579,6 +579,11 @@ void Parser::stmt()
     {
         jumpStmt();
     }
+    else if (check(TOKEN_SEMICOLON))
+    {
+        // empty statement
+        match();
+    }
     else
     {
         Parser_Error(this, stmt);
