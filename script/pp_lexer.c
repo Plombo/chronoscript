@@ -420,6 +420,12 @@ HRESULT pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken)
         if (( !strncmp( plexer->pcurChar, "E", 1)) || ( !strncmp( plexer->pcurChar, "e", 1)))
         {
             CONSUMECHARACTER;
+
+            if (*plexer->pcurChar == '-')
+            {
+                CONSUMECHARACTER;
+            }
+
             while (*plexer->pcurChar >= '0' && *plexer->pcurChar <= '9')
             {
                 CONSUMECHARACTER;
@@ -444,6 +450,11 @@ HRESULT pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken)
             if (( !strncmp( plexer->pcurChar, "E", 1)) || ( !strncmp( plexer->pcurChar, "e", 1)))
             {
                 CONSUMECHARACTER;
+
+                if (*plexer->pcurChar == '-')
+                {
+                    CONSUMECHARACTER;
+                }
 
                 while (*plexer->pcurChar >= '0' && *plexer->pcurChar <= '9')
                 {

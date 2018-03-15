@@ -4,7 +4,7 @@ double squareRoot(double n)
            max = n < 1.0 ? 1.0 : n,
            mid = max / 2.0,
            midSq = mid * mid;
-    while (abs(midSq - n) > .000001)
+    while (abs(midSq - n) > 1e-6f)
     {
         if (midSq > n)
             max = mid;
