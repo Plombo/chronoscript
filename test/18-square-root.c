@@ -1,14 +1,18 @@
 double squareRoot(double n)
 {
-    double min = 0.0, max = n, mid = n / 2.0, midSq;
-    do {
-        midSq = mid * mid;
+    double min = 0.0,
+           max = n < 1.0 ? 1.0 : n,
+           mid = max / 2.0,
+           midSq = mid * mid;
+    while (abs(midSq - n) > .000001)
+    {
         if (midSq > n)
             max = mid;
         else
             min = mid;
         mid = (min + max) / 2.0;
-    } while(abs(midSq - n) > .0001);
+        midSq = mid * mid;
+    }
     
     // see if the result is actually an integer
     double midInt = round(mid);
@@ -28,3 +32,19 @@ double round(double n)
 {
     return n;
 }
+
+void printSqrt(double n)
+{
+    log("sqrt(" + n + ") = " + squareRoot(n));
+}
+
+void main()
+{
+    printSqrt(4);
+    printSqrt(2);
+    printSqrt(3);
+    printSqrt(0.25);
+    printSqrt(1.0 / 16.0);
+    printSqrt(1.0 / 9.0);
+}
+
