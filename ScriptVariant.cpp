@@ -74,7 +74,7 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
     }
 }
 
-HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, int32_t *pVal)
+HRESULT ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal)
 {
     if (var->vt == VT_INTEGER)
     {
@@ -92,7 +92,7 @@ HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, int32_t *pVal)
     return S_OK;
 }
 
-HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal)
+HRESULT ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal)
 {
     if (var->vt == VT_INTEGER)
     {
@@ -111,7 +111,7 @@ HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal)
 }
 
 
-bool ScriptVariant_IsTrue(ScriptVariant *svar)
+bool ScriptVariant_IsTrue(const ScriptVariant *svar)
 {
     switch (svar->vt)
     {
@@ -129,7 +129,7 @@ bool ScriptVariant_IsTrue(ScriptVariant *svar)
 }
 
 // returns size of output string (or desired size, if greater than bufsize)
-int ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize)
+int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsize)
 {
     switch (svar->vt)
     {
@@ -151,7 +151,7 @@ int ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize)
 }
 
 // returns the length of svar converted to a string
-static int ScriptVariant_LengthAsString(ScriptVariant *svar)
+static int ScriptVariant_LengthAsString(const ScriptVariant *svar)
 {
     if (svar->vt == VT_STR)
     {
@@ -163,14 +163,14 @@ static int ScriptVariant_LengthAsString(ScriptVariant *svar)
     }
 }
 
-void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild)
+void ScriptVariant_Copy(ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     *svar = *rightChild;
 }
 
 //Logical Operations
 
-ScriptVariant *ScriptVariant_Or(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Or(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
     retvar.lVal = (ScriptVariant_IsTrue(svar) || ScriptVariant_IsTrue(rightChild));
@@ -178,14 +178,14 @@ ScriptVariant *ScriptVariant_Or(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_And(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_And(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
     retvar.lVal = (ScriptVariant_IsTrue(svar) && ScriptVariant_IsTrue(rightChild));
     return &retvar;
 }
 
-ScriptVariant *ScriptVariant_Bit_Or(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Bit_Or(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     int32_t l1, l2;
@@ -203,7 +203,7 @@ ScriptVariant *ScriptVariant_Bit_Or(ScriptVariant *svar, ScriptVariant *rightChi
     return &retvar;
 }
 
-ScriptVariant *ScriptVariant_Xor(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Xor(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     int32_t l1, l2;
@@ -221,7 +221,7 @@ ScriptVariant *ScriptVariant_Xor(ScriptVariant *svar, ScriptVariant *rightChild)
     return &retvar;
 }
 
-ScriptVariant *ScriptVariant_Bit_And(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Bit_And(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     int32_t l1, l2;
@@ -239,7 +239,7 @@ ScriptVariant *ScriptVariant_Bit_And(ScriptVariant *svar, ScriptVariant *rightCh
     return &retvar;
 }
 
-ScriptVariant *ScriptVariant_Eq(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Eq(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
@@ -274,7 +274,7 @@ ScriptVariant *ScriptVariant_Eq(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Ne(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Ne(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
@@ -305,7 +305,7 @@ ScriptVariant *ScriptVariant_Ne(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Lt(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Lt(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
@@ -337,7 +337,7 @@ ScriptVariant *ScriptVariant_Lt(ScriptVariant *svar, ScriptVariant *rightChild)
 
 
 
-ScriptVariant *ScriptVariant_Gt(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Gt(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
@@ -369,7 +369,7 @@ ScriptVariant *ScriptVariant_Gt(ScriptVariant *svar, ScriptVariant *rightChild)
 
 
 
-ScriptVariant *ScriptVariant_Ge(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Ge(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
@@ -404,7 +404,7 @@ ScriptVariant *ScriptVariant_Ge(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Le(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Le(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     static ScriptVariant retvar = {{.lVal = 0}, VT_INTEGER};
@@ -435,7 +435,7 @@ ScriptVariant *ScriptVariant_Le(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Shl(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Shl(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     int32_t l1, l2;
@@ -454,7 +454,7 @@ ScriptVariant *ScriptVariant_Shl(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Shr(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Shr(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     int32_t l1, l2;
@@ -473,7 +473,7 @@ ScriptVariant *ScriptVariant_Shr(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-inline ScriptVariant *ScriptVariant_AddGeneric(ScriptVariant *svar, ScriptVariant *rightChild, int (*stringPopFunc)(int))
+inline ScriptVariant *ScriptVariant_AddGeneric(const ScriptVariant *svar, const ScriptVariant *rightChild, int (*stringPopFunc)(int))
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
@@ -512,20 +512,20 @@ inline ScriptVariant *ScriptVariant_AddGeneric(ScriptVariant *svar, ScriptVarian
 
 
 // used when running a script
-ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Add(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     return ScriptVariant_AddGeneric(svar, rightChild, StrCache_Pop);
 }
 
 
 // used for constant folding when compiling a script
-ScriptVariant *ScriptVariant_AddFolding(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_AddFolding(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     return ScriptVariant_AddGeneric(svar, rightChild, StrCache_PopPersistent);
 }
 
 
-ScriptVariant *ScriptVariant_Sub(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Sub(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
@@ -569,7 +569,7 @@ ScriptVariant *ScriptVariant_Sub(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Mul(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Mul(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
@@ -606,7 +606,7 @@ ScriptVariant *ScriptVariant_Mul(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Div(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Div(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     double dbl1, dbl2;
@@ -655,7 +655,7 @@ ScriptVariant *ScriptVariant_Div(ScriptVariant *svar, ScriptVariant *rightChild)
 }
 
 
-ScriptVariant *ScriptVariant_Mod(ScriptVariant *svar, ScriptVariant *rightChild)
+ScriptVariant *ScriptVariant_Mod(const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     static ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
     int32_t l1, l2;
@@ -673,7 +673,7 @@ ScriptVariant *ScriptVariant_Mod(ScriptVariant *svar, ScriptVariant *rightChild)
     return &retvar;
 }
 
-ScriptVariant *ScriptVariant_Neg(ScriptVariant *svar)
+ScriptVariant *ScriptVariant_Neg(const ScriptVariant *svar)
 {
     static ScriptVariant retvar;
     retvar.vt = svar->vt;
@@ -694,7 +694,7 @@ ScriptVariant *ScriptVariant_Neg(ScriptVariant *svar)
 }
 
 
-ScriptVariant *ScriptVariant_Boolean_Not(ScriptVariant *svar)
+ScriptVariant *ScriptVariant_Boolean_Not(const ScriptVariant *svar)
 {
     
     static ScriptVariant retvar = {{.lVal=0}, VT_INTEGER};
@@ -703,7 +703,7 @@ ScriptVariant *ScriptVariant_Boolean_Not(ScriptVariant *svar)
 
 }
 
-ScriptVariant *ScriptVariant_Bit_Not(ScriptVariant *svar)
+ScriptVariant *ScriptVariant_Bit_Not(const ScriptVariant *svar)
 {
     static ScriptVariant retvar = {{.lVal=0}, VT_INTEGER};
     int32_t l1;
@@ -718,7 +718,7 @@ ScriptVariant *ScriptVariant_Bit_Not(ScriptVariant *svar)
     return &retvar;
 }
 
-ScriptVariant *ScriptVariant_ToBoolean(ScriptVariant *svar)
+ScriptVariant *ScriptVariant_ToBoolean(const ScriptVariant *svar)
 {
     static ScriptVariant retvar = {{.lVal=0}, VT_INTEGER};
     retvar.lVal = ScriptVariant_IsTrue(svar);

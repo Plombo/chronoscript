@@ -47,41 +47,41 @@ typedef struct ScriptVariant
 void ScriptVariant_Clear(ScriptVariant *var);
 
 void ScriptVariant_Init(ScriptVariant *var);
-void ScriptVariant_Copy(ScriptVariant *svar, ScriptVariant *rightChild);
+void ScriptVariant_Copy(ScriptVariant *svar, const ScriptVariant *rightChild);
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
-HRESULT ScriptVariant_IntegerValue(ScriptVariant *var, int32_t *pVal);
-HRESULT ScriptVariant_DecimalValue(ScriptVariant *var, double *pVal);
-bool ScriptVariant_IsTrue(ScriptVariant *svar);
-int ScriptVariant_ToString(ScriptVariant *svar, char *buffer, size_t bufsize);
+HRESULT ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal);
+HRESULT ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal);
+bool ScriptVariant_IsTrue(const ScriptVariant *svar);
+int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsize);
 
 ScriptVariant *ScriptVariant_Ref(ScriptVariant *var);
 void ScriptVariant_Unref(ScriptVariant *var);
 
-ScriptVariant *ScriptVariant_Or(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_And(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Bit_Or(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Xor(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Bit_And(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Eq(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Ne(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Lt(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Gt(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Ge(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Le(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Add(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_AddFolding(ScriptVariant *svar, ScriptVariant *rightChild); // used for constant folding when compiling a script
-ScriptVariant *ScriptVariant_Sub(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Shl(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Shr(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Mul(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Div(ScriptVariant *svar, ScriptVariant *rightChild);
-ScriptVariant *ScriptVariant_Mod(ScriptVariant *svar, ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Or(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_And(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Bit_Or(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Xor(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Bit_And(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Eq(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Ne(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Lt(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Gt(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Ge(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Le(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Add(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_AddFolding(const ScriptVariant *svar, const ScriptVariant *rightChild); // used for constant folding when compiling a script
+ScriptVariant *ScriptVariant_Sub(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Shl(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Shr(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Mul(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Div(const ScriptVariant *svar, const ScriptVariant *rightChild);
+ScriptVariant *ScriptVariant_Mod(const ScriptVariant *svar, const ScriptVariant *rightChild);
 
 // note that these are changed from OpenBOR - they now return new value instead of modifying in place
-ScriptVariant *ScriptVariant_Neg(ScriptVariant *svar);
-ScriptVariant *ScriptVariant_Boolean_Not(ScriptVariant *svar);
-ScriptVariant *ScriptVariant_Bit_Not(ScriptVariant *svar);
-ScriptVariant *ScriptVariant_ToBoolean(ScriptVariant *svar);
+ScriptVariant *ScriptVariant_Neg(const ScriptVariant *svar);
+ScriptVariant *ScriptVariant_Boolean_Not(const ScriptVariant *svar);
+ScriptVariant *ScriptVariant_Bit_Not(const ScriptVariant *svar);
+ScriptVariant *ScriptVariant_ToBoolean(const ScriptVariant *svar);
 
 #ifdef __cplusplus
 };

@@ -5,8 +5,8 @@
 #include "Builtins.h"
 #include "ssa.h" // for opcodes
 
-typedef ScriptVariant *(*UnaryOperation)(ScriptVariant*);
-typedef ScriptVariant *(*BinaryOperation)(ScriptVariant*, ScriptVariant*);
+typedef ScriptVariant *(*UnaryOperation)(const ScriptVariant*);
+typedef ScriptVariant *(*BinaryOperation)(const ScriptVariant*, const ScriptVariant*);
 
 // does the actual work of executing the script
 static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
