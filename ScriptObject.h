@@ -13,6 +13,7 @@ enum GCColor {
 class ScriptObject {
 private:
     bool persistent;
+    bool currentlyPrinting;
     int gcColor;
     List<ScriptVariant*> map;
 
@@ -42,6 +43,7 @@ int ObjectHeap_CreateNewObject();
 int ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);
 ScriptObject *ObjectHeap_Get(int index);
+void ObjectHeap_ListUnfreed();
 
 #endif
 

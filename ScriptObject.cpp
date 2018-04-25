@@ -36,6 +36,7 @@ public:
 ScriptObject::ScriptObject()
 {
     persistent = false;
+    currentlyPrinting = false;
 }
 
 // destructor that destroys all pointers in map
@@ -125,6 +126,14 @@ void ScriptObject::print()
 {
     char buf[256];
     bool first = true;
+
+    if (currentlyPrinting)
+    {
+        printf("{(object cycle)}");
+        return;
+    }
+    currentlyPrinting = true;
+
     printf("{");
     foreach_list(map, ScriptVariant*, iter)
     {
@@ -140,6 +149,7 @@ void ScriptObject::print()
         }
     }
     printf("}");
+    currentlyPrinting = false;
 }
 
 int ScriptObject::toString(char *dst, int dstsize)
@@ -148,6 +158,14 @@ int ScriptObject::toString(char *dst, int dstsize)
     char buf[256];
     bool first = true;
     int length = 0;
+
+    if (currentlyPrinting)
+    {
+        SNPRINTF("{(object cycle)}");
+        return length;
+    }
+    currentlyPrinting = true;
+
     SNPRINTF("{");
     foreach_list(map, ScriptVariant*, iter)
     {
@@ -159,8 +177,9 @@ int ScriptObject::toString(char *dst, int dstsize)
         SNPRINTF("%s", buf);
     }
     SNPRINTF("}");
-#undef SNPRINTF
+    currentlyPrinting = false;
     return length;
+#undef SNPRINTF
 }
 
 class ObjectHeap {
@@ -191,11 +210,27 @@ public:
     // takes over an object from another heap
     int steal(ScriptObject *obj);
 
+    // returns true if the given index is a link
+    inline bool isLink(int index)
+    {
+        return objects[index].type == MEMBER_LINK;
+    }
+
+    // gets (persistent) index that the given index links to
+    inline int getLinkTarget(int index)
+    {
+        assert(objects[index].type == MEMBER_LINK);
+        return objects[index].link.target;
+    }
+
     // replaces object with link to global index
     void replaceWithLink(int index, int target);
 
     // get the object with this index
     ScriptObject *get(int index);
+
+    // list all unfreed objects
+    void listUnfreed();
 };
 
 ObjectHeap::ObjectHeap()
@@ -331,6 +366,21 @@ void ObjectHeap::replaceWithLink(int index, int target)
     objects[index].link.target = target;
 }
 
+// list all unfreed objects in heap with printf
+void ObjectHeap::listUnfreed()
+{
+    char buf[256];
+    int i;
+    for (i = 0; i < size; i++)
+    {
+        if (objects[i].type == MEMBER_OBJECT)
+        {
+            objects[i].object.obj->toString(buf, sizeof(buf));
+            printf("Unfreed object %i: %s\n", i, buf);
+        }
+    }
+}
+
 // -------------------- PUBLIC API ----------------------
 static ObjectHeap persistentHeap; // global index = index (global index positive)
 static ObjectHeap temporaryHeap;  // global index = ~index (global index negative)
@@ -353,7 +403,6 @@ int ObjectHeap_CreateNewObject()
 }
 
 // makes temporary object persistent, or refs object if it's already persistent
-// FIXME handle case where index is already a link
 int ObjectHeap_Ref(int index)
 {
     if (index >= 0)
@@ -361,9 +410,14 @@ int ObjectHeap_Ref(int index)
         persistentHeap.ref(index);
         return index;
     }
+    else if (temporaryHeap.isLink(~index))
+    {
+        int newIndex = temporaryHeap.getLinkTarget(~index);
+        persistentHeap.ref(newIndex);
+        return newIndex;
+    }
     else
     {
-        // FIXME make this not infinite loop for cycles...
         ScriptObject *obj = temporaryHeap.get(~index);
         int newIndex = persistentHeap.steal(obj);
         temporaryHeap.replaceWithLink(~index, newIndex);
@@ -382,5 +436,10 @@ void ObjectHeap_Unref(int index)
 ScriptObject *ObjectHeap_Get(int index)
 {
     return (index < 0) ? temporaryHeap.get(~index) : persistentHeap.get(index);
+}
+
+void ObjectHeap_ListUnfreed()
+{
+    persistentHeap.listUnfreed();
 }
 

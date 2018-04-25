@@ -75,6 +75,8 @@ int main(int argc, char **argv)
     doTest(argv[1]);
     // testFile(argv[1]);
 
+    ObjectHeap_ListUnfreed();
+
     ImportCache_Clear();
     ObjectHeap_ClearTemporary();
     StrCache_ClearTemporary();
