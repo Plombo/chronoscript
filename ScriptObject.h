@@ -15,7 +15,7 @@ private:
     bool persistent;
     bool currentlyPrinting;
     int gcColor;
-    List<ScriptVariant*> map;
+    List<ScriptVariant> map;
 
 public:
     ScriptObject();

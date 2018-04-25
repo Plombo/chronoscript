@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "List.h"
-#include "Stack.h"
 #include "ScriptVariant.h"
 #include "StrCache.h"
 #include "ScriptObject.h"
@@ -10,8 +9,6 @@
     memset((p)+(n), 0, sizeof(*(p))*((s)-(n)));
 
 #define HEAP_SIZE_INCREMENT   64
-
-Stack<int> grayStack;
 
 enum MemberType {
     MEMBER_FREE,
@@ -45,9 +42,7 @@ ScriptObject::~ScriptObject()
     map.gotoFirst();
     while (map.size())
     {
-        ScriptVariant *storage = map.retrieve();
-        ScriptVariant_Unref(storage);
-        delete storage;
+        ScriptVariant_Unref(map.valuePtr());
         map.remove();
     }
 }
@@ -67,24 +62,20 @@ void ScriptObject::set(const char *key, ScriptVariant value)
             ScriptObject *valueObject = ObjectHeap_Get(value.objVal);
             if (valueObject->gcColor == GC_COLOR_WHITE)
             {
-                valueObject->gcColor = GC_COLOR_GRAY;
-                grayStack.push(value.objVal);
+                // TODO add value.objVal to gray stack
             }
         }
     }
 
     if (map.findByName(key))
     {
-        ScriptVariant *storage = map.retrieve();
-        ScriptVariant_Unref(storage);
-        *storage = value;
+        ScriptVariant_Unref(map.valuePtr());
+        map.update(value);
     }
     else
     {
-        ScriptVariant *storage = new ScriptVariant;
-        *storage = value;
         map.gotoLast();
-        map.insertAfter(storage, key);
+        map.insertAfter(value, key);
     }
 }
 
@@ -92,7 +83,7 @@ ScriptVariant ScriptObject::get(const char *key)
 {
     if (map.findByName(key))
     {
-        return *map.retrieve();
+        return map.retrieve();
     }
     else
     {
@@ -106,9 +97,9 @@ void ScriptObject::makePersistent()
     if (persistent) return;
     persistent = true; // set it up here to avoid infinite recursion in case of cycles
     gcColor = GC_COLOR_WHITE;
-    foreach_list(map, ScriptVariant*, iter)
+    foreach_list(map, ScriptVariant, iter)
     {
-        ScriptVariant *var = iter.value();
+        ScriptVariant *var = iter.valuePtr();
         if (var->vt == VT_OBJECT)
         {
             //printf("make object %i persistent\n", var->objVal);
@@ -135,12 +126,12 @@ void ScriptObject::print()
     currentlyPrinting = true;
 
     printf("{");
-    foreach_list(map, ScriptVariant*, iter)
+    foreach_list(map, ScriptVariant, iter)
     {
         if (!first) printf(", ");
         first = false;
         printf("\"%s\": ", iter.name());
-        ScriptVariant *var = iter.value();
+        ScriptVariant *var = iter.valuePtr();
         if (var->vt == VT_OBJECT) ObjectHeap_Get(var->objVal)->print();
         else
         {
@@ -167,12 +158,12 @@ int ScriptObject::toString(char *dst, int dstsize)
     currentlyPrinting = true;
 
     SNPRINTF("{");
-    foreach_list(map, ScriptVariant*, iter)
+    foreach_list(map, ScriptVariant, iter)
     {
         if (!first) SNPRINTF(", ");
         first = false;
         SNPRINTF("\"%s\": ", iter.name());
-        ScriptVariant *var = iter.value();
+        ScriptVariant *var = iter.valuePtr();
         ScriptVariant_ToString(var, buf, sizeof(buf));
         SNPRINTF("%s", buf);
     }

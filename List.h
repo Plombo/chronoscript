@@ -207,6 +207,9 @@ public:
     // get the data value of the current list item
     inline T retrieve() const { return static_cast<Node<T>*>(current)->value; }
 
+    // get a pointer to the data value of the current list item
+    inline T *valuePtr() const { return &(static_cast<Node<T>*>(current)->value); }
+
     // set the data value of current list item to a new value
     inline void update(T newValue) { static_cast<Node<T>*>(current)->value = newValue; }
 
