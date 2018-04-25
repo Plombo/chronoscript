@@ -4,9 +4,16 @@
 #include "List.h"
 #include "ScriptVariant.h"
 
+enum GCColor {
+    GC_COLOR_WHITE,
+    GC_COLOR_GRAY,
+    GC_COLOR_BLACK
+};
+
 class ScriptObject {
 private:
     bool persistent;
+    int gcColor;
     List<ScriptVariant*> map;
 
 public:
@@ -19,6 +26,14 @@ public:
     void print();
     int toString(char *dst, int dstsize);
 };
+
+/**
+ * There are two object heaps: temporary and persistent. All objects are
+ * put in the temporary heap when created with ObjectHeap_CreateNewObject(),
+ * and can be moved to the persistent heap with ObjectHeap_MakePersistent().
+ * The temporary heap is cleared after each call to Interpreter::runFunction(),
+ * i.e., every time a "main" function finishes execution.
+ */
 
 // public API
 void ObjectHeap_ClearTemporary();

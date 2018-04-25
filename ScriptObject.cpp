@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "List.h"
+#include "Stack.h"
 #include "ScriptVariant.h"
 #include "StrCache.h"
 #include "ScriptObject.h"
@@ -9,6 +10,8 @@
     memset((p)+(n), 0, sizeof(*(p))*((s)-(n)));
 
 #define HEAP_SIZE_INCREMENT   64
+
+Stack<int> grayStack;
 
 enum MemberType {
     MEMBER_FREE,
@@ -22,7 +25,7 @@ public:
     union {
         struct {
             int refcount;
-            ScriptObject *obj; // TODO allocate object as part of the structure
+            ScriptObject *obj;
         } object;
         struct {
             int target;
@@ -54,6 +57,19 @@ void ScriptObject::set(const char *key, ScriptVariant value)
     if (persistent)
     {
         value = *ScriptVariant_Ref(&value);
+
+        /* Write barrier: a black object cannot reference a white object, so
+           turn the white object gray */
+        if (value.vt == VT_OBJECT && // TODO: or VT_LIST, when lists are implemented
+            gcColor == GC_COLOR_BLACK)
+        {
+            ScriptObject *valueObject = ObjectHeap_Get(value.objVal);
+            if (valueObject->gcColor == GC_COLOR_WHITE)
+            {
+                valueObject->gcColor = GC_COLOR_GRAY;
+                grayStack.push(value.objVal);
+            }
+        }
     }
 
     if (map.findByName(key))
@@ -88,6 +104,7 @@ void ScriptObject::makePersistent()
 {
     if (persistent) return;
     persistent = true; // set it up here to avoid infinite recursion in case of cycles
+    gcColor = GC_COLOR_WHITE;
     foreach_list(map, ScriptVariant*, iter)
     {
         ScriptVariant *var = iter.value();
