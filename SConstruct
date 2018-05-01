@@ -28,6 +28,7 @@ cpp_sources = [
     'Builtins',
     'StrCache',
     'ScriptObject',
+    'ObjectHeap',
     'ImportCache',
     'SymbolTable',
     'HashTable',
