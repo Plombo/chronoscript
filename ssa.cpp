@@ -730,7 +730,13 @@ void SSABuildUtil::pushLoop(Loop *loop)
 {
     loop->parent = currentLoop;
     if (currentLoop == NULL) // this is a top-level loop
+    {
         builder->loops.insertAfter(loop);
+    }
+    else
+    {
+        currentLoop->children.insertAfter(loop);
+    }
     currentLoop = loop;
 }
 
@@ -743,7 +749,9 @@ void SSABuildUtil::popLoop()
 BasicBlock *SSABuildUtil::createBBAfter(BasicBlock *existingBB, Loop *loop)
 {
     BasicBlock *block = builder->createBBAfter(existingBB);
-    block->loop = loop ? loop : currentLoop;
+    if (!loop) loop = currentLoop;
+    block->loop = loop;
+    if (loop) loop->nodes.insertAfter(block);
     return block;
 }
 

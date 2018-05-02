@@ -74,6 +74,8 @@ void loopTreeDFS(Loop *loop)
         BasicBlock *m = iter.value();
         m->liveIn |= liveLoop; // LiveIn(B M ) = LiveIn(B M ) ∪ LiveLoop
         m->liveOut |= liveLoop; // LiveOut(B M ) = LiveOut(B M ) ∪ LiveLoop
+        //printf("liveIn BB %i: ", m->id); m->liveIn.print(); printf("\n");
+        //printf("liveOut BB %i: ", m->id); m->liveOut.print(); printf("\n");
     }
     foreach_list(loop->children, Loop*, iter)
     {
