@@ -206,6 +206,7 @@ void ObjectHeap::unref(int index)
     {
         objects[index].type = MEMBER_FREE;
         delete objects[index].object.obj;
+        free_indices[++top] = index;
         //printf("delete object %i\n", index);
     }
 }
@@ -293,6 +294,7 @@ void ObjectHeap::sweep()
             //printf("delete object %i (gc)\n", i);
             objects[i].type = MEMBER_FREE;
             delete objects[i].object.obj;
+            free_indices[++top] = i;
         }
     }
 }
