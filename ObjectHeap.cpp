@@ -1,12 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ScriptObject.h"
+#include "ObjectHeap.hpp"
 
 #define __reallocto(p, t, n, s) \
     p = (t)realloc((p), sizeof(*(p))*(s));\
     memset((p)+(n), 0, sizeof(*(p))*((s)-(n)));
 
 #define HEAP_SIZE_INCREMENT   64
+
+enum GCColor {
+    GC_COLOR_WHITE,
+    GC_COLOR_GRAY,
+    GC_COLOR_BLACK
+};
 
 enum MemberType {
     MEMBER_FREE,
@@ -16,21 +23,25 @@ enum MemberType {
 
 class HeapMember {
 public:
-    MemberType type;
     union {
         struct {
-            int refcount;
             ScriptObject *obj;
+            int refcount;
+            int gcColor;
         } object;
         struct {
             int target;
         } link;
     };
+    MemberType type;
 };
 
 class ObjectHeap {
+    friend class GarbageCollector;
+    
 private:
     HeapMember *objects;
+    Stack<int> grayStack;
     int size; // allocated size of heap (includes unused space, not equal to # of active objects!)
     int top; // top of free_indices stack, equal to (# of free positions - 1)
     int *free_indices; // stack of indices of free objects
@@ -74,6 +85,23 @@ public:
 
     // get the object with this index
     ScriptObject *get(int index);
+
+    // get the garbage collection color of the object with this index
+    inline int getGCColor(int index)
+    {
+        assert(objects[index].type == MEMBER_OBJECT);
+        return objects[index].object.gcColor;
+    }
+
+    // add an object to the gray list (for GC)
+    void pushGray(int index);
+
+    // mark phase of garbage collection
+    void processOneGray();
+    void markAll();
+
+    // delete all objects whose GC color is white
+    void sweep();
 
     // list all unfreed objects
     void listUnfreed();
@@ -156,6 +184,7 @@ int ObjectHeap::pop()
     objects[i].type = MEMBER_OBJECT;
     objects[i].object.obj = new ScriptObject;
     objects[i].object.refcount = 1;
+    objects[i].object.gcColor = GC_COLOR_WHITE;
     return i;
 }
 
@@ -168,14 +197,15 @@ void ObjectHeap::ref(int index)
 void ObjectHeap::unref(int index)
 {
     assert(index < size);
-    assert(objects[index].type == MEMBER_OBJECT);
+    // unreffing a free object is possible during garbage collection
+    if (objects[index].type == MEMBER_FREE) return;
     assert(objects[index].object.refcount >= 1);
 
     --objects[index].object.refcount;
     if (objects[index].object.refcount == 0)
     {
-        delete objects[index].object.obj;
         objects[index].type = MEMBER_FREE;
+        delete objects[index].object.obj;
         //printf("delete object %i\n", index);
     }
 }
@@ -212,6 +242,61 @@ void ObjectHeap::replaceWithLink(int index, int target)
     objects[index].link.target = target;
 }
 
+void ObjectHeap::pushGray(int index)
+{
+    assert(index >= 0);
+    assert(objects[index].object.gcColor != GC_COLOR_GRAY);
+    objects[index].object.gcColor = GC_COLOR_GRAY;
+    grayStack.push(index);
+}
+
+// process one item from the gray stack
+void ObjectHeap::processOneGray()
+{
+    int index = grayStack.top();
+    grayStack.pop();
+    assert(objects[index].type == MEMBER_OBJECT);
+    ScriptObject *obj = objects[index].object.obj;
+    foreach_list(obj->map, ScriptVariant, iter)
+    {
+        ScriptVariant *var = iter.valuePtr();
+        if (var->vt == VT_OBJECT)
+        {
+            int subIndex = var->objVal;
+            if (objects[subIndex].object.gcColor == GC_COLOR_WHITE)
+            {
+                pushGray(subIndex);
+            }
+        }
+    }
+    objects[index].object.gcColor = GC_COLOR_BLACK;
+}
+
+// mark objects until gray stack is empty
+void ObjectHeap::markAll()
+{
+    while (!grayStack.isEmpty())
+    {
+        processOneGray();
+    }
+}
+
+// delete all objects whose GC color is white
+void ObjectHeap::sweep()
+{
+    assert(grayStack.isEmpty());
+    for (int i = 0; i < size; i++)
+    {
+        if (objects[i].type == MEMBER_OBJECT &&
+            objects[i].object.gcColor == GC_COLOR_WHITE)
+        {
+            //printf("delete object %i (gc)\n", i);
+            objects[i].type = MEMBER_FREE;
+            delete objects[i].object.obj;
+        }
+    }
+}
+
 // list all unfreed objects in heap with printf
 void ObjectHeap::listUnfreed()
 {
@@ -227,10 +312,11 @@ void ObjectHeap::listUnfreed()
     }
 }
 
-// -------------------- PUBLIC API ----------------------
+// ------------------ GLOBAL INSTANCES ------------------
 static ObjectHeap persistentHeap; // global index = index (global index positive)
 static ObjectHeap temporaryHeap;  // global index = ~index (global index negative)
 
+// -------------------- PUBLIC API ----------------------
 void ObjectHeap_ClearTemporary()
 {
     temporaryHeap.clear();
@@ -284,9 +370,45 @@ ScriptObject *ObjectHeap_Get(int index)
     return (index < 0) ? temporaryHeap.get(~index) : persistentHeap.get(index);
 }
 
+void ObjectHeap_SetObjectMember(int index, const char *key, ScriptVariant *value)
+{
+    ScriptObject *obj = ObjectHeap_Get(index);
+
+    // assigning an object (any kind) as a member of a persistent object
+    if (index >= 0 && value->vt == VT_OBJECT) // or VT_LIST when implemented
+    {
+        // this will make the value persistent if it isn't already
+        value = ScriptVariant_Ref(value);
+
+        // a black object can't contain a white value, so make the white value gray
+        if (persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
+            persistentHeap.getGCColor(value->objVal) == GC_COLOR_WHITE)
+        {
+            persistentHeap.pushGray(value->objVal);
+        }
+    }
+
+    obj->set(key, *value);
+}
+
 void ObjectHeap_ListUnfreed()
 {
     persistentHeap.listUnfreed();
+}
+
+void GarbageCollector_Sweep()
+{
+    persistentHeap.sweep();
+}
+
+void GarbageCollector_PushGray(int index)
+{
+    persistentHeap.pushGray(index);
+}
+
+void GarbageCollector_MarkAll()
+{
+    persistentHeap.markAll();
 }
 
 

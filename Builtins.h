@@ -15,4 +15,7 @@ BuiltinScriptFunction getBuiltinByIndex(int index);
 // returns the name of the function with the given index
 const char *getBuiltinName(int index);
 
+// mark script objects in the global variant list as referenced
+void pushGlobalVariantsToGC();
+
 #endif

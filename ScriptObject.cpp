@@ -3,6 +3,7 @@
 #include "ScriptVariant.h"
 #include "StrCache.h"
 #include "ScriptObject.h"
+#include "ObjectHeap.hpp"
 
 ScriptObject::ScriptObject()
 {
@@ -24,23 +25,6 @@ ScriptObject::~ScriptObject()
 // TODO make this take a const pointer to a ScriptVariant
 void ScriptObject::set(const char *key, ScriptVariant value)
 {
-    if (persistent)
-    {
-        value = *ScriptVariant_Ref(&value);
-
-        /* Write barrier: a black object cannot reference a white object, so
-           turn the white object gray */
-        if (value.vt == VT_OBJECT && // TODO: or VT_LIST, when lists are implemented
-            gcColor == GC_COLOR_BLACK)
-        {
-            ScriptObject *valueObject = ObjectHeap_Get(value.objVal);
-            if (valueObject->gcColor == GC_COLOR_WHITE)
-            {
-                // TODO add value.objVal to gray stack
-            }
-        }
-    }
-
     if (map.findByName(key))
     {
         ScriptVariant_Unref(map.valuePtr());
@@ -70,7 +54,6 @@ void ScriptObject::makePersistent()
 {
     if (persistent) return;
     persistent = true; // set it up here to avoid infinite recursion in case of cycles
-    gcColor = GC_COLOR_WHITE;
     foreach_list(map, ScriptVariant, iter)
     {
         ScriptVariant *var = iter.valuePtr();

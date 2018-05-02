@@ -2,6 +2,7 @@
 #include "Interpreter.h"
 #include "ScriptVariant.h"
 #include "ScriptObject.h"
+#include "ObjectHeap.hpp"
 #include "Builtins.h"
 #include "ssa.h" // for opcodes
 
@@ -192,8 +193,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                     printf("error: invalid parameters for SET instruction\n");
                     return E_FAIL;
                 }
-                object = ObjectHeap_Get(src0->objVal);
-                object->set(StrCache_Get(src1->strVal), *src2);
+                ObjectHeap_SetObjectMember(src0->objVal, StrCache_Get(src1->strVal), src2);
                 break;
             case OP_GET:
                 fetchDst();

@@ -12,6 +12,7 @@
 #include "ImportCache.h"
 #include "StrCache.h"
 #include "ScriptObject.h"
+#include "ObjectHeap.hpp"
 
 void doTest(const char *filename)
 {
@@ -75,6 +76,12 @@ int main(int argc, char **argv)
     doTest(argv[1]);
     // testFile(argv[1]);
 
+    printf("\n");
+    ObjectHeap_ListUnfreed();
+    pushGlobalVariantsToGC();
+    GarbageCollector_MarkAll();
+    GarbageCollector_Sweep();
+    printf("\n");
     ObjectHeap_ListUnfreed();
 
     ImportCache_Clear();

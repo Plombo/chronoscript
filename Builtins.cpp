@@ -2,10 +2,24 @@
 #include <stdlib.h>
 #include "Builtins.h"
 #include "List.h"
+#include "ObjectHeap.hpp"
 
 static bool builtinsInited = false;
 static List<unsigned int> builtinIndices;
 static List<ScriptVariant> globalVariants;
+
+// mark script objects in the global variant list as referenced
+void pushGlobalVariantsToGC()
+{
+    foreach_list(globalVariants, ScriptVariant, iter)
+    {
+        ScriptVariant *var = iter.valuePtr();
+        if (var->vt == VT_OBJECT && var->objVal >= 0)
+        {
+            GarbageCollector_PushGray(var->objVal);
+        }
+    }
+}
 
 // log([a, [b, [...]]])
 // writes each of its parameters to the log file, separated by a space
