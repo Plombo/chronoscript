@@ -230,11 +230,15 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
     return S_OK;
 
 start_backtrace:
-    printf("\n\nAn exception occurred in script function %s()\n", function->functionName); // TODO: file name
+    printf("\n\nAn exception occurred in script function %s() in %s\n",
+        function->functionName,
+        function->interpreter->fileName);
     return E_FAIL;
 
 continue_backtrace:
-    printf("called from %s()\n", function->functionName); // TODO: file name
+    printf("called from %s() in %s\n",
+        function->functionName,
+        function->interpreter->fileName);
     return E_FAIL;
 }
 
@@ -276,6 +280,8 @@ Interpreter::~Interpreter()
         delete iter.value();
     }
     functions.clear();
+
+    free(fileName);
 }
 
 ExecFunction::~ExecFunction()

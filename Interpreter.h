@@ -82,14 +82,18 @@ struct ExecFunction {
 
 class Interpreter {
 public:
+    char *fileName;
     List<ExecFunction*> functions;
     int numConstants;
     ScriptVariant *constants;
     int numGlobals;
     ScriptVariant *globals;
 
-    inline Interpreter() : numConstants(0), constants(NULL), numGlobals(0), globals(NULL)
-    {}
+    inline Interpreter(const char *filePath) :
+        numConstants(0), constants(NULL), numGlobals(0), globals(NULL)
+    {
+        this->fileName = strdup(filePath);
+    }
 
     // destructor to free all of the above
     ~Interpreter();

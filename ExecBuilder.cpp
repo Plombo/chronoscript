@@ -5,9 +5,9 @@
 #include "Builtins.h"
 #include "ScriptUtils.h"
 
-ExecBuilder::ExecBuilder()
+ExecBuilder::ExecBuilder(const char *filename)
 {
-    interpreter = new Interpreter;
+    interpreter = new Interpreter(filename);
 }
 
 void ExecBuilder::allocateExecFunctions()

@@ -13,7 +13,7 @@ public:
     GlobalState globals;
     Interpreter *interpreter;
 public:
-    ExecBuilder();
+    ExecBuilder(const char *filename);
     void allocateExecFunctions();
     void buildExecutable();
     ExecFunction *getFunctionNamed(const char *name);

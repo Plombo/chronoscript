@@ -284,7 +284,7 @@ Interpreter *compileFile(const char *filename)
     char *scriptText = readScript(filename);
     if (!scriptText) return NULL;
 
-    ExecBuilder execBuilder;
+    ExecBuilder execBuilder(filename);
     pp_context ppContext;
     List<Interpreter*> imports;
     int numImports;
