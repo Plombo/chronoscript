@@ -174,7 +174,13 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                     callResult = execFunction(target, callParams, dst);
                 }
                 if (FAILED(callResult))
-                    return callResult;
+                {
+                    if (inst->opCode == OP_CALL_BUILTIN)
+                    {
+                        printf("\n\nan exception occurred in a builtin script function\n"); // TODO: function name
+                    }
+                    goto continue_backtrace;
+                }
                 break;
             }
 
@@ -191,7 +197,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 if (src0->vt != VT_OBJECT || src1->vt != VT_STR)
                 {
                     printf("error: invalid parameters for SET instruction\n");
-                    return E_FAIL;
+                    goto start_backtrace;
                 }
                 ObjectHeap_SetObjectMember(src0->objVal, StrCache_Get(src1->strVal), src2);
                 break;
@@ -202,7 +208,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 if (src0->vt != VT_OBJECT || src1->vt != VT_STR)
                 {
                     printf("error: invalid parameters for GET instruction\n");
-                    return E_FAIL;
+                    goto start_backtrace;
                 }
                 object = ObjectHeap_Get(src0->objVal);
                 *dst = object->get(StrCache_Get(src1->strVal));
@@ -222,6 +228,14 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
         if (!jumped) index++;
     }
     return S_OK;
+
+start_backtrace:
+    printf("\n\nAn exception occurred in script function %s()\n", function->functionName); // TODO: file name
+    return E_FAIL;
+
+continue_backtrace:
+    printf("called from %s()\n", function->functionName); // TODO: file name
+    return E_FAIL;
 }
 
 ExecFunction *Interpreter::getFunctionNamed(const char *name)
