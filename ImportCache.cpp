@@ -248,7 +248,7 @@ void linkConstants(SSABuilder *func, List<ScriptVariant*> *constants)
             foreach_plist(constants, ScriptVariant*, constIter)
             {
                 if (c->constValue.vt == constIter.value()->vt &&
-                    ScriptVariant_IsTrue(ScriptVariant_Eq(&c->constValue, constIter.value())))
+                    ScriptVariant_IsEqual(&c->constValue, constIter.value()))
                 {
                     c->id = i;
                     break;

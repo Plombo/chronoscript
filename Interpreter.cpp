@@ -6,8 +6,8 @@
 #include "Builtins.h"
 #include "ssa.h" // for opcodes
 
-typedef ScriptVariant *(*UnaryOperation)(const ScriptVariant*);
-typedef ScriptVariant *(*BinaryOperation)(const ScriptVariant*, const ScriptVariant*);
+typedef HRESULT (*UnaryOperation)(ScriptVariant *dst, const ScriptVariant *src);
+typedef HRESULT (*BinaryOperation)(ScriptVariant *dst, const ScriptVariant *src1, const ScriptVariant *src2);
 
 // does the actual work of executing the script
 static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
@@ -63,7 +63,8 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
     {
         ExecInstruction *inst = &function->instructions[index];
         bool jumped = false;
-        ScriptVariant *dst, *src0, *src1, *src2, *scratch;
+        ScriptVariant *dst, *src0, *src1, *src2, *paramTemp;
+        ScriptVariant scratch;
         ScriptObject *object;
         bool shouldBranch;
         switch(inst->opCode)
@@ -88,8 +89,8 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
             case OP_BRANCH_EQUAL:
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
-                scratch = ScriptVariant_Eq(src0, src1);
-                shouldBranch = ScriptVariant_IsTrue(scratch);
+                ScriptVariant_Eq(&scratch, src0, src1);
+                shouldBranch = ScriptVariant_IsTrue(&scratch);
                 if (shouldBranch)
                 {
                     index = inst->jumpTarget;
@@ -125,7 +126,12 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
             case OP_BOOL:
                 fetchDst();
                 fetchSrc(src0, inst->src0);
-                *dst = *(unaryOps[inst->opCode - OP_NEG](src0));
+                if (FAILED(unaryOps[inst->opCode - OP_NEG](dst, src0)))
+                {
+                    printf("error: an exception occurred when executing %s instruction\n",
+                        getOpCodeName((OpCode)inst->opCode));
+                    goto start_backtrace;
+                }
                 break;
 
             // binary ops
@@ -148,7 +154,12 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
-                *dst = *(binaryOps[inst->opCode - OP_BIT_OR](src0, src1));
+                if (FAILED(binaryOps[inst->opCode - OP_BIT_OR](dst, src0, src1)))
+                {
+                    printf("error: an exception occurred when executing %s instruction\n",
+                        getOpCodeName((OpCode)inst->opCode));
+                    goto start_backtrace;
+                }
                 break;
 
             // function call
@@ -159,8 +170,8 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 int numParams = function->callParams[inst->paramsIndex];
                 for (int i = 0; i < numParams; i++)
                 {
-                    fetchSrc(scratch, function->callParams[inst->paramsIndex+i+1]);
-                    callParams[i] = *scratch;
+                    fetchSrc(paramTemp, function->callParams[inst->paramsIndex+i+1]);
+                    callParams[i] = *paramTemp;
                 }
                 HRESULT callResult;
                 if (inst->opCode == OP_CALL_BUILTIN)

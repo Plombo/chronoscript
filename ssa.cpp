@@ -446,36 +446,39 @@ void SSABuildUtil::addParam(const char *name)
 // used for constant folding
 Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *src1)
 {
-    ScriptVariant *result;
-    switch(op)
+    ScriptVariant result;
+    HRESULT success;
+
+    switch (op)
     {
     // unary
-    case OP_NEG: result = ScriptVariant_Neg(src0); break;
-    case OP_BOOL_NOT: result = ScriptVariant_Boolean_Not(src0); break;
-    case OP_BIT_NOT: result = ScriptVariant_Bit_Not(src0); break;
-    case OP_BOOL: result = ScriptVariant_ToBoolean(src0); break;
+    case OP_NEG: success = ScriptVariant_Neg(&result, src0); break;
+    case OP_BOOL_NOT: success = ScriptVariant_Boolean_Not(&result, src0); break;
+    case OP_BIT_NOT: success = ScriptVariant_Bit_Not(&result, src0); break;
+    case OP_BOOL: success = ScriptVariant_ToBoolean(&result, src0); break;
     // binary
-    case OP_BIT_OR: result = ScriptVariant_Bit_Or(src0, src1); break;
-    case OP_XOR: result = ScriptVariant_Xor(src0, src1); break;
-    case OP_BIT_AND: result = ScriptVariant_Bit_And(src0, src1); break;
-    case OP_EQ: result = ScriptVariant_Eq(src0, src1); break;
-    case OP_NE: result = ScriptVariant_Ne(src0, src1); break;
-    case OP_LT: result = ScriptVariant_Lt(src0, src1); break;
-    case OP_GT: result = ScriptVariant_Gt(src0, src1); break;
-    case OP_GE: result = ScriptVariant_Ge(src0, src1); break;
-    case OP_LE: result = ScriptVariant_Le(src0, src1); break;
-    case OP_SHL: result = ScriptVariant_Shl(src0, src1); break;
-    case OP_SHR: result = ScriptVariant_Shr(src0, src1); break;
-    case OP_ADD: result = ScriptVariant_AddFolding(src0, src1); break;
-    case OP_SUB: result = ScriptVariant_Sub(src0, src1); break;
-    case OP_MUL: result = ScriptVariant_Mul(src0, src1); break;
-    case OP_DIV: result = ScriptVariant_Div(src0, src1); break;
-    case OP_MOD: result = ScriptVariant_Mod(src0, src1); break;
-    default: result = NULL;
+    case OP_BIT_OR: success = ScriptVariant_Bit_Or(&result, src0, src1); break;
+    case OP_XOR: success = ScriptVariant_Xor(&result, src0, src1); break;
+    case OP_BIT_AND: success = ScriptVariant_Bit_And(&result, src0, src1); break;
+    case OP_EQ: success = ScriptVariant_Eq(&result, src0, src1); break;
+    case OP_NE: success = ScriptVariant_Ne(&result, src0, src1); break;
+    case OP_LT: success = ScriptVariant_Lt(&result, src0, src1); break;
+    case OP_GT: success = ScriptVariant_Gt(&result, src0, src1); break;
+    case OP_GE: success = ScriptVariant_Ge(&result, src0, src1); break;
+    case OP_LE: success = ScriptVariant_Le(&result, src0, src1); break;
+    case OP_SHL: success = ScriptVariant_Shl(&result, src0, src1); break;
+    case OP_SHR: success = ScriptVariant_Shr(&result, src0, src1); break;
+    case OP_ADD: success = ScriptVariant_AddFolding(&result, src0, src1); break;
+    case OP_SUB: success = ScriptVariant_Sub(&result, src0, src1); break;
+    case OP_MUL: success = ScriptVariant_Mul(&result, src0, src1); break;
+    case OP_DIV: success = ScriptVariant_Div(&result, src0, src1); break;
+    case OP_MOD: success = ScriptVariant_Mod(&result, src0, src1); break;
+    default: success = E_FAIL;
     }
-    if (result && result->vt != VT_EMPTY)
+
+    if (SUCCEEDED(success))
     {
-        return builder->addConstant(*result);
+        return builder->addConstant(result);
     }
     return NULL;
 }
