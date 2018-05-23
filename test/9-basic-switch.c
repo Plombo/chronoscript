@@ -1,3 +1,5 @@
+#include "test/expect.h"
+
 // basic switch, no default, no break at end
 void basicSwitch(int param)
 {
@@ -13,3 +15,14 @@ void basicSwitch(int param)
     }
     return var;
 }
+
+void main()
+{
+    expect(basicSwitch(0), "zero");
+    expect(basicSwitch(1), "one or two");
+    expect(basicSwitch(2), "one or two");
+    expect(basicSwitch(3), "three");
+    expect(basicSwitch(4), "unknown");
+    expect(basicSwitch(""), "unknown");
+}
+
