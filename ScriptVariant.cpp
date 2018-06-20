@@ -471,19 +471,16 @@ inline HRESULT ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVaria
                                         int (*stringPopFunc)(int))
 {
     double dbl1, dbl2;
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+    if (svar->vt == VT_INTEGER || rightChild->vt == VT_INTEGER)
+    {
+        retvar->lVal = svar->lVal + rightChild->lVal;
+        retvar->vt = VT_INTEGER;
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
-        if (svar->vt == VT_DECIMAL || rightChild->vt == VT_DECIMAL)
-        {
-            retvar->dblVal = dbl1 + dbl2;
-            retvar->vt = VT_DECIMAL;
-        }
-        else
-        {
-            retvar->lVal = (int32_t)(dbl1 + dbl2);
-            retvar->vt = VT_INTEGER;
-        }
+        retvar->dblVal = dbl1 + dbl2;
+        retvar->vt = VT_DECIMAL;
     }
     else if (svar->vt == VT_STR || rightChild->vt == VT_STR)
     {
