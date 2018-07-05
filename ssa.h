@@ -328,6 +328,7 @@ class BasicBlock
 public:
     int id;
     bool isSealed;
+    bool hasAssignment; // an assignment is done in this basic block (so it is not empty)
     List<BasicBlock*> preds; // predecessors
     List<Phi*> incompletePhis;
     
@@ -350,13 +351,13 @@ public:
     int startIndex;
 
     inline BasicBlock(int id)
-       : id(id), isSealed(false), start(NULL), end(NULL),
-         loop(NULL), startIndex(-1)
+       : id(id), isSealed(false), hasAssignment(false), start(NULL),
+         end(NULL), loop(NULL), startIndex(-1)
     {}
 
     void addPred(BasicBlock *newPred);
     bool endsWithJump(); // returns true if this block ends with an unconditional jump
-    inline bool isEmpty() { return start->next == end; }
+    inline bool isEmpty() { return start->next == end && !hasAssignment; }
     void printName();
     void print();
 

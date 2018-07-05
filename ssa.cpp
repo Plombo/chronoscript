@@ -83,6 +83,7 @@ void SSABuilder::writeVariable(const char *variable, BasicBlock *block, RValue *
         currentDef.gotoLast();
         currentDef.insertAfter(value, ident);
     }
+    block->hasAssignment = true;
 }
 
 RValue *SSABuilder::readVariable(const char *variable, BasicBlock *block)
