@@ -16,7 +16,8 @@ public:
     ScriptObject();
     ~ScriptObject();
 
-    ScriptVariant get(const char *key);
+    // returns true on success, false on error
+    bool get(ScriptVariant *dst, const char *key);
 
     // don't call this directly; use ObjectHeap_SetObjectMember() instead
     void set(const char *key, ScriptVariant value);

@@ -37,16 +37,16 @@ void ScriptObject::set(const char *key, ScriptVariant value)
     }
 }
 
-ScriptVariant ScriptObject::get(const char *key)
+bool ScriptObject::get(ScriptVariant *dst, const char *key)
 {
     if (map.findByName(key))
     {
-        return map.retrieve();
+        *dst = map.retrieve();
+        return true;
     }
     else
     {
-        ScriptVariant retvar = {{.ptrVal = NULL}, VT_EMPTY};
-        return retvar;
+        return false;
     }
 }
 
