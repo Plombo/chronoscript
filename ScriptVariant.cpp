@@ -471,7 +471,7 @@ inline HRESULT ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVaria
                                         int (*stringPopFunc)(int))
 {
     double dbl1, dbl2;
-    if (svar->vt == VT_INTEGER || rightChild->vt == VT_INTEGER)
+    if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
         retvar->lVal = svar->lVal + rightChild->lVal;
         retvar->vt = VT_INTEGER;
