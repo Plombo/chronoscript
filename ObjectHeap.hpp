@@ -21,7 +21,7 @@ int ObjectHeap_CreateNewObject();
 int ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);
 ScriptObject *ObjectHeap_Get(int index);
-void ObjectHeap_SetObjectMember(int index, const char *key, ScriptVariant *value);
+void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value);
 void ObjectHeap_ListUnfreed();
 
 // turn a white or black object gray (for garbage collection)

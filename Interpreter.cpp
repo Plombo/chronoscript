@@ -65,7 +65,6 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
         bool jumped = false;
         ScriptVariant *dst, *src0, *src1, *src2, *paramTemp;
         ScriptVariant scratch;
-        ScriptObject *object;
         bool shouldBranch;
         switch(inst->opCode)
         {
@@ -205,24 +204,21 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
                 fetchSrc(src2, inst->src2);
-                if (src0->vt != VT_OBJECT || src1->vt != VT_STR)
+                if (FAILED(ScriptVariant_ContainerSet(dst, src0, src1, src2)))
                 {
-                    printf("error: invalid parameters for SET instruction\n");
+                    printf("error: SET operation failed\n");
                     goto start_backtrace;
                 }
-                ObjectHeap_SetObjectMember(src0->objVal, StrCache_Get(src1->strVal), src2);
                 break;
             case OP_GET:
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
-                if (src0->vt != VT_OBJECT || src1->vt != VT_STR)
+                if (FAILED(ScriptVariant_ContainerGet(dst, src0, src1)))
                 {
-                    printf("error: invalid parameters for GET instruction\n");
+                    printf("error: GET operation failed\n");
                     goto start_backtrace;
                 }
-                object = ObjectHeap_Get(src0->objVal);
-                *dst = object->get(StrCache_Get(src1->strVal));
                 break;
 
             // write to global variable

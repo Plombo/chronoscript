@@ -55,7 +55,7 @@ bool ScriptVariant_IsTrue(const ScriptVariant *svar);
 bool ScriptVariant_IsEqual(const ScriptVariant *svar, const ScriptVariant *rightChild);
 int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsize);
 
-ScriptVariant *ScriptVariant_Ref(ScriptVariant *var);
+ScriptVariant *ScriptVariant_Ref(const ScriptVariant *var);
 void ScriptVariant_Unref(ScriptVariant *var);
 
 HRESULT ScriptVariant_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
@@ -83,6 +83,9 @@ HRESULT ScriptVariant_Neg(ScriptVariant *dst, const ScriptVariant *svar);
 HRESULT ScriptVariant_Boolean_Not(ScriptVariant *dst, const ScriptVariant *svar);
 HRESULT ScriptVariant_Bit_Not(ScriptVariant *dst, const ScriptVariant *svar);
 HRESULT ScriptVariant_ToBoolean(ScriptVariant *dst, const ScriptVariant *svar);
+
+HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key);
+HRESULT ScriptVariant_ContainerSet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value);
 
 #ifdef __cplusplus
 };

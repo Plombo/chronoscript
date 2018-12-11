@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "ScriptObject.h"
 #include "ObjectHeap.hpp"
+#include "ScriptList.hpp" // FIXME ScriptList is not implemented yet; this is just a test
 
 #define __reallocto(p, t, n, s) \
     p = (t)realloc((p), sizeof(*(p))*(s));\
@@ -372,7 +373,7 @@ ScriptObject *ObjectHeap_Get(int index)
     return (index < 0) ? temporaryHeap.get(~index) : persistentHeap.get(index);
 }
 
-void ObjectHeap_SetObjectMember(int index, const char *key, ScriptVariant *value)
+void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value)
 {
     ScriptObject *obj = ObjectHeap_Get(index);
 

@@ -23,7 +23,7 @@ void ScriptVariant_Init(ScriptVariant *var)
 }
 
 // makes persistent version of variant if needed, and returns it
-ScriptVariant *ScriptVariant_Ref(ScriptVariant *var)
+ScriptVariant *ScriptVariant_Ref(const ScriptVariant *var)
 {
     static ScriptVariant retval;
 
@@ -725,7 +725,54 @@ HRESULT ScriptVariant_ToBoolean(ScriptVariant *retvar, const ScriptVariant *svar
     return S_OK;
 }
 
+HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key)
+{
+    if (container->vt == VT_OBJECT)
+    {
+        if (key->vt == VT_STR)
+        {
+            ScriptObject *object = ObjectHeap_Get(container->objVal);
+            *dst = object->get(StrCache_Get(key->strVal));
+            return S_OK;
+        }
+        else
+        {
+            // TODO: include the invalid key in the error message
+            printf("error: object key must be a string\n");
+            return E_FAIL;
+        }
+    }
+    else
+    {
+        // TODO: include the invalid container in the error message
+        printf("error: cannot fetch a member from a non-container\n");
+        return E_FAIL;
+    }
+}
 
+HRESULT ScriptVariant_ContainerSet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value)
+{
+    if (container->vt == VT_OBJECT)
+    {
+        if (key->vt == VT_STR)
+        {
+            ObjectHeap_SetObjectMember(container->objVal, StrCache_Get(key->strVal), value);
+            return S_OK;
+        }
+        else
+        {
+            // TODO: include the invalid key in the error message
+            printf("error: object key must be a string\n");
+            return E_FAIL;
+        }
+    }
+    else
+    {
+        // TODO: include the invalid container in the error message
+        printf("error: cannot set a member of a non-container\n");
+        return E_FAIL;
+    }
+}
 
 
 
