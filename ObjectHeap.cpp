@@ -526,6 +526,27 @@ void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant
     list->set(indexInList, *value);
 }
 
+bool ObjectHeap_InsertInList(int index, size_t indexInList, const ScriptVariant *value)
+{
+    ScriptList *list = ObjectHeap_GetList(index);
+
+    // assigning an object (any kind) as a member of a persistent object
+    if (index >= 0 && (value->vt == VT_OBJECT || value->vt == VT_LIST))
+    {
+        // this will make the value persistent if it isn't already
+        value = ScriptVariant_Ref(value);
+
+        // a black object can't contain a white value, so make the white value gray
+        if (persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
+            persistentHeap.getGCColor(value->objVal) == GC_COLOR_WHITE)
+        {
+            persistentHeap.pushGray(value->objVal);
+        }
+    }
+
+    return list->insert(indexInList, *value);
+}
+
 void ObjectHeap_ListUnfreed()
 {
     persistentHeap.listUnfreed();

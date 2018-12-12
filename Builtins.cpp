@@ -40,6 +40,63 @@ HRESULT builtin_log(int numParams, ScriptVariant *params, ScriptVariant *retval)
     return S_OK;
 }
 
+// list_append(list, value)
+// adds the given value to the end of the list
+HRESULT builtin_list_append(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 2)
+    {
+        printf("Error: list_append(list, value) requires exactly 2 parameters\n");
+        return E_FAIL;
+    }
+    else if (params[0].vt != VT_LIST)
+    {
+        printf("Error: list_append: first parameter must be a list\n");
+        return E_FAIL;
+    }
+
+    if (!ObjectHeap_InsertInList(params[0].objVal, ObjectHeap_GetList(params[0].objVal)->size(), &params[1]))
+    {
+        printf("Error: list_append failed\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+// list_insert(list, position, value)
+// inserts the given value in the list at the given position
+HRESULT builtin_list_insert(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 3)
+    {
+        printf("Error: list_insert(list, position, value) requires exactly 3 parameters\n");
+        return E_FAIL;
+    }
+    else if (params[0].vt != VT_LIST)
+    {
+        printf("Error: list_insert: first parameter must be a list\n");
+        return E_FAIL;
+    }
+    else if (params[1].vt != VT_INTEGER)
+    {
+        printf("Error: list_insert: second parameter must be an integer\n");
+        return E_FAIL;
+    }
+    else if (params[1].lVal < 0)
+    {
+        printf("Error: list_insert: position cannot be negative\n");
+    }
+
+    if (!ObjectHeap_InsertInList(params[0].objVal, params[1].lVal, &params[2]))
+    {
+        printf("Error: list_insert failed\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 // get_global_variant(name)
 // returns global variant with the given name, or fails if no such variant exists
 HRESULT builtin_get_global_variant(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -111,6 +168,8 @@ struct Builtin {
 // define each builtin IN ALPHABETICAL ORDER or binary search won't work
 static Builtin builtinsArray[] = {
     DEF_BUILTIN(get_global_variant),
+    DEF_BUILTIN(list_append),
+    DEF_BUILTIN(list_insert),
     DEF_BUILTIN(log),
     DEF_BUILTIN(set_global_variant),
 };

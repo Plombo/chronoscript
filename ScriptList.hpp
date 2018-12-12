@@ -7,6 +7,7 @@
 class ScriptList {
     friend class ObjectHeap;
     friend void ObjectHeap_SetListMember(int, size_t, const ScriptVariant *);
+    friend bool ObjectHeap_InsertInList(int, size_t, const ScriptVariant *);
 
 private:
     ArrayList<ScriptVariant> storage;
@@ -49,6 +50,17 @@ private:
 
         ScriptVariant_Unref(storage.getPtr(index));
         storage.set(index, value);
+        return true;
+    }
+
+    // don't call this directly; use ObjectHeap_InsertInList() instead
+    inline bool insert(size_t index, const ScriptVariant &value)
+    {
+        // note that index can be equal to size
+        if (index > storage.size())
+            return false;
+
+        storage.insert(index, value);
         return true;
     }
 };
