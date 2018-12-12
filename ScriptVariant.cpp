@@ -32,10 +32,10 @@ ScriptVariant *ScriptVariant_Ref(const ScriptVariant *var)
         retval.strVal = StrCache_Ref(var->strVal);
         retval.vt = VT_STR;
     }
-    else if (var->vt == VT_OBJECT)
+    else if (var->vt == VT_OBJECT || var->vt == VT_LIST)
     {
         retval.objVal = ObjectHeap_Ref(var->objVal);
-        retval.vt = VT_OBJECT;
+        retval.vt = var->vt;
     }
     else
     {
@@ -51,7 +51,7 @@ void ScriptVariant_Unref(ScriptVariant *var)
     {
         StrCache_Unref(var->strVal);
     }
-    else if (var->vt == VT_OBJECT)
+    else if (var->vt == VT_OBJECT || var->vt == VT_LIST)
     {
         ObjectHeap_Unref(var->objVal);
     }
@@ -175,7 +175,9 @@ int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsi
     case VT_STR:
         return snprintf(buffer, bufsize, "%s", StrCache_Get(svar->strVal));
     case VT_OBJECT:
-        return ObjectHeap_Get(svar->objVal)->toString(buffer, bufsize);
+        return ObjectHeap_GetObject(svar->objVal)->toString(buffer, bufsize);
+    case VT_LIST:
+        return ObjectHeap_GetList(svar->objVal)->toString(buffer, bufsize);
     default:
         return snprintf(buffer, bufsize, "<Unprintable VARIANT type.>");
     }
@@ -731,7 +733,7 @@ HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *cont
     {
         if (key->vt == VT_STR)
         {
-            ScriptObject *object = ObjectHeap_Get(container->objVal);
+            ScriptObject *object = ObjectHeap_GetObject(container->objVal);
             if (!object->get(dst, StrCache_Get(key->strVal)))
             {
                 printf("error: object has no member named %s\n", StrCache_Get(key->strVal));
@@ -745,6 +747,26 @@ HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *cont
             printf("error: object key must be a string\n");
             return E_FAIL;
         }
+    }
+    else if (container->vt == VT_LIST)
+    {
+        if (key->vt != VT_INTEGER)
+        {
+            printf("error: list index must be an integer\n");
+            return E_FAIL;
+        }
+        if (key->lVal < 0)
+        {
+            printf("error: list index cannot be negative\n");
+            return E_FAIL;
+        }
+        ScriptList *list = ObjectHeap_GetList(container->objVal);
+        if (!list->get(dst, (size_t)key->lVal))
+        {
+            printf("error: list index %i is out of bounds\n", key->lVal);
+            return E_FAIL;
+        }
+        return S_OK;
     }
     else
     {
@@ -769,6 +791,21 @@ HRESULT ScriptVariant_ContainerSet(ScriptVariant *dst, const ScriptVariant *cont
             printf("error: object key must be a string\n");
             return E_FAIL;
         }
+    }
+    else if (container->vt == VT_LIST)
+    {
+        if (key->vt != VT_INTEGER)
+        {
+            printf("error: list index must be an integer\n");
+            return E_FAIL;
+        }
+        if (key->lVal < 0)
+        {
+            printf("error: list index cannot be negative\n");
+            return E_FAIL;
+        }
+        ObjectHeap_SetListMember(container->objVal, (size_t)key->lVal, value);
+        return S_OK;
     }
     else
     {

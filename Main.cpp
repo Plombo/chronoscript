@@ -26,7 +26,7 @@ void doTest(const char *filename)
         if (retval.vt == VT_OBJECT)
         {
             printf("Returned value: ");
-            ObjectHeap_Get(retval.objVal)->print();
+            ObjectHeap_GetObject(retval.objVal)->print();
             printf("\n");
         }
         else

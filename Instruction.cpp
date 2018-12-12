@@ -413,6 +413,7 @@ const char *getOpCodeName(OpCode op)
         "call_builtin",
 
         "mkobject",
+        "mklist",
         "get",
         "set",
 

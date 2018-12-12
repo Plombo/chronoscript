@@ -2,6 +2,7 @@
 #define OBJECT_HEAP_HPP
 
 #include "ScriptObject.h"
+#include "ScriptList.hpp"
 #include "Stack.h"
 #include "List.h"
 #include "ScriptVariant.h"
@@ -18,10 +19,13 @@
 void ObjectHeap_ClearTemporary();
 void ObjectHeap_ClearAll();
 int ObjectHeap_CreateNewObject();
+int ObjectHeap_CreateNewList(size_t initialSize);
 int ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);
-ScriptObject *ObjectHeap_Get(int index);
+ScriptObject *ObjectHeap_GetObject(int index);
+ScriptList *ObjectHeap_GetList(int index);
 void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value);
+void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant *value);
 void ObjectHeap_ListUnfreed();
 
 // turn a white or black object gray (for garbage collection)

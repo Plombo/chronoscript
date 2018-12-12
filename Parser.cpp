@@ -1900,6 +1900,10 @@ RValue *Parser::primaryExpr()
     {
         return object();
     }
+    else if (parserSet.first(Productions::list_initializer, theNextToken.theType))
+    {
+        return list();
+    }
     else if (parserSet.first(Productions::constant, theNextToken.theType))
     {
         return constant();
@@ -1948,6 +1952,33 @@ RValue *Parser::object()
 
     checkAndMatchOrErrorReturn(TOKEN_RCURLY, object, bldUtil->undef());
     return object;
+}
+
+RValue *Parser::list()
+{
+    int32_t numElements = 0;
+    match(); // TOKEN_LBRACKET
+
+    RValue *list = bldUtil->mkList();
+
+    // Let's implement the list production iteratively, not recursively, to avoid stack overflow
+    while (parserSet.first(Productions::expr, theNextToken.theType))
+    {
+        RValue *value = assignmentExpr();
+        bldUtil->mkSet(list, bldUtil->mkConstInt(numElements), value);
+        ++numElements;
+        if (check(TOKEN_COMMA))
+        {
+            match();
+        }
+        else break;
+    }
+
+    // the initial number of elements in the list is the parameter to the MKLIST instruction
+    list->asTemporary()->expr->setSrc(0, bldUtil->mkConstInt(numElements));
+
+    checkAndMatchOrErrorReturn(TOKEN_RBRACKET, list_initializer, bldUtil->undef());
+    return list;
 }
 
 RValue *Parser::constant()

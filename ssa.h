@@ -56,8 +56,9 @@ enum OpCode
     OP_CALL,
     OP_CALL_BUILTIN,
 
-    // object operations
+    // object/list operations
     OP_MKOBJECT,
+    OP_MKLIST,
     OP_GET,
     OP_SET,
 
@@ -489,6 +490,7 @@ public:
     RValue *mkBool(RValue *src);
     RValue *mkMove(RValue *val);
     RValue *mkObject();
+    RValue *mkList();
     RValue *mkGet(RValue *object, RValue *key);
     Instruction *mkSet(RValue *object, RValue *key, RValue *value);
     Export *mkExport(GlobalVarRef *dst, RValue *src);

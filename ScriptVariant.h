@@ -26,7 +26,8 @@ typedef enum VariantType
     VT_DECIMAL  = 2,    //double
     VT_PTR      = 5,    //void*
     VT_STR      = 6,    //char*
-    VT_OBJECT   = 7,    //ScriptObject*
+    VT_OBJECT   = 7,    //ScriptObject
+    VT_LIST     = 8,    //ScriptList
 } VARTYPE;
 
 #pragma pack(push, 4) // make this structure 12 bytes and not 16 on 64-bit architectures

@@ -26,7 +26,11 @@ class HeapMember {
 public:
     union {
         struct {
-            ScriptObject *obj;
+            union {
+                ScriptObject *obj;
+                ScriptList *list;
+            };
+            bool isList;
             int refcount;
             int gcColor;
         } object;
@@ -47,6 +51,8 @@ private:
     int top; // top of free_indices stack, equal to (# of free positions - 1)
     int *free_indices; // stack of indices of free objects
 
+    int pop();
+
 public:
     ObjectHeap();
 
@@ -57,7 +63,10 @@ public:
     void clear();
 
     // create a new object with refcount 1 and return its index
-    int pop();
+    int popObject();
+
+    // create a new list with refcount 1 and return its index
+    int popList(size_t initialSize);
 
     // increments the reference count for an object
     void ref(int index);
@@ -65,8 +74,15 @@ public:
     // decrements the reference count for an object
     void unref(int index);
 
-    // takes over an object from another heap
-    int steal(ScriptObject *obj);
+    // takes over an object or list from another heap
+    int stealObject(ScriptObject *obj);
+    int stealList(ScriptList *list);
+
+    // returns true if the given index is a list (not a link to a list)
+    inline bool isList(int index)
+    {
+        return objects[index].type == MEMBER_OBJECT && objects[index].object.isList;
+    }
 
     // returns true if the given index is a link
     inline bool isLink(int index)
@@ -85,7 +101,10 @@ public:
     void replaceWithLink(int index, int target);
 
     // get the object with this index
-    ScriptObject *get(int index);
+    ScriptObject *getObject(int index);
+
+    // get the list with this index
+    ScriptList *getList(int index);
 
     // get the garbage collection color of the object with this index
     inline int getGCColor(int index)
@@ -98,6 +117,7 @@ public:
     void pushGray(int index);
 
     // mark phase of garbage collection
+    inline void processOneGraySub(const ScriptVariant *var);
     void processOneGray();
     void markAll();
 
@@ -141,7 +161,14 @@ void ObjectHeap::clear()
         {
             if (objects[i].type == MEMBER_OBJECT)
             {
-                delete objects[i].object.obj;
+                if (objects[i].object.isList)
+                {
+                    delete objects[i].object.list;
+                }
+                else
+                {
+                    delete objects[i].object.obj;
+                }
             }
         }
         free(objects);
@@ -183,10 +210,25 @@ int ObjectHeap::pop()
     i = free_indices[top--];
     assert(objects[i].type == MEMBER_FREE);
     objects[i].type = MEMBER_OBJECT;
-    objects[i].object.obj = new ScriptObject;
     objects[i].object.refcount = 1;
     objects[i].object.gcColor = GC_COLOR_WHITE;
     return i;
+}
+
+int ObjectHeap::popObject()
+{
+    int index = pop();
+    objects[index].object.obj = new ScriptObject;
+    objects[index].object.isList = false;
+    return index;
+}
+
+int ObjectHeap::popList(size_t initialSize)
+{
+    int index = pop();
+    objects[index].object.list = new ScriptList(initialSize);
+    objects[index].object.isList = true;
+    return index;
 }
 
 void ObjectHeap::ref(int index)
@@ -212,27 +254,51 @@ void ObjectHeap::unref(int index)
     }
 }
 
-ScriptObject *ObjectHeap::get(int index)
+ScriptObject *ObjectHeap::getObject(int index)
 {
     assert(index < size);
     if (objects[index].type == MEMBER_OBJECT)
     {
+        assert(!objects[index].object.isList);
         return objects[index].object.obj;
     }
     else
     {
         assert(objects[index].type == MEMBER_LINK);
-        return ObjectHeap_Get(objects[index].link.target);
+        return ObjectHeap_GetObject(objects[index].link.target);
+    }
+}
+
+ScriptList *ObjectHeap::getList(int index)
+{
+    assert(index < size);
+    if (objects[index].type == MEMBER_OBJECT)
+    {
+        assert(objects[index].object.isList);
+        return objects[index].object.list;
+    }
+    else
+    {
+        assert(objects[index].type == MEMBER_LINK);
+        return ObjectHeap_GetList(objects[index].link.target);
     }
 }
 
 // takes over an object from another heap
-int ObjectHeap::steal(ScriptObject *obj)
+int ObjectHeap::stealObject(ScriptObject *obj)
 {
     int index = pop();
-    assert(objects[index].type == MEMBER_OBJECT);
-    delete objects[index].object.obj;
     objects[index].object.obj = obj;
+    objects[index].object.isList = false;
+    return index;
+}
+
+// takes over a list from another heap
+int ObjectHeap::stealList(ScriptList *list)
+{
+    int index = pop();
+    objects[index].object.list = list;
+    objects[index].object.isList = true;
     return index;
 }
 
@@ -252,23 +318,40 @@ void ObjectHeap::pushGray(int index)
     grayStack.push(index);
 }
 
+inline void ObjectHeap::processOneGraySub(const ScriptVariant *var)
+{
+    if (var->vt == VT_OBJECT || var->vt == VT_LIST)
+    {
+        int subIndex = var->objVal;
+        if (objects[subIndex].object.gcColor == GC_COLOR_WHITE)
+        {
+            pushGray(subIndex);
+        }
+    }
+}
+
 // process one item from the gray stack
 void ObjectHeap::processOneGray()
 {
     int index = grayStack.top();
     grayStack.pop();
     assert(objects[index].type == MEMBER_OBJECT);
-    ScriptObject *obj = objects[index].object.obj;
-    foreach_list(obj->map, ScriptVariant, iter)
+    if (objects[index].object.isList)
     {
-        ScriptVariant *var = iter.valuePtr();
-        if (var->vt == VT_OBJECT)
+        ScriptList *list = objects[index].object.list;
+        for (size_t i = 0; i < list->size(); i++)
         {
-            int subIndex = var->objVal;
-            if (objects[subIndex].object.gcColor == GC_COLOR_WHITE)
-            {
-                pushGray(subIndex);
-            }
+            ScriptVariant var;
+            list->get(&var, i);
+            processOneGraySub(&var);
+        }
+    }
+    else
+    {
+        ScriptObject *obj = objects[index].object.obj;
+        foreach_list(obj->map, ScriptVariant, iter)
+        {
+            processOneGraySub(iter.valuePtr());
         }
     }
     objects[index].object.gcColor = GC_COLOR_BLACK;
@@ -294,7 +377,10 @@ void ObjectHeap::sweep()
         {
             //printf("delete object %i (gc)\n", i);
             objects[i].type = MEMBER_FREE;
-            delete objects[i].object.obj;
+            if (objects[i].object.isList)
+                delete objects[i].object.list;
+            else
+                delete objects[i].object.obj;
             free_indices[++top] = i;
         }
     }
@@ -309,7 +395,10 @@ void ObjectHeap::listUnfreed()
     {
         if (objects[i].type == MEMBER_OBJECT)
         {
-            objects[i].object.obj->toString(buf, sizeof(buf));
+            if (objects[i].object.isList)
+                objects[i].object.list->toString(buf, sizeof(buf));
+            else
+                objects[i].object.obj->toString(buf, sizeof(buf));
             printf("Unfreed object %i: %s\n", i, buf);
         }
     }
@@ -334,7 +423,13 @@ void ObjectHeap_ClearAll()
 // returns global index of newly created object (non-persistent)
 int ObjectHeap_CreateNewObject()
 {
-    return ~temporaryHeap.pop(); 
+    return ~temporaryHeap.popObject(); 
+}
+
+// returns global index of newly created list (non-persistent)
+int ObjectHeap_CreateNewList(size_t initialSize)
+{
+    return ~temporaryHeap.popList(initialSize); 
 }
 
 // makes temporary object persistent, or refs object if it's already persistent
@@ -353,10 +448,21 @@ int ObjectHeap_Ref(int index)
     }
     else
     {
-        ScriptObject *obj = temporaryHeap.get(~index);
-        int newIndex = persistentHeap.steal(obj);
-        temporaryHeap.replaceWithLink(~index, newIndex);
-        obj->makePersistent();
+        int newIndex;
+        if (temporaryHeap.isList(~index))
+        {
+            ScriptList *list = temporaryHeap.getList(~index);
+            newIndex = persistentHeap.stealList(list);
+            temporaryHeap.replaceWithLink(~index, newIndex);
+            list->makePersistent();
+        }
+        else
+        {
+            ScriptObject *obj = temporaryHeap.getObject(~index);
+            newIndex = persistentHeap.stealObject(obj);
+            temporaryHeap.replaceWithLink(~index, newIndex);
+            obj->makePersistent();
+        }
         //printf("made persistent: %i -> %i\n", index, newIndex);
         return newIndex;
     }
@@ -368,17 +474,22 @@ void ObjectHeap_Unref(int index)
         persistentHeap.unref(index);
 }
 
-ScriptObject *ObjectHeap_Get(int index)
+ScriptObject *ObjectHeap_GetObject(int index)
 {
-    return (index < 0) ? temporaryHeap.get(~index) : persistentHeap.get(index);
+    return (index < 0) ? temporaryHeap.getObject(~index) : persistentHeap.getObject(index);
+}
+
+ScriptList *ObjectHeap_GetList(int index)
+{
+    return (index < 0) ? temporaryHeap.getList(~index) : persistentHeap.getList(index);
 }
 
 void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value)
 {
-    ScriptObject *obj = ObjectHeap_Get(index);
+    ScriptObject *obj = ObjectHeap_GetObject(index);
 
     // assigning an object (any kind) as a member of a persistent object
-    if (index >= 0 && value->vt == VT_OBJECT) // or VT_LIST when implemented
+    if (index >= 0 && (value->vt == VT_OBJECT || value->vt == VT_LIST))
     {
         // this will make the value persistent if it isn't already
         value = ScriptVariant_Ref(value);
@@ -392,6 +503,27 @@ void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant 
     }
 
     obj->set(key, *value);
+}
+
+void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant *value)
+{
+    ScriptList *list = ObjectHeap_GetList(index);
+
+    // assigning an object (any kind) as a member of a persistent object
+    if (index >= 0 && (value->vt == VT_OBJECT || value->vt == VT_LIST))
+    {
+        // this will make the value persistent if it isn't already
+        value = ScriptVariant_Ref(value);
+
+        // a black object can't contain a white value, so make the white value gray
+        if (persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
+            persistentHeap.getGCColor(value->objVal) == GC_COLOR_WHITE)
+        {
+            persistentHeap.pushGray(value->objVal);
+        }
+    }
+
+    list->set(indexInList, *value);
 }
 
 void ObjectHeap_ListUnfreed()

@@ -109,6 +109,7 @@ private:
     void argExprList2(FunctionCall *call);
     RValue *primaryExpr();
     RValue *object();
+    RValue *list();
     RValue *constant();
 
     void handleError(PRODUCTION offender);

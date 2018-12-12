@@ -1,62 +1,38 @@
 #include <stdio.h>
-#include "List.h"
-#include "ScriptVariant.h"
-#include "StrCache.h"
-#include "ScriptObject.h"
+#include <stdlib.h>
+#include <string.h>
+#include "ScriptList.hpp"
 #include "ObjectHeap.hpp"
 
-ScriptObject::ScriptObject()
+ScriptList::ScriptList(size_t initialSize)
 {
     persistent = false;
     currentlyPrinting = false;
+
+    ScriptVariant emptyVariant = {{.ptrVal = 0}, VT_EMPTY};
+    for (size_t i = 0; i < initialSize; i++)
+    {
+        storage.push_back(emptyVariant);
+    }
 }
 
-// destructor that destroys all pointers in map
-ScriptObject::~ScriptObject()
+ScriptList::~ScriptList()
 {
-    map.gotoFirst();
-    while (map.size())
+    size_t size = storage.size(), i;
+    for (i = 0; i < size; i++)
     {
-        ScriptVariant_Unref(map.valuePtr());
-        map.remove();
+        ScriptVariant_Unref(&storage.at(i));
     }
 }
 
-// TODO make this take a const pointer to a ScriptVariant
-void ScriptObject::set(const char *key, ScriptVariant value)
-{
-    if (map.findByName(key))
-    {
-        ScriptVariant_Unref(map.valuePtr());
-        map.update(value);
-    }
-    else
-    {
-        map.gotoLast();
-        map.insertAfter(value, key);
-    }
-}
-
-bool ScriptObject::get(ScriptVariant *dst, const char *key)
-{
-    if (map.findByName(key))
-    {
-        *dst = map.retrieve();
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void ScriptObject::makePersistent()
+void ScriptList::makePersistent()
 {
     if (persistent) return;
+    size_t size = storage.size(), i;
     persistent = true; // set it up here to avoid infinite recursion in case of cycles
-    foreach_list(map, ScriptVariant, iter)
+    for (i = 0; i < size; i++)
     {
-        ScriptVariant *var = iter.valuePtr();
+        ScriptVariant *var = &storage.at(i);
         if (var->vt == VT_OBJECT || var->vt == VT_LIST)
         {
             //printf("make object %i persistent\n", var->objVal);
@@ -70,25 +46,24 @@ void ScriptObject::makePersistent()
     }
 }
 
-void ScriptObject::print()
+void ScriptList::print()
 {
     char buf[256];
     bool first = true;
 
     if (currentlyPrinting)
     {
-        printf("{(object cycle)}");
+        printf("[(list cycle)]");
         return;
     }
     currentlyPrinting = true;
 
-    printf("{");
-    foreach_list(map, ScriptVariant, iter)
+    printf("[");
+    for (size_t i = 0; i < storage.size(); i++)
     {
         if (!first) printf(", ");
         first = false;
-        printf("\"%s\": ", iter.name());
-        ScriptVariant *var = iter.valuePtr();
+        ScriptVariant *var = &storage.at(i);
         if (var->vt == VT_OBJECT) ObjectHeap_GetObject(var->objVal)->print();
         else if (var->vt == VT_LIST) ObjectHeap_GetList(var->objVal)->print();
         else
@@ -97,11 +72,11 @@ void ScriptObject::print()
             printf("%s", buf);
         }
     }
-    printf("}");
+    printf("]");
     currentlyPrinting = false;
 }
 
-int ScriptObject::toString(char *dst, int dstsize)
+int ScriptList::toString(char *dst, int dstsize)
 {
 #define SNPRINTF(...) { int n = snprintf(dst, dstsize, __VA_ARGS__); dst += n; length += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
     char buf[256];
@@ -110,22 +85,20 @@ int ScriptObject::toString(char *dst, int dstsize)
 
     if (currentlyPrinting)
     {
-        SNPRINTF("{(object cycle)}");
+        SNPRINTF("[(list cycle)]");
         return length;
     }
     currentlyPrinting = true;
 
-    SNPRINTF("{");
-    foreach_list(map, ScriptVariant, iter)
+    SNPRINTF("[");
+    for (size_t i = 0; i < storage.size(); i++)
     {
         if (!first) SNPRINTF(", ");
         first = false;
-        SNPRINTF("\"%s\": ", iter.name());
-        ScriptVariant *var = iter.valuePtr();
-        ScriptVariant_ToString(var, buf, sizeof(buf));
+        ScriptVariant_ToString(&storage.at(i), buf, sizeof(buf));
         SNPRINTF("%s", buf);
     }
-    SNPRINTF("}");
+    SNPRINTF("]");
     currentlyPrinting = false;
     return length;
 #undef SNPRINTF

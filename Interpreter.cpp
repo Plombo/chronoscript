@@ -194,11 +194,17 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 break;
             }
 
-            // operations to create/modify/access objects
+            // operations to create/modify/access objects and lists
             case OP_MKOBJECT:
                 fetchDst();
                 dst->vt = VT_OBJECT;
                 dst->objVal = ObjectHeap_CreateNewObject();
+                break;
+            case OP_MKLIST:
+                fetchDst();
+                fetchSrc(src0, inst->src0);
+                dst->vt = VT_LIST;
+                dst->objVal = ObjectHeap_CreateNewList((size_t)src0->lVal);
                 break;
             case OP_SET:
                 fetchSrc(src0, inst->src0);

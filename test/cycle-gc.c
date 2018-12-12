@@ -5,7 +5,7 @@
 void makeCycle()
 {
     void obj1 = {};
-    void obj2 = {"ref2": obj1};
+    void obj2 = [obj1];
     void obj3 = {"ref3": obj2};
     obj1.ref1 = obj3;
     return obj1;

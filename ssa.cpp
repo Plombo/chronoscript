@@ -597,6 +597,13 @@ RValue *SSABuildUtil::mkObject()
     return inst->value();
 }
 
+RValue *SSABuildUtil::mkList()
+{
+    Expression *inst = new(builder->memCtx) Expression(OP_MKLIST, builder->valueId(), mkConstInt(0));
+    builder->insertInstruction(inst, currentBlock);
+    return inst->value();
+}
+
 RValue *SSABuildUtil::mkGet(RValue *object, RValue *key)
 {
     RValue *value = mkBinaryOp(OP_GET, object, key);
