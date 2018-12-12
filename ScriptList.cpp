@@ -4,24 +4,12 @@
 #include "ScriptList.hpp"
 #include "ObjectHeap.hpp"
 
-ScriptList::ScriptList(size_t initialSize)
-{
-    persistent = false;
-    currentlyPrinting = false;
-
-    ScriptVariant emptyVariant = {{.ptrVal = 0}, VT_EMPTY};
-    for (size_t i = 0; i < initialSize; i++)
-    {
-        storage.push_back(emptyVariant);
-    }
-}
-
 ScriptList::~ScriptList()
 {
     size_t size = storage.size(), i;
     for (i = 0; i < size; i++)
     {
-        ScriptVariant_Unref(&storage.at(i));
+        ScriptVariant_Unref(storage.getPtr(i));
     }
 }
 
@@ -32,7 +20,7 @@ void ScriptList::makePersistent()
     persistent = true; // set it up here to avoid infinite recursion in case of cycles
     for (i = 0; i < size; i++)
     {
-        ScriptVariant *var = &storage.at(i);
+        ScriptVariant *var = storage.getPtr(i);
         if (var->vt == VT_OBJECT || var->vt == VT_LIST)
         {
             //printf("make object %i persistent\n", var->objVal);
@@ -63,7 +51,7 @@ void ScriptList::print()
     {
         if (!first) printf(", ");
         first = false;
-        ScriptVariant *var = &storage.at(i);
+        ScriptVariant *var = storage.getPtr(i);
         if (var->vt == VT_OBJECT) ObjectHeap_GetObject(var->objVal)->print();
         else if (var->vt == VT_LIST) ObjectHeap_GetList(var->objVal)->print();
         else
@@ -95,7 +83,7 @@ int ScriptList::toString(char *dst, int dstsize)
     {
         if (!first) SNPRINTF(", ");
         first = false;
-        ScriptVariant_ToString(&storage.at(i), buf, sizeof(buf));
+        ScriptVariant_ToString(storage.getPtr(i), buf, sizeof(buf));
         SNPRINTF("%s", buf);
     }
     SNPRINTF("]");

@@ -2,18 +2,23 @@
 #define SCRIPT_LIST_HPP
 
 #include "ScriptVariant.hpp"
-#include <bits/stdc++.h> 
+#include "ArrayList.hpp"
 
 class ScriptList {
     friend class ObjectHeap;
 
 private:
-    std::vector<ScriptVariant> storage;
+    ArrayList<ScriptVariant> storage;
     bool persistent;
     bool currentlyPrinting;
 
 public:
-    ScriptList(size_t initialSize);
+    inline ScriptList(size_t initialSize) :
+        storage(initialSize, {{.ptrVal = 0}, VT_EMPTY}),
+        persistent(false),
+        currentlyPrinting(false)
+    {}
+
     ~ScriptList();
 
     inline bool get(ScriptVariant *dst, size_t index)
@@ -21,18 +26,18 @@ public:
         if (index >= storage.size())
             return false;
 
-        *dst = storage.at(index);
+        *dst = *storage.getPtr(index);
         return true;
     }
 
     // don't call this directly; use ObjectHeap_SetListMember() instead
-    inline bool set(size_t index, ScriptVariant value)
+    inline bool set(size_t index, const ScriptVariant &value)
     {
         if (index >= storage.size())
             return false;
 
-        ScriptVariant_Unref(&storage.at(index));
-        storage.at(index) = value;
+        ScriptVariant_Unref(storage.getPtr(index));
+        storage.set(index, value);
         return true;
     }
 
