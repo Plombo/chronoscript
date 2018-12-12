@@ -14,7 +14,7 @@ private:
     bool currentlyPrinting;
 
     // don't call this directly; use ObjectHeap_SetObjectMember() instead
-    void set(const char *key, ScriptVariant value);
+    void set(const char *key, const ScriptVariant *value);
 
 public:
     ScriptObject();

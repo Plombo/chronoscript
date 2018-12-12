@@ -502,7 +502,7 @@ void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant 
         }
     }
 
-    obj->set(key, *value);
+    obj->set(key, value);
 }
 
 void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant *value)

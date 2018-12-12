@@ -22,18 +22,17 @@ ScriptObject::~ScriptObject()
     }
 }
 
-// TODO make this take a const pointer to a ScriptVariant
-void ScriptObject::set(const char *key, ScriptVariant value)
+void ScriptObject::set(const char *key, const ScriptVariant *value)
 {
     if (map.findByName(key))
     {
         ScriptVariant_Unref(map.valuePtr());
-        map.update(value);
+        map.update(*value);
     }
     else
     {
         map.gotoLast();
-        map.insertAfter(value, key);
+        map.insertAfter(*value, key);
     }
 }
 
