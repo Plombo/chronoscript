@@ -6,11 +6,11 @@
  * Copyright (c) 2004 - 2016 OpenBOR Team
  */
 
-#ifndef IMPORTCACHE_H
-#define IMPORTCACHE_H
+#ifndef IMPORTCACHE_HPP
+#define IMPORTCACHE_HPP
 
-#include "List.h"
-#include "Interpreter.h"
+#include "List.hpp"
+#include "Interpreter.hpp"
 
 void ImportCache_Init();
 Interpreter *ImportCache_ImportFile(const char *path);

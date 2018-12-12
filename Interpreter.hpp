@@ -1,9 +1,9 @@
-#ifndef INTERPRETER_H
-#define INTERPRETER_H
+#ifndef INTERPRETER_HPP
+#define INTERPRETER_HPP
 
 #include "depends.h"
-#include "List.h"
-#include "ScriptVariant.h"
+#include "List.hpp"
+#include "ScriptVariant.hpp"
 
 enum RegFile {
     FILE_NONE,

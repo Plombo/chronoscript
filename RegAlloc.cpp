@@ -5,8 +5,8 @@
  */
 
 #include <stdlib.h>
-#include "regalloc.h"
-#include "liveness.h"
+#include "RegAlloc.hpp"
+#include "liveness.hpp"
 
 // stores interference nodes in buckets according to their weight
 class WeightBuckets {

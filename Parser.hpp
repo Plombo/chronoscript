@@ -6,14 +6,14 @@
  * Copyright (c) 2004 - 2013 OpenBOR Team
  */
 
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
 #include "depends.h"
 #include "ParserSet.h"
-#include "List.h"
+#include "List.hpp"
 #include "ssa.h"
-#include "ExecBuilder.h"
+#include "ExecBuilder.hpp"
 
 class Parser
 {
@@ -119,3 +119,4 @@ private:
 #define Parser_Error(pa, pr) pa->errorDefault(Productions::pr, #pr)
 
 #endif
+

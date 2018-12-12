@@ -19,7 +19,7 @@
 #define PP_PARSER_H
 
 #include "pp_lexer.h"
-#include "List.h"
+#include "List.hpp"
 #include "depends.h" // #include "types.h"
 
 #define MACRO_CONTENTS_SIZE		512

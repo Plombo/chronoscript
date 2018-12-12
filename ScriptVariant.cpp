@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "ScriptVariant.h"
+#include "ScriptVariant.hpp"
 #include "ObjectHeap.hpp"
 
 void ScriptVariant_Clear(ScriptVariant *var)

@@ -41,7 +41,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
-#include "List.h"
+#include "List.hpp"
 
 /* Perl's hash function */
 static uint32_t hash_func(const char *key)

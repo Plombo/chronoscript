@@ -1,7 +1,7 @@
-#ifndef REGALLOC_H
-#define REGALLOC_H
+#ifndef REGALLOC_HPP
+#define REGALLOC_HPP
 
-#include "liveness.h"
+#include "liveness.hpp"
 
 /**
  * Does register allocation by coloring an interference graph.
@@ -24,3 +24,4 @@ private:
 };
 
 #endif
+

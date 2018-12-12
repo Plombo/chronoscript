@@ -1,8 +1,8 @@
-#ifndef SCRIPT_OBJECT_H
-#define SCRIPT_OBJECT_H
+#ifndef SCRIPT_OBJECT_HPP
+#define SCRIPT_OBJECT_HPP
 
-#include "List.h"
-#include "ScriptVariant.h"
+#include "List.hpp"
+#include "ScriptVariant.hpp"
 
 class ScriptObject {
     friend class ObjectHeap;

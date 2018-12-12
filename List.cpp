@@ -1,4 +1,4 @@
-#include "List.h"
+#include "List.hpp"
 
 // adds a new item to the list before the given node
 // returns the newly created node

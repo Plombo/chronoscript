@@ -20,7 +20,7 @@ cpp_sources = [
     'Instruction',
     'Parser',
     'Main',
-    'regalloc',
+    'RegAlloc',
     'liveness',
     'RegAllocUtil',
     'ExecBuilder',

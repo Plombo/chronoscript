@@ -10,17 +10,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "Interpreter.h"
-#include "List.h"
+#include "Interpreter.hpp"
+#include "List.hpp"
 // #include "packfile.h"
-#include "ImportCache.h"
+#include "ImportCache.hpp"
 
 #include "ssa.h"
-#include "Parser.h"
-#include "liveness.h"
-#include "regalloc.h"
-#include "Builtins.h"
-#include "ExecBuilder.h"
+#include "Parser.hpp"
+#include "liveness.hpp"
+#include "RegAlloc.hpp"
+#include "Builtins.hpp"
+#include "ExecBuilder.hpp"
 #include "pp_parser.h"
 
 //#define IC_DEBUG 1

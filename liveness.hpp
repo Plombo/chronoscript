@@ -1,5 +1,5 @@
-#ifndef LIVENESS_H
-#define LIVENESS_H
+#ifndef LIVENESS_HPP
+#define LIVENESS_HPP
 
 #include "ssa.h"
 #include "ralloc.h"

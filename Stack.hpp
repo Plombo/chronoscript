@@ -6,10 +6,10 @@
  * Copyright (c) 2004 - 2014 OpenBOR Team
  */
 
-#ifndef STACK_H
-#define STACK_H
+#ifndef STACK_HPP
+#define STACK_HPP
 
-#include "List.h"
+#include "List.hpp"
 
 template <typename T>
 class Stack : public List<T>

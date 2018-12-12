@@ -20,8 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef REGALLOC_UTIL_H
-#define REGALLOC_UTIL_H
+#ifndef REGALLOC_UTIL_HPP
+#define REGALLOC_UTIL_HPP
 
 #include "globals.h"
 
@@ -195,4 +195,5 @@ void Interval::checkTail() const
 #endif
 }
 
-#endif // !defined REGALLOC_UTIL_H
+#endif // !defined REGALLOC_UTIL_HPP
+

@@ -6,14 +6,14 @@
  * Copyright (c) 2004 - 2014 OpenBOR Team
  */
 
-#ifndef SCRIPTVARIANT_H
-#define SCRIPTVARIANT_H
+#ifndef SCRIPTVARIANT_HPP
+#define SCRIPTVARIANT_HPP
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "depends.h"
-#include "StrCache.h"
+#include "StrCache.hpp"
 
 #ifdef __cplusplus
 extern "C" {

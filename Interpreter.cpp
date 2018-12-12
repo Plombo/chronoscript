@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include "Interpreter.h"
-#include "ScriptVariant.h"
-#include "ScriptObject.h"
+#include "Interpreter.hpp"
+#include "ScriptVariant.hpp"
+#include "ScriptObject.hpp"
 #include "ObjectHeap.hpp"
-#include "Builtins.h"
+#include "Builtins.hpp"
 #include "ssa.h" // for opcodes
 
 typedef HRESULT (*UnaryOperation)(ScriptVariant *dst, const ScriptVariant *src);

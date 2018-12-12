@@ -2,10 +2,10 @@
 #define SSA_H
 
 #include "ralloc.h"
-#include "List.h"
-#include "ScriptVariant.h"
-#include "SymbolTable.h"
-#include "RegAllocUtil.h"
+#include "List.hpp"
+#include "ScriptVariant.hpp"
+#include "SymbolTable.hpp"
+#include "RegAllocUtil.hpp"
 
 #ifndef __cplusplus
 #error C++ header included from C source file

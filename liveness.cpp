@@ -1,6 +1,6 @@
 // https://hal.inria.fr/inria-00558509v1/document
 #include "ssa.h"
-#include "liveness.h"
+#include "liveness.hpp"
 
 #if DEBUG_RA
 #define debug_printf(...) printf(__VA_ARGS__)

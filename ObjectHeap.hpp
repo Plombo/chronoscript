@@ -1,11 +1,11 @@
 #ifndef OBJECT_HEAP_HPP
 #define OBJECT_HEAP_HPP
 
-#include "ScriptObject.h"
+#include "ScriptObject.hpp"
 #include "ScriptList.hpp"
-#include "Stack.h"
-#include "List.h"
-#include "ScriptVariant.h"
+#include "Stack.hpp"
+#include "List.hpp"
+#include "ScriptVariant.hpp"
 
 /**
  * There are two object heaps: temporary and persistent. All objects are

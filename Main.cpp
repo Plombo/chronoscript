@@ -2,16 +2,16 @@
 #include <stdio.h>
 #include <errno.h>
 #include "pp_parser.h"
-#include "Parser.h"
-#include "List.h"
-#include "regalloc.h"
-#include "liveness.h"
-#include "ExecBuilder.h"
-#include "Builtins.h"
+#include "Parser.hpp"
+#include "List.hpp"
+#include "RegAlloc.hpp"
+#include "liveness.hpp"
+#include "ExecBuilder.hpp"
+#include "Builtins.hpp"
 
-#include "ImportCache.h"
-#include "StrCache.h"
-#include "ScriptObject.h"
+#include "ImportCache.hpp"
+#include "StrCache.hpp"
+#include "ScriptObject.hpp"
 #include "ObjectHeap.hpp"
 
 void doTest(const char *filename)

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "Builtins.h"
-#include "List.h"
+#include "Builtins.hpp"
+#include "List.hpp"
 #include "ObjectHeap.hpp"
 
 static bool builtinsInited = false;

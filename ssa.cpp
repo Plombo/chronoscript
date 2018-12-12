@@ -4,9 +4,9 @@
 #include <assert.h>
 
 #include "ssa.h"
-#include "regalloc.h"
+#include "RegAlloc.hpp"
 #include "ralloc.h"
-#include "List.h"
+#include "List.hpp"
 #include "ScriptUtils.h"
 
 void BasicBlock::addPred(BasicBlock *newPred)

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "StrCache.h"
+#include "StrCache.hpp"
 
 /*
 The string cache is intended to reduce memory usage; since not all variants are

@@ -6,12 +6,12 @@
  * Copyright (c) 2004 - 2014 OpenBOR Team
  */
 
-#ifndef SYMBOLTABLE_H
-#define SYMBOLTABLE_H
+#ifndef SYMBOLTABLE_HPP
+#define SYMBOLTABLE_HPP
 
-#include "ScriptVariant.h"
-#include "List.h"
-#include "Stack.h"
+#include "ScriptVariant.hpp"
+#include "List.hpp"
+#include "Stack.hpp"
 
 struct Symbol
 {

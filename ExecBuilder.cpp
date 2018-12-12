@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "ExecBuilder.h"
-#include "Builtins.h"
+#include "ExecBuilder.hpp"
+#include "Builtins.hpp"
 #include "ScriptUtils.h"
 
 ExecBuilder::ExecBuilder(const char *filename)

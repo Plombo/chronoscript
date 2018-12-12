@@ -1,7 +1,7 @@
 #ifndef SCRIPT_LIST_HPP
 #define SCRIPT_LIST_HPP
 
-#include "ScriptVariant.h"
+#include "ScriptVariant.hpp"
 #include <bits/stdc++.h> 
 
 class ScriptList {

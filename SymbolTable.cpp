@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "SymbolTable.h"
+#include "SymbolTable.hpp"
 
 
 void Symbol_Init(Symbol *symbol, const char *theName, ScriptVariant *pvar)

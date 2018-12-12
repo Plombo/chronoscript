@@ -6,7 +6,7 @@
  * Copyright (c) 2004 - 2013 OpenBOR Team
  */
 
-#include "Parser.h"
+#include "Parser.hpp"
 
 #define errorWithMessage(pr, ...) {                  \
     pp_error(&(theLexer.preprocessor), __VA_ARGS__); \

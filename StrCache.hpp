@@ -1,5 +1,5 @@
-#ifndef STRCACHE_H
-#define STRCACHE_H
+#ifndef STRCACHE_HPP
+#define STRCACHE_HPP
 
 #ifdef __cplusplus
 extern "C" {

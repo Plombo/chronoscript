@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ScriptObject.h"
+#include "ScriptObject.hpp"
 #include "ObjectHeap.hpp"
-#include "ScriptList.hpp" // FIXME ScriptList is not implemented yet; this is just a test
+#include "ScriptList.hpp"
 
 #define __reallocto(p, t, n, s) \
     p = (t)realloc((p), sizeof(*(p))*(s));\

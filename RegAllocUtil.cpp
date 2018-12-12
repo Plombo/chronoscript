@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "RegAllocUtil.h"
+#include "RegAllocUtil.hpp"
 
 #ifdef __MINGW32__
 #define ffs __builtin_ffs

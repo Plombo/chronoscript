@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "List.h"
-#include "ScriptVariant.h"
-#include "StrCache.h"
-#include "ScriptObject.h"
+#include "List.hpp"
+#include "ScriptVariant.hpp"
+#include "StrCache.hpp"
+#include "ScriptObject.hpp"
 #include "ObjectHeap.hpp"
 
 ScriptObject::ScriptObject()

@@ -1,8 +1,8 @@
-#ifndef BUILTINS_H
-#define BUILTINS_H
+#ifndef BUILTINS_HPP
+#define BUILTINS_HPP
 
 #include "depends.h"
-#include "ScriptVariant.h"
+#include "ScriptVariant.hpp"
 
 typedef HRESULT (*BuiltinScriptFunction)(int numParams, ScriptVariant *params, ScriptVariant *retval);
 
@@ -19,3 +19,4 @@ const char *getBuiltinName(int index);
 void pushGlobalVariantsToGC();
 
 #endif
+

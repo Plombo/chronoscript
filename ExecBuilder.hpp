@@ -1,7 +1,7 @@
-#ifndef EXEC_BUILDER_H
-#define EXEC_BUILDER_H
+#ifndef EXEC_BUILDER_HPP
+#define EXEC_BUILDER_HPP
 
-#include "Interpreter.h"
+#include "Interpreter.hpp"
 #include "ssa.h"
 
 // builds ExecFunction/ExecInstruction from SSA IR
@@ -17,7 +17,7 @@ public:
     void allocateExecFunctions();
     void buildExecutable();
     ExecFunction *getFunctionNamed(const char *name);
-    void printInstructions(); // XXX: move to Interpreter
+    void printInstructions();
 };
 
 class FunctionBuilder {
@@ -35,3 +35,4 @@ public:
 };
 
 #endif
+
