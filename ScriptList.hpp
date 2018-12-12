@@ -6,6 +6,7 @@
 
 class ScriptList {
     friend class ObjectHeap;
+    friend void ObjectHeap_SetListMember(int, size_t, const ScriptVariant *);
 
 private:
     ArrayList<ScriptVariant> storage;
@@ -30,6 +31,16 @@ public:
         return true;
     }
 
+    inline size_t size()
+    {
+        return storage.size();
+    }
+
+    void makePersistent(); // make all values in list persistent
+    void print();
+    int toString(char *dst, int dstsize);
+
+private:
     // don't call this directly; use ObjectHeap_SetListMember() instead
     inline bool set(size_t index, const ScriptVariant &value)
     {
@@ -40,15 +51,6 @@ public:
         storage.set(index, value);
         return true;
     }
-
-    inline size_t size()
-    {
-        return storage.size();
-    }
-
-    void makePersistent(); // make all values in list persistent
-    void print();
-    int toString(char *dst, int dstsize);
 };
 
 #endif
