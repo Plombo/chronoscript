@@ -484,18 +484,28 @@ ScriptList *ObjectHeap_GetList(int index)
     return (index < 0) ? temporaryHeap.getList(~index) : persistentHeap.getList(index);
 }
 
+static int followIfLink(int index)
+{
+    if (index < 0 && temporaryHeap.isLink(~index))
+        return temporaryHeap.getLinkTarget(~index);
+    else
+        return index;
+}
+
 void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value)
 {
+    index = followIfLink(index); // we need to know if this is object is persistent
     ScriptObject *obj = ObjectHeap_GetObject(index);
 
-    // assigning an object (any kind) as a member of a persistent object
-    if (index >= 0 && (value->vt == VT_OBJECT || value->vt == VT_LIST))
+    // assigning something as a member of a persistent object
+    if (index >= 0)
     {
         // this will make the value persistent if it isn't already
         value = ScriptVariant_Ref(value);
 
         // a black object can't contain a white value, so make the white value gray
-        if (persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
+        if ((value->vt == VT_OBJECT || value->vt == VT_LIST) &&
+            persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
             persistentHeap.getGCColor(value->objVal) == GC_COLOR_WHITE)
         {
             persistentHeap.pushGray(value->objVal);
@@ -507,16 +517,18 @@ void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant 
 
 void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant *value)
 {
+    index = followIfLink(index); // we need to know if this is object is persistent
     ScriptList *list = ObjectHeap_GetList(index);
 
-    // assigning an object (any kind) as a member of a persistent object
-    if (index >= 0 && (value->vt == VT_OBJECT || value->vt == VT_LIST))
+    // assigning something as a member of a persistent list
+    if (index >= 0)
     {
         // this will make the value persistent if it isn't already
         value = ScriptVariant_Ref(value);
 
         // a black object can't contain a white value, so make the white value gray
-        if (persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
+        if ((value->vt == VT_OBJECT || value->vt == VT_LIST) &&
+            persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
             persistentHeap.getGCColor(value->objVal) == GC_COLOR_WHITE)
         {
             persistentHeap.pushGray(value->objVal);
@@ -528,16 +540,18 @@ void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant
 
 bool ObjectHeap_InsertInList(int index, size_t indexInList, const ScriptVariant *value)
 {
+    index = followIfLink(index); // we need to know if this is object is persistent
     ScriptList *list = ObjectHeap_GetList(index);
 
-    // assigning an object (any kind) as a member of a persistent object
-    if (index >= 0 && (value->vt == VT_OBJECT || value->vt == VT_LIST))
+    // assigning something as a member of a persistent list
+    if (index >= 0)
     {
         // this will make the value persistent if it isn't already
         value = ScriptVariant_Ref(value);
 
         // a black object can't contain a white value, so make the white value gray
-        if (persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
+        if ((value->vt == VT_OBJECT || value->vt == VT_LIST) &&
+            persistentHeap.getGCColor(index) == GC_COLOR_BLACK &&
             persistentHeap.getGCColor(value->objVal) == GC_COLOR_WHITE)
         {
             persistentHeap.pushGray(value->objVal);
