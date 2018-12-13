@@ -42,7 +42,8 @@ public:
         if (index >= storage.size())
             return false;
 
-        ScriptVariant_Unref(storage.getPtr(index));
+        if (persistent)
+            ScriptVariant_Unref(storage.getPtr(index));
         storage.remove(index);
         return true;
     }
@@ -58,7 +59,8 @@ private:
         if (index >= storage.size())
             return false;
 
-        ScriptVariant_Unref(storage.getPtr(index));
+        if (persistent)
+            ScriptVariant_Unref(storage.getPtr(index));
         storage.set(index, value);
         return true;
     }

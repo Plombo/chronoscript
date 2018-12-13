@@ -6,10 +6,13 @@
 
 ScriptList::~ScriptList()
 {
-    size_t size = storage.size(), i;
-    for (i = 0; i < size; i++)
+    if (persistent)
     {
-        ScriptVariant_Unref(storage.getPtr(i));
+        size_t size = storage.size(), i;
+        for (i = 0; i < size; i++)
+        {
+            ScriptVariant_Unref(storage.getPtr(i));
+        }
     }
 }
 

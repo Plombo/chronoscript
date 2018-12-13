@@ -14,11 +14,14 @@ ScriptObject::ScriptObject()
 // destructor that destroys all pointers in map
 ScriptObject::~ScriptObject()
 {
-    map.gotoFirst();
-    while (map.size())
+    if (persistent)
     {
-        ScriptVariant_Unref(map.valuePtr());
-        map.remove();
+        map.gotoFirst();
+        while (map.size())
+        {
+            ScriptVariant_Unref(map.valuePtr());
+            map.remove();
+        }
     }
 }
 
@@ -26,7 +29,8 @@ void ScriptObject::set(const char *key, const ScriptVariant *value)
 {
     if (map.findByName(key))
     {
-        ScriptVariant_Unref(map.valuePtr());
+        if (persistent)
+            ScriptVariant_Unref(map.valuePtr());
         map.update(*value);
     }
     else
