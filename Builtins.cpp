@@ -97,6 +97,39 @@ HRESULT builtin_list_insert(int numParams, ScriptVariant *params, ScriptVariant 
     return S_OK;
 }
 
+// list_remove(list, position)
+// removes the element at the given position from the list
+HRESULT builtin_list_remove(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 2)
+    {
+        printf("Error: list_remove(list, position) requires exactly 2 parameters\n");
+        return E_FAIL;
+    }
+    else if (params[0].vt != VT_LIST)
+    {
+        printf("Error: list_remove: first parameter must be a list\n");
+        return E_FAIL;
+    }
+    else if (params[1].vt != VT_INTEGER)
+    {
+        printf("Error: list_remove: second parameter must be an integer\n");
+        return E_FAIL;
+    }
+    else if (params[1].lVal < 0)
+    {
+        printf("Error: list_remove: position cannot be negative\n");
+    }
+
+    if (!ObjectHeap_GetList(params[0].objVal)->remove(params[1].lVal))
+    {
+        printf("Error: list_remove failed\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 // get_global_variant(name)
 // returns global variant with the given name, or fails if no such variant exists
 HRESULT builtin_get_global_variant(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -170,6 +203,7 @@ static Builtin builtinsArray[] = {
     DEF_BUILTIN(get_global_variant),
     DEF_BUILTIN(list_append),
     DEF_BUILTIN(list_insert),
+    DEF_BUILTIN(list_remove),
     DEF_BUILTIN(log),
     DEF_BUILTIN(set_global_variant),
 };

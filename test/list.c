@@ -26,5 +26,9 @@ void main()
     log(list);
     expect(list[3], "f");
     expect(list[4], "e");
+
+    list_remove(list, 3);
+    log(list);
+    expect(list[3], "e");
 }
 

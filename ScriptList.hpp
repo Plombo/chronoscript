@@ -37,6 +37,16 @@ public:
         return storage.size();
     }
 
+    inline bool remove(size_t index)
+    {
+        if (index >= storage.size())
+            return false;
+
+        ScriptVariant_Unref(storage.getPtr(index));
+        storage.remove(index);
+        return true;
+    }
+
     void makePersistent(); // make all values in list persistent
     void print();
     int toString(char *dst, int dstsize);
