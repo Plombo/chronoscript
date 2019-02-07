@@ -2,7 +2,7 @@
 #include "ssa.h"
 #include "liveness.hpp"
 
-#if DEBUG_RA
+#ifdef DEBUG_RA
 #define debug_printf(...) printf(__VA_ARGS__)
 #else
 #define debug_printf(...)
@@ -67,7 +67,18 @@ void loopTreeDFS(Loop *loop)
     // let LiveLoop = LiveIn(B_N) - PhiDefs(B_N)
     BitSet liveLoop(n->liveIn.getSize(), false);
     liveLoop = n->liveIn;
+#ifdef DEBUG_RA
+    debug_printf("liveLoop: "); liveLoop.print(); debug_printf("\n");
+#endif
     liveLoop.andNot(n->phiDefs);
+#ifdef DEBUG_RA
+    debug_printf("liveLoop: "); liveLoop.print(); debug_printf("\n");
+    debug_printf("loop header liveOut: "); n->liveOut.print(); debug_printf("\n");
+#endif
+
+    // This is not in the paper, but seems to be necessary...
+    n->liveOut |= liveLoop;
+
     // for each M in LoopTree_succs(N) do
     foreach_list(loop->nodes, BasicBlock*, iter)
     {
@@ -189,7 +200,19 @@ void LivenessAnalyzer::computeLiveIntervals()
 bool InterferenceNode::mergeInto(InterferenceNode *dstNode)
 {
     if (dstNode->livei.overlaps(this->livei))
+    {
+#ifdef DEBUG_RA
+        printf("Intervals overlap:\n");
+        printf("This interval: "); this->livei.print();
+        printf("Destination interval:  "); dstNode->livei.print();
+#endif
         return false;
+    }
+#ifdef DEBUG_RA
+    printf("Intervals don't overlap:\n");
+    printf("This interval: "); this->livei.print();
+    printf("Destination interval:  "); dstNode->livei.print();
+#endif
     dstNode->livei.unify(&this->livei);
     this->parent = dstNode;
     return true;
@@ -206,9 +229,7 @@ bool LivenessAnalyzer::mergeNodes(Temporary *dst, Temporary *src)
     InterferenceNode *dstNode = nodeForTemp[dst->id]->root();
     InterferenceNode *srcNode = nodeForTemp[src->id]->root();
     bool result = srcNode->mergeInto(dstNode);
-#if DEBUG_RA
-    printf("Merging %i into %i: %s\n", src->id, dst->id, result ? "success" : "failure");
-#endif
+    debug_printf("Merging %i into %i: %s\n", src->id, dst->id, result ? "success" : "failure");
     if (result)
     {
         nodeForTemp[src->id] = dstNode;
@@ -298,6 +319,14 @@ void LivenessAnalyzer::buildInterferenceGraph()
                     cur->addInterference(n);
                     n->addInterference(cur);
                 }
+#ifdef DEBUG_RA
+                else
+                {
+                    debug_printf("nodes %i and %i do not interfere\n", n->id, cur->id);
+                    debug_printf("node %i: ", n->id); n->livei.print();
+                    debug_printf("node %i: ", cur->id); cur->livei.print();
+                }
+#endif
             }
         }
         active.gotoLast();
