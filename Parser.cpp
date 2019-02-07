@@ -719,26 +719,27 @@ void Parser::switchBody(RValue *baseVal)
     BasicBlock *jumps = bldUtil->createBBAfter(bldUtil->currentBlock),
                *body = bldUtil->createBBAfter(jumps),
                *after = bldUtil->createBBAfter(body),
-               *defaultTarget = after;
+               *defaultTarget = NULL;
     jumps->addPred(bldUtil->currentBlock);
     bld->sealBlock(jumps);
     body->addPred(jumps);
     bld->sealBlock(body);
     bldUtil->breakTargets.push(after);
+    bldUtil->currentBlock = body;
 
     //Using a loop here instead of recursion goes against the idea of a
     //recursive descent parser, but it keeps us from having 200 stack frames.
     while (true)
     {
-        bldUtil->currentBlock = body;
         if (parserSet.first(Productions::case_label, theNextToken.theType))
         {
-            if (!body->isEmpty())
+            body = bldUtil->currentBlock;
+            if (!bldUtil->currentBlock->isEmpty())
             {
-                BasicBlock *newBody = bldUtil->createBBAfter(body);
+                BasicBlock *newBody = bldUtil->createBBAfter(bldUtil->currentBlock);
                 newBody->addPred(jumps);
-                if (!body->endsWithJump())
-                    newBody->addPred(body);
+                if (!bldUtil->currentBlock->endsWithJump())
+                    newBody->addPred(bldUtil->currentBlock);
                 bld->sealBlock(newBody);
                 body = newBody;
             }
@@ -757,6 +758,7 @@ void Parser::switchBody(RValue *baseVal)
                 checkAndMatchOrError(TOKEN_COLON, switch_body);
                 defaultTarget = body;
             }
+            bldUtil->currentBlock = body;
         }
         else if (parserSet.first(Productions::stmt_list, theNextToken.theType))
         {
@@ -772,16 +774,30 @@ void Parser::switchBody(RValue *baseVal)
             break;
         }
     }
-    
+
+    // If there's no "default" case, create an empty basic block for it so SSABuilder can put phi moves there
+    // instead of in the jumps block, where they would cause problems with register allocation.
+    if (defaultTarget == NULL)
+    {
+        if (!bldUtil->currentBlock->isEmpty())
+        {
+            BasicBlock *newBody = bldUtil->createBBAfter(bldUtil->currentBlock);
+            newBody->addPred(jumps);
+            if (!bldUtil->currentBlock->endsWithJump())
+                newBody->addPred(bldUtil->currentBlock);
+            bld->sealBlock(newBody);
+            defaultTarget = newBody;
+            bldUtil->currentBlock = newBody;
+        }
+    }
+
     // implicit jump from end of switch body to after switch
-    if (!body->endsWithJump())
-        after->addPred(body);
+    if (!bldUtil->currentBlock->endsWithJump())
+        after->addPred(bldUtil->currentBlock);
 
     // set default target
     bldUtil->currentBlock = jumps;
     bldUtil->mkJump(OP_JMP, defaultTarget, NULL);
-    if (defaultTarget == after)
-        after->addPred(jumps);
     bld->sealBlock(after);
     bldUtil->breakTargets.pop();
     bldUtil->currentBlock = after;
