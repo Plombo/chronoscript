@@ -7,8 +7,6 @@
 #include <assert.h>
 #include "ralloc.h"
 
-#pragma pack(push, 4)
-
 /* hash table flags */
 #define HASH_TABLE_FROZEN 1      /* do not rehash when the size thresholds are reached */
 #define HASH_TABLE_FROZEN_UNTIL_GROWS (1 << 1) /* do not shrink the hash until it has grown */
@@ -334,8 +332,6 @@ public:
 
 #define foreach_plist(list, type, var) \
     for(ListIterator<type> var = list->iterator(); !var.isFinished(); var.gotoNext())
-
-#pragma pack(pop)
 
 #endif // !defined(LIST_H)
 
