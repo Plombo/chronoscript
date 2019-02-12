@@ -269,26 +269,36 @@ HRESULT ScriptVariant_Lt(ScriptVariant *retvar, const ScriptVariant *svar, const
 {
     double dbl1, dbl2;
 
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+    if (svar->vt == rightChild->vt)
+    {
+        switch (svar->vt)
+        {
+            case VT_INTEGER:
+                retvar->lVal = (svar->lVal < rightChild->lVal);
+                break;
+            case VT_DECIMAL:
+                retvar->lVal = (svar->dblVal < rightChild->dblVal);
+                break;
+            case VT_STR:
+                retvar->lVal = (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) < 0);
+                break;
+            case VT_PTR:
+            case VT_OBJECT:
+            case VT_LIST:
+            case VT_EMPTY:
+            default:
+                retvar->lVal = 0;
+                break;
+        }
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
         retvar->lVal = (dbl1 < dbl2);
     }
-    else if (svar->vt == VT_STR && rightChild->vt == VT_STR)
-    {
-        retvar->lVal = (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) < 0);
-    }
-    else if (svar->vt == VT_PTR && rightChild->vt == VT_PTR)
-    {
-        retvar->lVal = (svar->ptrVal < rightChild->ptrVal);
-    }
-    else if (svar->vt == VT_EMPTY || rightChild->vt == VT_EMPTY)
-    {
-        retvar->lVal = 0;
-    }
     else
     {
-        retvar->lVal = (memcmp(svar, rightChild, sizeof(ScriptVariant)) < 0);
+        retvar->lVal = 0;
     }
 
     retvar->vt = VT_INTEGER;
@@ -301,26 +311,36 @@ HRESULT ScriptVariant_Gt(ScriptVariant *retvar, const ScriptVariant *svar, const
 {
     double dbl1, dbl2;
 
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+    if (svar->vt == rightChild->vt)
+    {
+        switch (svar->vt)
+        {
+            case VT_INTEGER:
+                retvar->lVal = (svar->lVal > rightChild->lVal);
+                break;
+            case VT_DECIMAL:
+                retvar->lVal = (svar->dblVal > rightChild->dblVal);
+                break;
+            case VT_STR:
+                retvar->lVal = (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) > 0);
+                break;
+            case VT_PTR:
+            case VT_OBJECT:
+            case VT_LIST:
+            case VT_EMPTY:
+            default:
+                retvar->lVal = 0;
+                break;
+        }
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
         retvar->lVal = (dbl1 > dbl2);
     }
-    else if (svar->vt == VT_STR && rightChild->vt == VT_STR)
-    {
-        retvar->lVal = (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) > 0);
-    }
-    else if (svar->vt == VT_PTR && rightChild->vt == VT_PTR)
-    {
-        retvar->lVal = (svar->ptrVal > rightChild->ptrVal);
-    }
-    else if (svar->vt == VT_EMPTY || rightChild->vt == VT_EMPTY)
-    {
-        retvar->lVal = 0;
-    }
     else
     {
-        retvar->lVal = (memcmp(svar, rightChild, sizeof(ScriptVariant)) > 0);
+        retvar->lVal = 0;
     }
 
     retvar->vt = VT_INTEGER;
@@ -333,21 +353,27 @@ HRESULT ScriptVariant_Ge(ScriptVariant *retvar, const ScriptVariant *svar, const
 {
     double dbl1, dbl2;
 
-    if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
+    if (svar->vt == rightChild->vt)
     {
-        retvar->lVal = (svar->lVal >= rightChild->lVal);
-    }
-    else if (svar->vt == VT_STR && rightChild->vt == VT_STR)
-    {
-        retvar->lVal = (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) >= 0);
-    }
-    else if (svar->vt == VT_PTR && rightChild->vt == VT_PTR)
-    {
-        retvar->lVal = (svar->ptrVal >= rightChild->ptrVal);
-    }
-    else if (svar->vt == VT_EMPTY || rightChild->vt == VT_EMPTY)
-    {
-        retvar->lVal = 0;
+        switch (svar->vt)
+        {
+            case VT_INTEGER:
+                retvar->lVal = (svar->lVal >= rightChild->lVal);
+                break;
+            case VT_DECIMAL:
+                retvar->lVal = (svar->dblVal >= rightChild->dblVal);
+                break;
+            case VT_STR:
+                retvar->lVal = (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) >= 0);
+                break;
+            case VT_PTR:
+            case VT_OBJECT:
+            case VT_LIST:
+            case VT_EMPTY:
+            default:
+                retvar->lVal = 0;
+                break;
+        }
     }
     else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
@@ -356,7 +382,7 @@ HRESULT ScriptVariant_Ge(ScriptVariant *retvar, const ScriptVariant *svar, const
     }
     else
     {
-        retvar->lVal = (memcmp(svar, rightChild, sizeof(ScriptVariant)) >= 0);
+        retvar->lVal = 0;
     }
 
     retvar->vt = VT_INTEGER;
@@ -368,26 +394,36 @@ HRESULT ScriptVariant_Le(ScriptVariant *retvar, const ScriptVariant *svar, const
 {
     double dbl1, dbl2;
 
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
+    if (svar->vt == rightChild->vt)
+    {
+        switch (svar->vt)
+        {
+            case VT_INTEGER:
+                retvar->lVal = (svar->lVal <= rightChild->lVal);
+                break;
+            case VT_DECIMAL:
+                retvar->lVal = (svar->dblVal <= rightChild->dblVal);
+                break;
+            case VT_STR:
+                retvar->lVal = (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) <= 0);
+                break;
+            case VT_PTR:
+            case VT_OBJECT:
+            case VT_LIST:
+            case VT_EMPTY:
+            default:
+                retvar->lVal = 0;
+                break;
+        }
+    }
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
         retvar->lVal = (dbl1 <= dbl2);
     }
-    else if (svar->vt == VT_STR && rightChild->vt == VT_STR)
-    {
-        retvar->lVal = (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) <= 0);
-    }
-    else if (svar->vt == VT_PTR && rightChild->vt == VT_PTR)
-    {
-        retvar->lVal = (svar->ptrVal <= rightChild->ptrVal);
-    }
-    else if (svar->vt == VT_EMPTY || rightChild->vt == VT_EMPTY)
-    {
-        retvar->lVal = 0;
-    }
     else
     {
-        retvar->lVal = (memcmp(svar, rightChild, sizeof(ScriptVariant)) <= 0);
+        retvar->lVal = 0;
     }
 
     retvar->vt = VT_INTEGER;
