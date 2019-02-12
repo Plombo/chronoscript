@@ -201,23 +201,6 @@ void ScriptVariant_Copy(ScriptVariant *svar, const ScriptVariant *rightChild)
     *svar = *rightChild;
 }
 
-//Logical Operations
-
-HRESULT ScriptVariant_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
-{
-    retvar->lVal = (ScriptVariant_IsTrue(svar) || ScriptVariant_IsTrue(rightChild));
-    retvar->vt = VT_INTEGER;
-    return S_OK;
-}
-
-
-HRESULT ScriptVariant_And(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
-{
-    retvar->lVal = (ScriptVariant_IsTrue(svar) && ScriptVariant_IsTrue(rightChild));
-    retvar->vt = VT_INTEGER;
-    return S_OK;
-}
-
 HRESULT ScriptVariant_Bit_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)

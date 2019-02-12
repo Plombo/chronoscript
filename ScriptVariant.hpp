@@ -57,8 +57,6 @@ int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsi
 ScriptVariant *ScriptVariant_Ref(const ScriptVariant *var);
 void ScriptVariant_Unref(ScriptVariant *var);
 
-HRESULT ScriptVariant_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_And(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
 HRESULT ScriptVariant_Bit_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
 HRESULT ScriptVariant_Xor(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
 HRESULT ScriptVariant_Bit_And(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
