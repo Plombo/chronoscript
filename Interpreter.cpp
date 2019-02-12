@@ -4,7 +4,7 @@
 #include "ScriptObject.hpp"
 #include "ObjectHeap.hpp"
 #include "Builtins.hpp"
-#include "ssa.h" // for opcodes
+#include "SSABuilder.hpp" // for opcodes
 
 typedef HRESULT (*UnaryOperation)(ScriptVariant *dst, const ScriptVariant *src);
 typedef HRESULT (*BinaryOperation)(ScriptVariant *dst, const ScriptVariant *src1, const ScriptVariant *src2);

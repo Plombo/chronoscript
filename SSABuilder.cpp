@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "ssa.h"
+#include "SSABuilder.hpp"
 #include "RegAlloc.hpp"
 #include "ralloc.h"
 #include "List.hpp"

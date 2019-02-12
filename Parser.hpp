@@ -12,7 +12,7 @@
 #include "depends.h"
 #include "ParserSet.h"
 #include "List.hpp"
-#include "ssa.h"
+#include "SSABuilder.hpp"
 #include "ExecBuilder.hpp"
 
 class Parser

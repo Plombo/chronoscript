@@ -1,5 +1,5 @@
 // https://hal.inria.fr/inria-00558509v1/document
-#include "ssa.h"
+#include "SSABuilder.hpp"
 #include "liveness.hpp"
 
 #ifdef DEBUG_RA

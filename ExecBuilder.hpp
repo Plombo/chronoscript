@@ -2,7 +2,7 @@
 #define EXEC_BUILDER_HPP
 
 #include "Interpreter.hpp"
-#include "ssa.h"
+#include "SSABuilder.hpp"
 
 // builds ExecFunction/ExecInstruction from SSA IR
 class ExecBuilder {

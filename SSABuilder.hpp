@@ -1,15 +1,11 @@
-#ifndef SSA_H
-#define SSA_H
+#ifndef SSA_BUILDER_HPP
+#define SSA_BUILDER_HPP
 
 #include "ralloc.h"
 #include "List.hpp"
 #include "ScriptVariant.hpp"
 #include "SymbolTable.hpp"
 #include "RegAllocUtil.hpp"
-
-#ifndef __cplusplus
-#error C++ header included from C source file
-#endif
 
 // be sure to update getOpCodeName() in Instruction.cpp if you change this enum!!
 enum OpCode
@@ -517,4 +513,5 @@ public:
     BasicBlock *createBBAfter(BasicBlock *existingBB, Loop *loop = NULL);
 };
 
-#endif // !defined(SSA_H)
+#endif // !defined(SSA_BUILDER_HPP)
+

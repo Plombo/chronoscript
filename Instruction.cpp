@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ssa.h"
+#include "SSABuilder.hpp"
 #include "ScriptUtils.h"
 
 // referenced by another instruction

@@ -1,7 +1,7 @@
 #ifndef LIVENESS_HPP
 #define LIVENESS_HPP
 
-#include "ssa.h"
+#include "SSABuilder.hpp"
 #include "ralloc.h"
 
 void computeLiveSets(SSABuilder *func);

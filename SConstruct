@@ -15,7 +15,7 @@ c_sources = [
     'script/pp_lexer',
 ]
 cpp_sources = [
-    'ssa',
+    'SSABuilder',
     'ScriptVariant',
     'Instruction',
     'Parser',

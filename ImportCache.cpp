@@ -15,7 +15,7 @@
 // #include "packfile.h"
 #include "ImportCache.hpp"
 
-#include "ssa.h"
+#include "SSABuilder.hpp"
 #include "Parser.hpp"
 #include "liveness.hpp"
 #include "RegAlloc.hpp"
