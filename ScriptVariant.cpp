@@ -276,30 +276,7 @@ HRESULT ScriptVariant_Eq(ScriptVariant *retvar, const ScriptVariant *svar, const
 
 HRESULT ScriptVariant_Ne(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
-    double dbl1, dbl2;
-
-    if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
-    {
-        retvar->lVal = (dbl1 != dbl2);
-    }
-    else if (svar->vt == VT_STR && rightChild->vt == VT_STR)
-    {
-        retvar->lVal = strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal));
-    }
-    else if (svar->vt == VT_PTR && rightChild->vt == VT_PTR)
-    {
-        retvar->lVal = (svar->ptrVal != rightChild->ptrVal);
-    }
-    else if (svar->vt == VT_EMPTY && rightChild->vt == VT_EMPTY)
-    {
-        retvar->lVal = 0;
-    }
-    else
-    {
-        retvar->lVal = (memcmp(svar, rightChild, sizeof(ScriptVariant)) != 0);
-    }
-
+    retvar->lVal = !ScriptVariant_IsEqual(svar, rightChild);
     retvar->vt = VT_INTEGER;
     return S_OK;
 }
