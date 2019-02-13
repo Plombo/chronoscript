@@ -16,7 +16,5 @@ void forLoop()
 void main()
 {
     forLoop();
-    log_write(char_from_integer(91));
-    log_write(char_from_integer(93));
 }
 
