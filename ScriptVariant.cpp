@@ -135,31 +135,34 @@ bool ScriptVariant_IsEqual(const ScriptVariant *svar, const ScriptVariant *right
 {
     double dbl1, dbl2;
 
-    if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
+    if (svar->vt == rightChild->vt)
     {
-        return (svar->lVal == rightChild->lVal);
-    }
-    else if (svar->vt == VT_STR && rightChild->vt == VT_STR)
-    {
-        return !(strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)));
-    }
-    else if (svar->vt == VT_PTR && rightChild->vt == VT_PTR)
-    {
-        return (svar->ptrVal == rightChild->ptrVal);
-    }
-    else if (svar->vt == VT_EMPTY && rightChild->vt == VT_EMPTY)
-    {
-        return true;
+        switch (svar->vt)
+        {
+            case VT_INTEGER:
+                return (svar->lVal == rightChild->lVal);
+            case VT_DECIMAL:
+                return (svar->dblVal == rightChild->dblVal);
+            case VT_STR:
+                return (strcmp(StrCache_Get(svar->strVal), StrCache_Get(rightChild->strVal)) == 0);
+            case VT_PTR:
+                return (svar->ptrVal == rightChild->ptrVal);
+            case VT_OBJECT:
+            case VT_LIST:
+                return (svar->objVal == rightChild->objVal);
+            case VT_EMPTY:
+                return true;
+            default:
+                return false;
+        }
     }
     else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
             ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
     {
         return (dbl1 == dbl2);
     }
-    else
-    {
-        return !(memcmp(svar, rightChild, sizeof(ScriptVariant)));
-    }
+
+    return false;
 }
 
 // returns size of output string (or desired size, if greater than bufsize)
