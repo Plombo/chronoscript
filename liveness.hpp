@@ -51,7 +51,6 @@ private:
     void *memCtx;
     List<Temporary*> *temporaries;
     List<BasicBlock*> *basicBlocks;
-    List<Instruction*> *instructions;
 public:
     InterferenceNode **nodeForTemp; // indexed by temporary id
     InterferenceNode **values; // indexed by node id

@@ -110,7 +110,6 @@ void computeLiveSets(SSABuilder *func)
 LivenessAnalyzer::LivenessAnalyzer(SSABuilder *func)
     : temporaries(&func->temporaries),
       basicBlocks(&func->basicBlockList),
-      instructions(&func->instructionList),
       values(NULL)
 {
     memCtx = ralloc_context(NULL);
