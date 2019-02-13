@@ -248,7 +248,14 @@ void ObjectHeap::unref(int index)
     if (objects[index].object.refcount == 0)
     {
         objects[index].type = MEMBER_FREE;
-        delete objects[index].object.obj;
+        if (objects[index].object.isList)
+        {
+            delete objects[index].object.list;
+        }
+        else
+        {
+            delete objects[index].object.obj;
+        }
         free_indices[++top] = index;
         //printf("delete object %i\n", index);
     }
