@@ -115,16 +115,19 @@ bool ScriptVariant_IsTrue(const ScriptVariant *svar)
 {
     switch (svar->vt)
     {
-    case VT_STR:
-        return StrCache_Get(svar->strVal)[0] != 0;
-    case VT_INTEGER:
-        return svar->lVal != 0;
-    case VT_DECIMAL:
-        return svar->dblVal != 0.0;
-    case VT_PTR:
-        return svar->ptrVal != 0;
-    default:
-        return false;
+        case VT_INTEGER:
+            return svar->lVal != 0;
+        case VT_DECIMAL:
+            return svar->dblVal != 0.0;
+        case VT_PTR:
+            // builtins should return VT_EMPTY instead of VT_PTR with a null pointer, but just in case...
+            return svar->ptrVal != NULL;
+        case VT_STR:
+        case VT_OBJECT:
+        case VT_LIST:
+            return true;
+        default:
+            return false;
     }
 }
 
