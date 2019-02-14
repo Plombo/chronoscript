@@ -82,7 +82,7 @@ HRESULT ScriptVariant_Bit_Not(ScriptVariant *dst, const ScriptVariant *svar);
 HRESULT ScriptVariant_ToBoolean(ScriptVariant *dst, const ScriptVariant *svar);
 
 HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key);
-HRESULT ScriptVariant_ContainerSet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value);
+HRESULT ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value);
 
 #ifdef __cplusplus
 };

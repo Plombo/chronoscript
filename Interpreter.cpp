@@ -210,7 +210,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
                 fetchSrc(src2, inst->src2);
-                if (FAILED(ScriptVariant_ContainerSet(dst, src0, src1, src2)))
+                if (FAILED(ScriptVariant_ContainerSet(src0, src1, src2)))
                 {
                     printf("error: SET operation failed\n");
                     goto start_backtrace;

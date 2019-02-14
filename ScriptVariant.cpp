@@ -778,7 +778,7 @@ HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *cont
     }
 }
 
-HRESULT ScriptVariant_ContainerSet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value)
+HRESULT ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value)
 {
     if (container->vt == VT_OBJECT)
     {
