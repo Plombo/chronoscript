@@ -237,7 +237,10 @@ void Parser::externalDecl2(bool variableonly)
                 "there is already a global variable named '%s'", token.theSource);
             return;
         }
-        else execBuilder->globals.declareGlobalVariable(token.theSource, (ScriptVariant){0});
+        else
+        {
+            execBuilder->globals.declareGlobalVariable(token.theSource, {{.ptrVal = NULL}, .vt = VT_EMPTY});
+        }
         match();
     }
     // still comma? there should be another identifier so declare the variable and go for the next
@@ -249,7 +252,10 @@ void Parser::externalDecl2(bool variableonly)
                 "there is already a global variable named '%s'", token.theSource);
             return;
         }
-        else execBuilder->globals.declareGlobalVariable(token.theSource, (ScriptVariant){0});
+        else
+        {
+            execBuilder->globals.declareGlobalVariable(token.theSource, {{.ptrVal = NULL}, .vt = VT_EMPTY});
+        }
         match();
         externalDecl2(true);
     }
