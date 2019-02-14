@@ -14,6 +14,9 @@
 #include "ScriptObject.hpp"
 #include "ObjectHeap.hpp"
 
+int script_arg_count;
+char **script_args;
+
 void doTest(const char *filename)
 {
     Interpreter *interpreter = ImportCache_ImportFile(filename);
@@ -66,13 +69,16 @@ io_error:
 
 int main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc < 2)
     {
         fprintf(stderr, argc < 2 ? "no file specified\n" : "too many arguments\n");
         fprintf(stderr, "usage: %s script.c\n", argv[0]);
         return 1;
     }
-    
+
+    script_arg_count = argc - 2;
+    script_args = argv + 2;
+
     doTest(argv[1]);
     // testFile(argv[1]);
 
