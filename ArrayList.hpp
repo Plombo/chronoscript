@@ -2,66 +2,130 @@
 #define ARRAY_LIST_HPP
 
 #include <stdlib.h>
-#include <vector>
+#include <string.h>
+#include "globals.h"
 
-/*
-    A mutable list class, implemented as a wrapper around std::vector because
-    while std::vector has a bad interface, it's going to have better
-    performance than an implementation from scratch.
-*/
+#define ARRAY_LIST_DEFAULT_CAPACITY 16
+
+// A dynamic array class. Caller is responsible for all bounds checking.
 template <typename T>
 class ArrayList
 {
 private:
-    std::vector<T> storage;
+    T *array;
+    size_t numElements;
+    size_t capacity;
+
+    inline void resize(size_t newCapacity)
+    {
+        array = (T*) realloc(array, newCapacity * sizeof(T));
+        assert(array != NULL);
+        capacity = newCapacity;
+    }
 
 public:
-    inline ArrayList() {}
+    explicit inline ArrayList(size_t initialCapacity) : numElements(0), capacity(initialCapacity)
+    {
+        if (capacity == 0)
+        {
+            capacity = ARRAY_LIST_DEFAULT_CAPACITY;
+        }
 
-    // initializes the list with n elements, each with the given value
-    inline ArrayList(size_t n, const T &value) : storage(n, value) {}
+        array = (T*) malloc(capacity * sizeof(T));
+    }
+
+    inline ArrayList(size_t initialSize, const T &value) : ArrayList(initialSize)
+    {
+        numElements = initialSize;
+
+        for (size_t i = 0; i < initialSize; i++)
+        {
+            array[i] = value;
+        }
+    }
+
+    inline ArrayList() : ArrayList(ARRAY_LIST_DEFAULT_CAPACITY) {}
+
+    inline ~ArrayList()
+    {
+        free(array);
+    }
 
     // returns the number of elements in the list
     inline size_t size() const
     {
-        return storage.size();
+        return numElements;
     }
 
     // returns the element at index
     inline T get(size_t index) const
     {
-        return storage.at(index);
+        return array[index];
     }
 
     // returns a pointer to the element at index
     inline T *getPtr(size_t index)
     {
-        return &storage.at(index);
+        return &array[index];
     }
 
     // sets the element at index to the given value
     inline void set(size_t index, const T &value)
     {
-        storage.at(index) = value;
+        array[index] = value;
     }
 
     // adds an element with the given value to the end of the list
-    inline void append(const T &value)
+    inline void append(const T &newElem)
     {
-        storage.push_back(value);
-    }
+        if (numElements == capacity)
+        {
+            resize(capacity * 2);
+        }
 
-    // removes the element at index from the list; runs in linear (not constant) time
-    inline void remove(size_t index)
-    {
-        storage.erase(storage.begin() + index);
+        array[numElements] = newElem;
+        ++numElements;
     }
 
     // inserts the given value into the list at index i, moving everything after it forward
     // runs in linear (not constant) time
-    inline void insert(size_t index, const T &value)
+    inline void insert(size_t pos, const T &newElem)
     {
-        storage.insert(storage.begin() + index, value);
+        if (pos == numElements)
+        {
+            append(newElem);
+        }
+        else
+        {
+            if (numElements == capacity)
+            {
+                resize(capacity * 2);
+            }
+            memmove(&array[pos + 1], &array[pos], numElements - pos);
+            array[pos] = newElem;
+            ++numElements;
+        }
+    }
+
+    // removes the element at index from the list; runs in linear (not constant) time
+    inline void remove(size_t pos)
+    {
+        memmove(&array[pos], &array[pos + 1], numElements - pos);
+        --numElements;
+    }
+
+    // removes elements from start (inclusive) to end (exclusive)
+    inline void removeRange(size_t start, size_t end)
+    {
+        assert(end >= start);
+        memmove(&array[start], &array[end], numElements - (end - start));
+        numElements -= (end - start);
+    }
+
+    // removes all elements from list (but doesn't change allocated capacity)
+    inline void clear()
+    {
+        removeRange(0, numElements);
     }
 };
 
