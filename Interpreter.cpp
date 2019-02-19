@@ -118,6 +118,13 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 *dst = *src0;
                 break;
 
+            // read global variable
+            case OP_GET_GLOBAL:
+                fetchDst();
+                fetchSrc(src0, inst->src0);
+                *dst = *src0;
+                break;
+
             // unary ops
             case OP_NEG:
             case OP_BOOL_NOT:

@@ -590,6 +590,13 @@ RValue *SSABuildUtil::mkMove(RValue *src)
     return inst->value();
 }
 
+RValue *SSABuildUtil::mkGetGlobal(RValue *src)
+{
+    Expression *inst = new(builder->memCtx) Expression(OP_GET_GLOBAL, builder->valueId(), src);
+    builder->insertInstruction(inst, currentBlock);
+    return inst->value();
+}
+
 RValue *SSABuildUtil::mkObject()
 {
     Expression *inst = new(builder->memCtx) Expression(OP_MKOBJECT, builder->valueId());
@@ -713,7 +720,7 @@ RValue *SSABuildUtil::readVariable(const char *varName)
         GlobalVarRef *global = globalState->readGlobalVariable(varName, builder->memCtx);
         if (global)
         {
-            RValue *value = mkMove(global);
+            RValue *value = mkGetGlobal(global);
             value->lvalue = new(builder->memCtx) LValue(varName);
             return value;
         }

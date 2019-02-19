@@ -386,6 +386,7 @@ const char *getOpCodeName(OpCode op)
         "return",
         
         "mov",
+        "get_global",
 
         "neg",
         "bool_not",

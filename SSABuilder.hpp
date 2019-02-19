@@ -23,6 +23,7 @@ enum OpCode
 
     // move
     OP_MOV,
+    OP_GET_GLOBAL,
 
     // unary ops
     OP_NEG,
@@ -485,6 +486,7 @@ public:
     Instruction *mkReturn(RValue *src0);
     RValue *mkBool(RValue *src);
     RValue *mkMove(RValue *val);
+    RValue *mkGetGlobal(RValue *val);
     RValue *mkObject();
     RValue *mkList();
     RValue *mkGet(RValue *object, RValue *key);
