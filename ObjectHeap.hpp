@@ -8,11 +8,9 @@
 #include "ScriptVariant.hpp"
 
 /**
- * There are two object heaps: temporary and persistent. All objects are
- * put in the temporary heap when created with ObjectHeap_CreateNewObject(),
- * and can be moved to the persistent heap with ObjectHeap_MakePersistent().
- * The temporary heap is cleared after each call to Interpreter::runFunction(),
- * i.e., every time a "main" function finishes execution.
+ * All objects are reference counted. Any number of references in temporary registers counts as a single reference.
+ * Otherwise, references are from persistent places like global variables or other objects/lists. Temporary references
+ * are cleared every time Interpreter::runFunction() finishes executing a function call.
  */
 
 // public API
@@ -22,6 +20,7 @@ int ObjectHeap_CreateNewObject();
 int ObjectHeap_CreateNewList(size_t initialSize);
 int ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);
+void ObjectHeap_AddTemporaryReference(int index);
 ScriptObject *ObjectHeap_GetObject(int index);
 ScriptList *ObjectHeap_GetList(int index);
 void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value);

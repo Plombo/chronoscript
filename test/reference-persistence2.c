@@ -1,0 +1,17 @@
+/*
+    This test tries to make ChronoScript free an object that is still in use by adding a persistent reference,
+    removing the persistent reference, and then accessing the object through its original temporary reference.
+*/
+
+#include "test/expect.h"
+
+void globalObject;
+
+void main()
+{
+    void obj = {"data": 3};
+    globalObject = obj;
+    globalObject = 0;
+    expect(obj.data, 3);
+}
+

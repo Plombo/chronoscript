@@ -123,6 +123,10 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 *dst = *src0;
+                if (dst->vt == VT_OBJECT || dst->vt == VT_LIST)
+                {
+                    ObjectHeap_AddTemporaryReference(dst->objVal);
+                }
                 break;
 
             // unary ops
