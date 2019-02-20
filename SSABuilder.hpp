@@ -99,6 +99,9 @@ public:
 
     inline RValue() : lvalue(NULL) {}
 
+    // trivial virtual destructor to silence compiler warnings
+    virtual ~RValue();
+
     // returns true if this value is unused
     inline bool isDead() { return users.size() == 0; }
 
@@ -222,6 +225,9 @@ public:
     bool isPhiMove; // this instruction is a move used by a phi in a successor block
 
     inline Instruction(OpCode opCode) : op(opCode), block(NULL), seqIndex(-1), isPhiMove(false) {}
+
+    // trivial virtual destructor to silence compiler warnings
+    virtual ~Instruction();
 
     void appendOperand(RValue *value);
     RValue *src(int index);

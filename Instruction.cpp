@@ -3,6 +3,11 @@
 #include "SSABuilder.hpp"
 #include "ScriptUtils.h"
 
+// empty virtual destructor to silence compiler warnings
+RValue::~RValue()
+{
+}
+
 // referenced by another instruction
 void RValue::ref(Instruction *inst)
 {
@@ -189,6 +194,11 @@ bool Temporary::isBoolValue()
         default:
             return false;
     }
+}
+
+// empty virtual destructor to silence compiler warnings
+Instruction::~Instruction()
+{
 }
 
 void Instruction::appendOperand(RValue *value)
