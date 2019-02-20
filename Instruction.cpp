@@ -133,6 +133,10 @@ void Constant::printDst()
     {
         printEscapedString(StrCache_Get(constValue.strVal));
     }
+    else if (constValue.vt == VT_EMPTY)
+    {
+        printf("NULL");
+    }
     else
     {
         printf("const[?]");

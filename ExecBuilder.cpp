@@ -217,6 +217,10 @@ void ExecBuilder::printInstructions()
         {
             printEscapedString(StrCache_Get(val->strVal));
         }
+        else if (val->vt == VT_EMPTY)
+        {
+            printf("NULL");
+        }
         else
         {
             printf("const[?]");
