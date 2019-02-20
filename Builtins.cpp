@@ -1,25 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Builtins.hpp"
+#include "ScriptVariant.hpp"
 #include "List.hpp"
 #include "ObjectHeap.hpp"
 
 static bool builtinsInited = false;
 static List<unsigned int> builtinIndices;
-static List<ScriptVariant> globalVariants;
+static ScriptVariant globalsObject = {{.ptrVal = NULL}, .vt = VT_EMPTY};
+
 extern size_t script_arg_count;
 extern char **script_args;
 
-// mark script objects in the global variant list as referenced
+// mark the globals object as referenced for GC purposes
 void pushGlobalVariantsToGC()
 {
-    foreach_list(globalVariants, ScriptVariant, iter)
+    // this check is necessary because the globals object might not be initialized yet
+    if (globalsObject.vt == VT_OBJECT)
     {
-        ScriptVariant *var = iter.valuePtr();
-        if (var->vt == VT_OBJECT && var->objVal >= 0)
-        {
-            GarbageCollector_PushGray(var->objVal);
-        }
+        GarbageCollector_PushGray(globalsObject.objVal);
     }
 }
 
@@ -197,6 +196,28 @@ HRESULT builtin_list_remove(int numParams, ScriptVariant *params, ScriptVariant 
     return S_OK;
 }
 
+// globals()
+// returns object holding global variants
+HRESULT builtin_globals(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 0)
+    {
+        printf("Error: globals() takes no parameters\n");
+        return E_FAIL;
+    }
+
+    if (globalsObject.vt == VT_EMPTY)
+    {
+        // globals object doesn't exist yet; create it
+        globalsObject.objVal = ObjectHeap_CreateNewObject();
+        globalsObject.vt = VT_OBJECT;
+        ScriptVariant_Ref(&globalsObject);
+    }
+
+    *retval = globalsObject;
+    return S_OK;
+}
+
 // get_global_variant(name)
 // returns global variant with the given name, or fails if no such variant exists
 HRESULT builtin_get_global_variant(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -212,17 +233,27 @@ HRESULT builtin_get_global_variant(int numParams, ScriptVariant *params, ScriptV
         return E_FAIL;
     }
 
-    const char *name = StrCache_Get(params[0].strVal);
-    if (globalVariants.findByName(name))
+    if (globalsObject.vt == VT_EMPTY)
     {
-        *retval = globalVariants.retrieve();
-        return S_OK;
+        // globals object doesn't exist yet; create it
+        globalsObject.objVal = ObjectHeap_CreateNewObject();
+        globalsObject.vt = VT_OBJECT;
+        ScriptVariant_Ref(&globalsObject);
     }
-    else
+
+    const char *name = StrCache_Get(params[0].strVal);
+    if (!ObjectHeap_GetObject(globalsObject.objVal)->get(retval, name))
     {
         printf("Error: get_global_variant: no global variant named '%s'\n", name);
         return E_FAIL;
     }
+
+    if (retval->vt == VT_OBJECT || retval->vt == VT_LIST)
+    {
+        ObjectHeap_AddTemporaryReference(retval->objVal);
+    }
+
+    return S_OK;
 }
 
 // set_global_variant(name, value)
@@ -240,22 +271,17 @@ HRESULT builtin_set_global_variant(int numParams, ScriptVariant *params, ScriptV
         return E_FAIL;
     }
 
-    /* Ref the new value to make it persistent -- must be done before unreffing
-       the old value, because the old and new values could be the same
-       string/list/object! */
-    ScriptVariant *reffedValue = ScriptVariant_Ref(&params[1]);
+    if (globalsObject.vt == VT_EMPTY)
+    {
+        // globals object doesn't exist yet; create it
+        globalsObject.objVal = ObjectHeap_CreateNewObject();
+        globalsObject.vt = VT_OBJECT;
+        ScriptVariant_Ref(&globalsObject);
+    }
+
     const char *name = StrCache_Get(params[0].strVal);
-    if (globalVariants.findByName(name))
-    {
-        ScriptVariant oldValue = globalVariants.retrieve();
-        ScriptVariant_Unref(&oldValue);
-        globalVariants.update(*reffedValue);
-    }
-    else
-    {
-        globalVariants.gotoLast(); // not strictly necessary, but nice
-        globalVariants.insertAfter(*reffedValue, name);
-    }
+    ObjectHeap_SetObjectMember(globalsObject.objVal, name, &params[1]);
+    retval->vt = VT_EMPTY;
 
     return S_OK;
 }
@@ -407,6 +433,7 @@ static Builtin builtinsArray[] = {
     DEF_BUILTIN(file_read),
     DEF_BUILTIN(get_args),
     DEF_BUILTIN(get_global_variant),
+    DEF_BUILTIN(globals),
     DEF_BUILTIN(list_append),
     DEF_BUILTIN(list_insert),
     DEF_BUILTIN(list_length),
