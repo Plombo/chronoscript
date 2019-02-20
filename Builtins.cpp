@@ -106,6 +106,7 @@ HRESULT builtin_list_append(int numParams, ScriptVariant *params, ScriptVariant 
         return E_FAIL;
     }
 
+    retval->vt = VT_EMPTY;
     return S_OK;
 }
 
@@ -131,6 +132,7 @@ HRESULT builtin_list_insert(int numParams, ScriptVariant *params, ScriptVariant 
     else if (params[1].lVal < 0)
     {
         printf("Error: list_insert: position cannot be negative\n");
+        return E_FAIL;
     }
 
     if (!ObjectHeap_InsertInList(params[0].objVal, params[1].lVal, &params[2]))
@@ -139,6 +141,7 @@ HRESULT builtin_list_insert(int numParams, ScriptVariant *params, ScriptVariant 
         return E_FAIL;
     }
 
+    retval->vt = VT_EMPTY;
     return S_OK;
 }
 
@@ -185,6 +188,7 @@ HRESULT builtin_list_remove(int numParams, ScriptVariant *params, ScriptVariant 
     else if (params[1].lVal < 0)
     {
         printf("Error: list_remove: position cannot be negative\n");
+        return E_FAIL;
     }
 
     if (!ObjectHeap_GetList(params[0].objVal)->remove(params[1].lVal))
@@ -193,6 +197,7 @@ HRESULT builtin_list_remove(int numParams, ScriptVariant *params, ScriptVariant 
         return E_FAIL;
     }
 
+    retval->vt = VT_EMPTY;
     return S_OK;
 }
 
