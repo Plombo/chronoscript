@@ -2037,7 +2037,7 @@ RValue *Parser::constant()
     }
 }
 
-const char  *_production_error_message(Parser *pparser, PRODUCTION offender)
+const char  *production_error_message(PRODUCTION offender)
 {
     switch(offender)
     {
@@ -2089,7 +2089,7 @@ void Parser::errorDefault(PRODUCTION offender, const char *offenderStr)
     //it offended in.
     if (offender != Productions::error)
         pp_error(&(theLexer.preprocessor), "%s '%s' (in production '%s')",
-                 _production_error_message(this, offender), theNextToken.theSource, offenderStr);
+                 production_error_message(offender), theNextToken.theSource, offenderStr);
 
     handleError(offender);
 }
