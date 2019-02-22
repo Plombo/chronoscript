@@ -285,19 +285,6 @@ void Parser::externalDecl2(bool variableonly)
 
 void Parser::declSpec()
 {
-    if (check(TOKEN_CONST))
-    {
-        match();
-    }
-
-    if (check(TOKEN_SIGNED))
-    {
-        match();
-    }
-    else if (check(TOKEN_UNSIGNED))
-    {
-        match();
-    }
     // It's OK though not all below are valid types for our language
     if (check(TOKEN_VOID))
     {
