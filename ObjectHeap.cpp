@@ -170,13 +170,17 @@ void ObjectHeap::clearTemporaryReferences()
     for (size_t i = 0; i < numTempRefs; i++)
     {
         int index = tempRefsList.get(i);
-        assert(objects[index].type == MEMBER_OBJECT);
-        if (objects[index].refcount == 0 || !objects[index].container->isPersistent())
+
+        // If type is MEMBER_FREE, it just means the index was added twice to tempRefsList. No harm done.
+        if (objects[index].type == MEMBER_OBJECT)
         {
-            delete objects[index].container;
-            objects[index].container = NULL;
-            objects[index].type = MEMBER_FREE;
-            free_indices[++top] = index;
+            if (objects[index].refcount == 0 || !objects[index].container->isPersistent())
+            {
+                delete objects[index].container;
+                objects[index].container = NULL;
+                objects[index].type = MEMBER_FREE;
+                free_indices[++top] = index;
+            }
         }
     }
 
@@ -246,6 +250,10 @@ void ObjectHeap::unref(int index)
 
     --objects[index].refcount;
     assert(objects[index].refcount >= 0);
+    if (objects[index].refcount == 0)
+    {
+        tempRefsList.append(index);
+    }
 }
 
 ScriptContainer *ObjectHeap::getContainer(int index)
