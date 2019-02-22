@@ -26,19 +26,12 @@ enum MemberType {
 class HeapMember {
 public:
     union {
-        struct {
-            union {
-                ScriptObject *obj;
-                ScriptList *list;
-            };
-            bool isList;
-            int refcount;
-            int gcColor;
-        } object;
-        struct {
-            int target;
-        } link;
+        ScriptObject *obj;
+        ScriptList *list;
     };
+    bool isList;
+    int refcount;
+    int gcColor;
     MemberType type;
 };
 
@@ -89,20 +82,20 @@ public:
         {
             return false;
         }
-        else if (objects[index].object.isList)
+        else if (objects[index].isList)
         {
-            return objects[index].object.list->persistent;
+            return objects[index].list->persistent;
         }
         else
         {
-            return objects[index].object.obj->persistent;
+            return objects[index].obj->persistent;
         }
     }
 
     // returns true if the given index is a list (not a link to a list)
     inline bool isList(int index)
     {
-        return objects[index].type == MEMBER_OBJECT && objects[index].object.isList;
+        return objects[index].type == MEMBER_OBJECT && objects[index].isList;
     }
 
     // get the object with this index
@@ -115,7 +108,7 @@ public:
     inline int getGCColor(int index)
     {
         assert(objects[index].type == MEMBER_OBJECT);
-        return objects[index].object.gcColor;
+        return objects[index].gcColor;
     }
 
     // add an object to the gray list (for GC)
@@ -166,13 +159,13 @@ void ObjectHeap::clear()
         {
             if (objects[i].type == MEMBER_OBJECT)
             {
-                if (objects[i].object.isList)
+                if (objects[i].isList)
                 {
-                    delete objects[i].object.list;
+                    delete objects[i].list;
                 }
                 else
                 {
-                    delete objects[i].object.obj;
+                    delete objects[i].obj;
                 }
             }
         }
@@ -198,16 +191,16 @@ void ObjectHeap::clearTemporaryReferences()
     {
         int index = tempRefsList.get(i);
         assert(objects[index].type == MEMBER_OBJECT);
-        if (objects[index].object.refcount == 0 || !isPersistent(index))
+        if (objects[index].refcount == 0 || !isPersistent(index))
         {
             objects[index].type = MEMBER_FREE;
-            if (objects[index].object.isList)
+            if (objects[index].isList)
             {
-                delete objects[index].object.list;
+                delete objects[index].list;
             }
             else
             {
-                delete objects[index].object.obj;
+                delete objects[index].obj;
             }
             free_indices[++top] = index;
         }
@@ -243,32 +236,32 @@ int ObjectHeap::pop()
     i = free_indices[top--];
     assert(objects[i].type == MEMBER_FREE);
     objects[i].type = MEMBER_OBJECT;
-    objects[i].object.refcount = 0;
+    objects[i].refcount = 0;
     tempRefsList.append(i);
-    objects[i].object.gcColor = GC_COLOR_WHITE;
+    objects[i].gcColor = GC_COLOR_WHITE;
     return i;
 }
 
 int ObjectHeap::popObject()
 {
     int index = pop();
-    objects[index].object.obj = new ScriptObject;
-    objects[index].object.isList = false;
+    objects[index].obj = new ScriptObject;
+    objects[index].isList = false;
     return index;
 }
 
 int ObjectHeap::popList(size_t initialSize)
 {
     int index = pop();
-    objects[index].object.list = new ScriptList(initialSize);
-    objects[index].object.isList = true;
+    objects[index].list = new ScriptList(initialSize);
+    objects[index].isList = true;
     return index;
 }
 
 void ObjectHeap::ref(int index)
 {
     assert(index < size && objects[index].type == MEMBER_OBJECT);
-    ++objects[index].object.refcount;
+    ++objects[index].refcount;
 }
 
 void ObjectHeap::unref(int index)
@@ -277,31 +270,31 @@ void ObjectHeap::unref(int index)
     // unreffing a free object is possible during garbage collection
     if (objects[index].type == MEMBER_FREE) return;
 
-    --objects[index].object.refcount;
-    assert(objects[index].object.refcount >= 0);
+    --objects[index].refcount;
+    assert(objects[index].refcount >= 0);
 }
 
 ScriptObject *ObjectHeap::getObject(int index)
 {
     assert(index < size);
     assert(objects[index].type == MEMBER_OBJECT);
-    assert(!objects[index].object.isList);
-    return objects[index].object.obj;
+    assert(!objects[index].isList);
+    return objects[index].obj;
 }
 
 ScriptList *ObjectHeap::getList(int index)
 {
     assert(index < size);
     assert(objects[index].type == MEMBER_OBJECT);
-    assert(objects[index].object.isList);
-    return objects[index].object.list;
+    assert(objects[index].isList);
+    return objects[index].list;
 }
 
 void ObjectHeap::pushGray(int index)
 {
     assert(index >= 0);
-    assert(objects[index].object.gcColor != GC_COLOR_GRAY);
-    objects[index].object.gcColor = GC_COLOR_GRAY;
+    assert(objects[index].gcColor != GC_COLOR_GRAY);
+    objects[index].gcColor = GC_COLOR_GRAY;
     grayStack.push(index);
 }
 
@@ -310,7 +303,7 @@ inline void ObjectHeap::processOneGraySub(const ScriptVariant *var)
     if (var->vt == VT_OBJECT || var->vt == VT_LIST)
     {
         int subIndex = var->objVal;
-        if (objects[subIndex].object.gcColor == GC_COLOR_WHITE)
+        if (objects[subIndex].gcColor == GC_COLOR_WHITE)
         {
             pushGray(subIndex);
         }
@@ -323,9 +316,9 @@ void ObjectHeap::processOneGray()
     int index = grayStack.top();
     grayStack.pop();
     assert(objects[index].type == MEMBER_OBJECT);
-    if (objects[index].object.isList)
+    if (objects[index].isList)
     {
-        ScriptList *list = objects[index].object.list;
+        ScriptList *list = objects[index].list;
         for (size_t i = 0; i < list->size(); i++)
         {
             ScriptVariant var;
@@ -335,13 +328,13 @@ void ObjectHeap::processOneGray()
     }
     else
     {
-        ScriptObject *obj = objects[index].object.obj;
+        ScriptObject *obj = objects[index].obj;
         foreach_list(obj->map, ScriptVariant, iter)
         {
             processOneGraySub(iter.valuePtr());
         }
     }
-    objects[index].object.gcColor = GC_COLOR_BLACK;
+    objects[index].gcColor = GC_COLOR_BLACK;
 }
 
 // mark objects until gray stack is empty
@@ -360,14 +353,14 @@ void ObjectHeap::sweep()
     for (int i = 0; i < size; i++)
     {
         if (objects[i].type == MEMBER_OBJECT &&
-            objects[i].object.gcColor == GC_COLOR_WHITE)
+            objects[i].gcColor == GC_COLOR_WHITE)
         {
             //printf("delete object %i (gc)\n", i);
             objects[i].type = MEMBER_FREE;
-            if (objects[i].object.isList)
-                delete objects[i].object.list;
+            if (objects[i].isList)
+                delete objects[i].list;
             else
-                delete objects[i].object.obj;
+                delete objects[i].obj;
             free_indices[++top] = i;
         }
     }
@@ -382,10 +375,10 @@ void ObjectHeap::listUnfreed()
     {
         if (objects[i].type == MEMBER_OBJECT)
         {
-            if (objects[i].object.isList)
-                objects[i].object.list->toString(buf, sizeof(buf));
+            if (objects[i].isList)
+                objects[i].list->toString(buf, sizeof(buf));
             else
-                objects[i].object.obj->toString(buf, sizeof(buf));
+                objects[i].obj->toString(buf, sizeof(buf));
             printf("Unfreed object %i: %s\n", i, buf);
         }
     }
