@@ -47,7 +47,6 @@ class ObjectHeap {
     
 private:
     HeapMember *objects;
-    bool *tempRefs; // if tempRefs[i] is true, there is a temporary reference to object i
     ArrayList<int> tempRefsList;
     Stack<int> grayStack;
     int size; // allocated size of heap (includes unused space, not equal to # of active objects!)
@@ -148,7 +147,6 @@ void ObjectHeap::init()
     int i;
     clear(); // just in case
     objects = (HeapMember*) calloc(HEAP_SIZE_INCREMENT, sizeof(*objects));
-    tempRefs = (bool*) calloc(HEAP_SIZE_INCREMENT, sizeof(*tempRefs));
     free_indices = (int*) malloc(HEAP_SIZE_INCREMENT * sizeof(*free_indices));
     for (i = 0; i < HEAP_SIZE_INCREMENT; i++)
     {
@@ -182,11 +180,6 @@ void ObjectHeap::clear()
         objects = NULL;
     }
 
-    if (tempRefs)
-    {
-        free(tempRefs);
-    }
-
     if (free_indices)
     {
         free(free_indices);
@@ -205,11 +198,7 @@ void ObjectHeap::clearTemporaryReferences()
     {
         int index = tempRefsList.get(i);
         assert(objects[index].type == MEMBER_OBJECT);
-        if (isPersistent(index))
-        {
-            unref(index);
-        }
-        else
+        if (objects[index].object.refcount == 0 || !isPersistent(index))
         {
             objects[index].type = MEMBER_FREE;
             if (objects[index].object.isList)
@@ -222,7 +211,6 @@ void ObjectHeap::clearTemporaryReferences()
             }
             free_indices[++top] = index;
         }
-        tempRefs[index] = false;
     }
 
     tempRefsList.clear();
@@ -241,11 +229,9 @@ int ObjectHeap::pop()
     {
         __reallocto(objects, HeapMember*, size, size + HEAP_SIZE_INCREMENT);
         __reallocto(free_indices, int*, size, size + HEAP_SIZE_INCREMENT);
-        __reallocto(tempRefs, bool*, size, size + HEAP_SIZE_INCREMENT);
         for (i = 0; i < HEAP_SIZE_INCREMENT; i++)
         {
             objects[size + i].type = MEMBER_FREE;
-            tempRefs[size + i] = false;
             free_indices[i] = size + i;
         }
 
@@ -257,8 +243,7 @@ int ObjectHeap::pop()
     i = free_indices[top--];
     assert(objects[i].type == MEMBER_FREE);
     objects[i].type = MEMBER_OBJECT;
-    objects[i].object.refcount = 1;
-    tempRefs[i] = true;
+    objects[i].object.refcount = 0;
     tempRefsList.append(i);
     objects[i].object.gcColor = GC_COLOR_WHITE;
     return i;
@@ -291,34 +276,9 @@ void ObjectHeap::unref(int index)
     assert(index < size);
     // unreffing a free object is possible during garbage collection
     if (objects[index].type == MEMBER_FREE) return;
-    assert(objects[index].object.refcount >= 1);
 
     --objects[index].object.refcount;
-    if (objects[index].object.refcount == 0)
-    {
-        objects[index].type = MEMBER_FREE;
-        if (objects[index].object.isList)
-        {
-            delete objects[index].object.list;
-        }
-        else
-        {
-            delete objects[index].object.obj;
-        }
-        free_indices[++top] = index;
-        //printf("delete object %i\n", index);
-    }
-}
-
-void ObjectHeap::addTemporaryReference(int index)
-{
-    if (!tempRefs[index])
-    {
-        assert(isPersistent(index));
-        tempRefsList.append(index);
-        tempRefs[index] = true;
-        ref(index);
-    }
+    assert(objects[index].object.refcount >= 0);
 }
 
 ScriptObject *ObjectHeap::getObject(int index)
@@ -481,11 +441,6 @@ int ObjectHeap_Ref(int index)
 void ObjectHeap_Unref(int index)
 {
     theHeap.unref(index);
-}
-
-void ObjectHeap_AddTemporaryReference(int index)
-{
-    theHeap.addTemporaryReference(index);
 }
 
 ScriptObject *ObjectHeap_GetObject(int index)

@@ -741,10 +741,6 @@ HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *cont
                 printf("error: object has no member named %s\n", StrCache_Get(key->strVal));
                 return E_FAIL;
             }
-            if (dst->vt == VT_OBJECT || dst->vt == VT_LIST)
-            {
-                ObjectHeap_AddTemporaryReference(dst->objVal);
-            }
             return S_OK;
         }
         else
@@ -771,10 +767,6 @@ HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *cont
         {
             printf("error: list index %i is out of bounds\n", key->lVal);
             return E_FAIL;
-        }
-        if (dst->vt == VT_OBJECT || dst->vt == VT_LIST)
-        {
-            ObjectHeap_AddTemporaryReference(dst->objVal);
         }
         return S_OK;
     }

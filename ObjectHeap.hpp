@@ -8,9 +8,9 @@
 #include "ScriptVariant.hpp"
 
 /**
- * All objects are reference counted. Any number of references in temporary registers counts as a single reference.
- * Otherwise, references are from persistent places like global variables or other objects/lists. Temporary references
- * are cleared every time Interpreter::runFunction() finishes executing a function call.
+ * All objects are reference counted. The only references counted are from persistent places like global variables or
+ * other persistent objects/lists. Objects with refcount 0 are freed when ObjectHeap_ClearTemporary() is called, and
+ * not before, since temporary registers can hold references to objects with refcount 0.
  */
 
 // public API
@@ -20,7 +20,6 @@ int ObjectHeap_CreateNewObject();
 int ObjectHeap_CreateNewList(size_t initialSize);
 int ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);
-void ObjectHeap_AddTemporaryReference(int index);
 ScriptObject *ObjectHeap_GetObject(int index);
 ScriptList *ObjectHeap_GetList(int index);
 void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value);

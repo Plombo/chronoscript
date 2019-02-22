@@ -113,20 +113,10 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
 
             // move
             case OP_MOV:
-                fetchDst();
-                fetchSrc(src0, inst->src0);
-                *dst = *src0;
-                break;
-
-            // read global variable
             case OP_GET_GLOBAL:
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 *dst = *src0;
-                if (dst->vt == VT_OBJECT || dst->vt == VT_LIST)
-                {
-                    ObjectHeap_AddTemporaryReference(dst->objVal);
-                }
                 break;
 
             // unary ops
