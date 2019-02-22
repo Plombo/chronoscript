@@ -9,12 +9,14 @@
 
 int hasRun = 0;
 void globalObject;
+char globalString;
 
 void main()
 {
     if (hasRun == 0)
     {
         globalObject = {"data": 3};
+        globalString = "a " + stringPart();
         hasRun = 1;
     }
     else
@@ -23,6 +25,16 @@ void main()
         void obj = globalObject;
         globalObject = 0;
         expect(obj.data, 3);
+
+        log(globalString);
+        void str = globalString;
+        globalString = 0;
+        expect(str, "a string");
     }
+}
+
+char stringPart()
+{
+    return "string";
 }
 
