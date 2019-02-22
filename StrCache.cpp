@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "globals.h"
 #include "StrCache.hpp"
+#include "ArrayList.hpp"
 
 /*
 The string cache is intended to reduce memory usage; since not all variants are
@@ -30,6 +32,7 @@ private:
     int strcache_size;
     int strcache_top;
     int *strcache_index;
+    ArrayList<int> tempRefs; // list of indices i where the refcount of string i might be zero
 
 public:
     StrCache();
@@ -39,6 +42,9 @@ public:
 
     //clear the string cache
     void clear();
+
+    // frees all strings with a refcount of 0
+    void clearTemporary();
 
     // reallocs a string in the cache to a new size
     void resize(int index, int size);
@@ -114,6 +120,24 @@ void StrCache::clear()
     strcache_top = -1;
 }
 
+// frees all strings with a refcount of 0
+void StrCache::clearTemporary()
+{
+    int numTemps = tempRefs.size();
+    for (int i = 0; i < numTemps; i++)
+    {
+        int index = tempRefs.get(i);
+        if (strcache[index].ref == 0)
+        {
+            free(strcache[index].str);
+            strcache[index].str = NULL;
+            strcache_index[++strcache_top] = index;
+        }
+    }
+
+    tempRefs.clear();
+}
+
 // reallocs a string in the cache to a new size
 void StrCache::resize(int index, int size)
 {
@@ -135,15 +159,10 @@ void StrCache::unref(int index)
 {
     strcache[index].ref--;
     //printf("unref \"%s\" -> %i\n", strcache[index].str, strcache[index].ref);
-    //assert(strcache[index].ref>=0);
-    if (!strcache[index].ref)
+    assert(strcache[index].ref >= 0);
+    if (strcache[index].ref == 0)
     {
-        free(strcache[index].str);
-        strcache[index].str = NULL;
-        //if (strcache[index].len > MAX_STR_VAR_LEN)
-        //	this->resize(index, MAX_STR_VAR_LEN);
-        //assert(strcache_top+1<strcache_size);
-        strcache_index[++strcache_top] = index;
+        tempRefs.append(index);
     }
 }
 
@@ -177,7 +196,8 @@ int StrCache::pop(int length)
     i = strcache_index[strcache_top--];
     strcache[i].str = (char*) malloc(length + 1);
     strcache[i].len = length;
-    strcache[i].ref = 1;
+    strcache[i].ref = 0;
+    tempRefs.append(i);
     return i;
 }
 
@@ -235,85 +255,69 @@ int StrCache::findString(const char *str)
 
 extern "C" {
 
-static StrCache persistentCache; // global index = index (global index positive)
-static StrCache temporaryCache; // global index = ~index (global index negative)
+static StrCache theCache;
 
 void StrCache_ClearTemporary()
 {
-    temporaryCache.clear();
+    theCache.clearTemporary();
 }
 
 // clear both string caches
 void StrCache_ClearAll()
 {
-    persistentCache.clear();
-    temporaryCache.clear();
+    theCache.clear();
 }
 
 // strings in the temporary cache will be dealt with by clear
 void StrCache_Unref(int index)
 {
-    if (index >= 0)
-        persistentCache.unref(index);
+    theCache.unref(index);
 }
 
 int StrCache_Pop(int length)
 {
-    return ~(temporaryCache.pop(length));
+    return theCache.pop(length);
 }
 
 int StrCache_PopPersistent(int length)
 {
-    return persistentCache.pop(length);
+    int index = theCache.pop(length);
+    theCache.ref(index);
+    return index;
 }
 
 void StrCache_Copy(int index, const char *str)
 {
-    if (index < 0)
-        temporaryCache.copy(~index, str);
-    else
-        persistentCache.copy(index, str);
+    theCache.copy(index, str);
 }
 
 void StrCache_NCopy(int index, const char *str, int n)
 {
-    if (index < 0)
-        temporaryCache.ncopy(~index, str, n);
-    else
-        persistentCache.ncopy(index, str, n);
+    theCache.ncopy(index, str, n);
 }
 
 char *StrCache_Get(int index)
 {
-    return index < 0 ? temporaryCache.get(~index) : persistentCache.get(index);
+    return theCache.get(index);
 }
 
 int StrCache_Len(int index)
 {
-    return index < 0 ? temporaryCache.len(~index) : persistentCache.len(index);
+    return theCache.len(index);
 }
 
+// note: there's no need for this to return anything anymore
 int StrCache_Ref(int index)
 {
-    if (index < 0)
-    {
-        // get a constant reference for this temporary string
-        int newIndex = persistentCache.pop(temporaryCache.len(~index));
-        persistentCache.copy(newIndex, temporaryCache.get(~index));
-        return newIndex;
-    }
-    else
-    {
-        persistentCache.ref(index);
-        return index;
-    }
+    theCache.ref(index);
+    return index;
 }
 
 // see if a string is already in the persistent cache
 // return its index if it is, or -1 if it isn't
 int StrCache_FindString(const char *str)
 {
-    return persistentCache.findString(str);
+    return theCache.findString(str);
 }
 
 }; // extern "C"
