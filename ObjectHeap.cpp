@@ -28,6 +28,7 @@ public:
     union {
         ScriptObject *obj;
         ScriptList *list;
+        ScriptContainer *container;
     };
     bool isList;
     int refcount;
@@ -75,34 +76,20 @@ public:
     // adds a temporary reference for an object if there isn't one already
     void addTemporaryReference(int index);
 
-    // returns true if the object at the given index is persistent
-    inline bool isPersistent(int index)
-    {
-        if (objects[index].type != MEMBER_OBJECT)
-        {
-            return false;
-        }
-        else if (objects[index].isList)
-        {
-            return objects[index].list->persistent;
-        }
-        else
-        {
-            return objects[index].obj->persistent;
-        }
-    }
-
     // returns true if the given index is a list (not a link to a list)
     inline bool isList(int index)
     {
         return objects[index].type == MEMBER_OBJECT && objects[index].isList;
     }
 
+    // get the container with this index
+    inline ScriptContainer *getContainer(int index);
+
     // get the object with this index
-    ScriptObject *getObject(int index);
+    inline ScriptObject *getObject(int index);
 
     // get the list with this index
-    ScriptList *getList(int index);
+    inline ScriptList *getList(int index);
 
     // get the garbage collection color of the object with this index
     inline int getGCColor(int index)
@@ -159,14 +146,7 @@ void ObjectHeap::clear()
         {
             if (objects[i].type == MEMBER_OBJECT)
             {
-                if (objects[i].isList)
-                {
-                    delete objects[i].list;
-                }
-                else
-                {
-                    delete objects[i].obj;
-                }
+                delete objects[i].container;
             }
         }
         free(objects);
@@ -191,17 +171,11 @@ void ObjectHeap::clearTemporaryReferences()
     {
         int index = tempRefsList.get(i);
         assert(objects[index].type == MEMBER_OBJECT);
-        if (objects[index].refcount == 0 || !isPersistent(index))
+        if (objects[index].refcount == 0 || !objects[index].container->isPersistent())
         {
+            delete objects[index].container;
+            objects[index].container = NULL;
             objects[index].type = MEMBER_FREE;
-            if (objects[index].isList)
-            {
-                delete objects[index].list;
-            }
-            else
-            {
-                delete objects[index].obj;
-            }
             free_indices[++top] = index;
         }
     }
@@ -245,7 +219,7 @@ int ObjectHeap::pop()
 int ObjectHeap::popObject()
 {
     int index = pop();
-    objects[index].obj = new ScriptObject;
+    objects[index].container = new ScriptObject;
     objects[index].isList = false;
     return index;
 }
@@ -253,7 +227,7 @@ int ObjectHeap::popObject()
 int ObjectHeap::popList(size_t initialSize)
 {
     int index = pop();
-    objects[index].list = new ScriptList(initialSize);
+    objects[index].container = new ScriptList(initialSize);
     objects[index].isList = true;
     return index;
 }
@@ -274,20 +248,25 @@ void ObjectHeap::unref(int index)
     assert(objects[index].refcount >= 0);
 }
 
-ScriptObject *ObjectHeap::getObject(int index)
+ScriptContainer *ObjectHeap::getContainer(int index)
 {
     assert(index < size);
     assert(objects[index].type == MEMBER_OBJECT);
+    return objects[index].container;
+}
+
+ScriptObject *ObjectHeap::getObject(int index)
+{
+    ScriptContainer *container = getContainer(index);
     assert(!objects[index].isList);
-    return objects[index].obj;
+    return static_cast<ScriptObject*>(container);
 }
 
 ScriptList *ObjectHeap::getList(int index)
 {
-    assert(index < size);
-    assert(objects[index].type == MEMBER_OBJECT);
+    ScriptContainer *container = getContainer(index);
     assert(objects[index].isList);
-    return objects[index].list;
+    return static_cast<ScriptList*>(container);
 }
 
 void ObjectHeap::pushGray(int index)
@@ -318,7 +297,7 @@ void ObjectHeap::processOneGray()
     assert(objects[index].type == MEMBER_OBJECT);
     if (objects[index].isList)
     {
-        ScriptList *list = objects[index].list;
+        ScriptList *list = static_cast<ScriptList*>(objects[index].container);
         for (size_t i = 0; i < list->size(); i++)
         {
             ScriptVariant var;
@@ -328,7 +307,7 @@ void ObjectHeap::processOneGray()
     }
     else
     {
-        ScriptObject *obj = objects[index].obj;
+        ScriptObject *obj = static_cast<ScriptObject*>(objects[index].container);
         foreach_list(obj->map, ScriptVariant, iter)
         {
             processOneGraySub(iter.valuePtr());
@@ -357,10 +336,7 @@ void ObjectHeap::sweep()
         {
             //printf("delete object %i (gc)\n", i);
             objects[i].type = MEMBER_FREE;
-            if (objects[i].isList)
-                delete objects[i].list;
-            else
-                delete objects[i].obj;
+            delete objects[i].container;
             free_indices[++top] = i;
         }
     }
@@ -375,10 +351,7 @@ void ObjectHeap::listUnfreed()
     {
         if (objects[i].type == MEMBER_OBJECT)
         {
-            if (objects[i].isList)
-                objects[i].list->toString(buf, sizeof(buf));
-            else
-                objects[i].obj->toString(buf, sizeof(buf));
+            objects[i].container->toString(buf, sizeof(buf));
             printf("Unfreed object %i: %s\n", i, buf);
         }
     }
@@ -413,18 +386,10 @@ int ObjectHeap_CreateNewList(size_t initialSize)
 // makes temporary object persistent, or refs object if it's already persistent
 int ObjectHeap_Ref(int index)
 {
-    if (!theHeap.isPersistent(index))
+    ScriptContainer *container = theHeap.getContainer(index);
+    if (!container->isPersistent())
     {
-        if (theHeap.isList(index))
-        {
-            ScriptList *list = theHeap.getList(index);
-            list->makePersistent();
-        }
-        else
-        {
-            ScriptObject *obj = theHeap.getObject(index);
-            obj->makePersistent();
-        }
+        container->makePersistent();
     }
 
     theHeap.ref(index);
@@ -434,6 +399,11 @@ int ObjectHeap_Ref(int index)
 void ObjectHeap_Unref(int index)
 {
     theHeap.unref(index);
+}
+
+ScriptContainer *ObjectHeap_Get(int index)
+{
+    return theHeap.getContainer(index);
 }
 
 ScriptObject *ObjectHeap_GetObject(int index)
@@ -451,7 +421,7 @@ void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant 
     ScriptObject *obj = theHeap.getObject(index);
 
     // assigning something as a member of a persistent object
-    if (theHeap.isPersistent(index))
+    if (obj->isPersistent())
     {
         // this will make the value persistent if it isn't already
         value = ScriptVariant_Ref(value);
@@ -473,7 +443,7 @@ void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant
     ScriptList *list = theHeap.getList(index);
 
     // assigning something as a member of a persistent list
-    if (theHeap.isPersistent(index))
+    if (list->isPersistent())
     {
         // this will make the value persistent if it isn't already
         value = ScriptVariant_Ref(value);
@@ -495,7 +465,7 @@ bool ObjectHeap_InsertInList(int index, size_t indexInList, const ScriptVariant 
     ScriptList *list = theHeap.getList(index);
 
     // assigning something as a member of a persistent list
-    if (theHeap.isPersistent(index))
+    if (list->isPersistent())
     {
         // this will make the value persistent if it isn't already
         value = ScriptVariant_Ref(value);

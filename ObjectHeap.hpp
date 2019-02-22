@@ -1,6 +1,7 @@
 #ifndef OBJECT_HEAP_HPP
 #define OBJECT_HEAP_HPP
 
+#include "ScriptContainer.hpp"
 #include "ScriptObject.hpp"
 #include "ScriptList.hpp"
 #include "Stack.hpp"
@@ -20,6 +21,7 @@ int ObjectHeap_CreateNewObject();
 int ObjectHeap_CreateNewList(size_t initialSize);
 int ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);
+ScriptContainer *ObjectHeap_Get(int index);
 ScriptObject *ObjectHeap_GetObject(int index);
 ScriptList *ObjectHeap_GetList(int index);
 void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value);

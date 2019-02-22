@@ -5,6 +5,11 @@
 #include "ScriptObject.hpp"
 #include "ObjectHeap.hpp"
 
+// this has to be defined somewhere...since there's no ScriptContainer.cpp, let's put it here
+ScriptContainer::~ScriptContainer()
+{
+}
+
 ScriptObject::ScriptObject()
 {
     persistent = false;

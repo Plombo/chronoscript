@@ -1,23 +1,22 @@
 #ifndef SCRIPT_LIST_HPP
 #define SCRIPT_LIST_HPP
 
+#include "ScriptContainer.hpp"
 #include "ScriptVariant.hpp"
 #include "ArrayList.hpp"
 
-class ScriptList {
+class ScriptList : public ScriptContainer {
     friend class ObjectHeap;
     friend void ObjectHeap_SetListMember(int, size_t, const ScriptVariant *);
     friend bool ObjectHeap_InsertInList(int, size_t, const ScriptVariant *);
 
 private:
     ArrayList<ScriptVariant> storage;
-    bool persistent;
     bool currentlyPrinting;
 
 public:
     inline ScriptList(size_t initialSize) :
         storage(initialSize, {{.ptrVal = 0}, VT_EMPTY}),
-        persistent(false),
         currentlyPrinting(false)
     {}
 
@@ -48,9 +47,9 @@ public:
         return true;
     }
 
-    void makePersistent(); // make all values in list persistent
-    void print();
-    int toString(char *dst, int dstsize);
+    void makePersistent() override; // make all values in list persistent
+    void print() override;
+    int toString(char *dst, int dstsize) override;
 
 private:
     // don't call this directly; use ObjectHeap_SetListMember() instead

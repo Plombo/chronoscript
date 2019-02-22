@@ -181,9 +181,8 @@ int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsi
     case VT_STR:
         return snprintf(buffer, bufsize, "%s", StrCache_Get(svar->strVal));
     case VT_OBJECT:
-        return ObjectHeap_GetObject(svar->objVal)->toString(buffer, bufsize);
     case VT_LIST:
-        return ObjectHeap_GetList(svar->objVal)->toString(buffer, bufsize);
+        return ObjectHeap_Get(svar->objVal)->toString(buffer, bufsize);
     default:
         return snprintf(buffer, bufsize, "<Unprintable VARIANT type.>");
     }
