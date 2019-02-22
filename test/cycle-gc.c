@@ -13,8 +13,8 @@ void makeCycle()
 
 void main()
 {
-    set_global_variant("obj", {"foo": 3});
-    set_global_variant("obj", makeCycle());
-    set_global_variant("obj", makeCycle());
+    globals().obj = {"foo": 3};
+    globals().obj = makeCycle();
+    globals().obj = makeCycle();
 }
 

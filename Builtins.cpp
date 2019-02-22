@@ -223,74 +223,6 @@ HRESULT builtin_globals(int numParams, ScriptVariant *params, ScriptVariant *ret
     return S_OK;
 }
 
-// get_global_variant(name)
-// returns global variant with the given name, or fails if no such variant exists
-HRESULT builtin_get_global_variant(int numParams, ScriptVariant *params, ScriptVariant *retval)
-{
-    if (numParams != 1)
-    {
-        printf("Error: get_global_variant(name) requires exactly 1 parameter\n");
-        return E_FAIL;
-    }
-    else if (params[0].vt != VT_STR)
-    {
-        printf("Error: get_global_variant: name parameter must be a string\n");
-        return E_FAIL;
-    }
-
-    if (globalsObject.vt == VT_EMPTY)
-    {
-        // globals object doesn't exist yet; create it
-        globalsObject.objVal = ObjectHeap_CreateNewObject();
-        globalsObject.vt = VT_OBJECT;
-        ScriptVariant_Ref(&globalsObject);
-    }
-
-    const char *name = StrCache_Get(params[0].strVal);
-    if (!ObjectHeap_GetObject(globalsObject.objVal)->get(retval, name))
-    {
-        printf("Error: get_global_variant: no global variant named '%s'\n", name);
-        return E_FAIL;
-    }
-
-    if (retval->vt == VT_OBJECT || retval->vt == VT_LIST)
-    {
-        ObjectHeap_AddTemporaryReference(retval->objVal);
-    }
-
-    return S_OK;
-}
-
-// set_global_variant(name, value)
-// sets global variant with the given name and value
-HRESULT builtin_set_global_variant(int numParams, ScriptVariant *params, ScriptVariant *retval)
-{
-    if (numParams != 2)
-    {
-        printf("Error: set_global_variant(name, value) requires exactly 2 parameters\n");
-        return E_FAIL;
-    }
-    else if (params[0].vt != VT_STR)
-    {
-        printf("Error: set_global_variant: name parameter must be a string\n");
-        return E_FAIL;
-    }
-
-    if (globalsObject.vt == VT_EMPTY)
-    {
-        // globals object doesn't exist yet; create it
-        globalsObject.objVal = ObjectHeap_CreateNewObject();
-        globalsObject.vt = VT_OBJECT;
-        ScriptVariant_Ref(&globalsObject);
-    }
-
-    const char *name = StrCache_Get(params[0].strVal);
-    ObjectHeap_SetObjectMember(globalsObject.objVal, name, &params[1]);
-    retval->vt = VT_EMPTY;
-
-    return S_OK;
-}
-
 // string_char_at(string, index)
 // returns the character (as an integer)
 HRESULT builtin_string_char_at(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -437,7 +369,6 @@ static Builtin builtinsArray[] = {
     DEF_BUILTIN(char_from_integer),
     DEF_BUILTIN(file_read),
     DEF_BUILTIN(get_args),
-    DEF_BUILTIN(get_global_variant),
     DEF_BUILTIN(globals),
     DEF_BUILTIN(list_append),
     DEF_BUILTIN(list_insert),
@@ -445,7 +376,6 @@ static Builtin builtinsArray[] = {
     DEF_BUILTIN(list_remove),
     DEF_BUILTIN(log),
     DEF_BUILTIN(log_write),
-    DEF_BUILTIN(set_global_variant),
     DEF_BUILTIN(string_char_at),
     DEF_BUILTIN(string_length),
 };

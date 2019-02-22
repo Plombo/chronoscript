@@ -2,11 +2,11 @@
 
 void main()
 {
-    set_global_variant("foo", 5);
-    expect(get_global_variant("foo"), 5);
-    set_global_variant("foo", "foo_value1");
-    expect(get_global_variant("foo"), "foo_value1");
-    set_global_variant("foo", "foo_value2");
-    expect(get_global_variant("foo"), "foo_value2");
+    globals().foo = 5;
+    expect(globals().foo, 5);
+    globals().foo = "foo_value1";
+    expect(globals().foo, "foo_value1");
+    globals().foo = "foo_value2";
+    expect(globals().foo, "foo_value2");
 }
 
