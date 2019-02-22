@@ -127,7 +127,9 @@ void StrCache::clearTemporary()
     for (int i = 0; i < numTemps; i++)
     {
         int index = tempRefs.get(i);
-        if (strcache[index].ref == 0)
+
+        // If strcache[index].str is NULL, it means the index was added twice to tempRefs. No harm done.
+        if (strcache[index].ref == 0 && strcache[index].str != NULL)
         {
             free(strcache[index].str);
             strcache[index].str = NULL;
