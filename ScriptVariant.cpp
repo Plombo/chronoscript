@@ -773,15 +773,12 @@ HRESULT ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptV
 {
     if (container->vt == VT_OBJECT)
     {
-        if (key->vt == VT_STR)
+        if (ObjectHeap_SetObjectMember(container->objVal, key, value))
         {
-            ObjectHeap_SetObjectMember(container->objVal, StrCache_Get(key->strVal), value);
             return S_OK;
         }
         else
         {
-            // TODO: include the invalid key in the error message
-            printf("error: object key must be a string\n");
             return E_FAIL;
         }
     }

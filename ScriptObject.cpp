@@ -31,9 +31,17 @@ ScriptObject::~ScriptObject()
     }
 }
 
-void ScriptObject::set(const char *key, const ScriptVariant *value)
+bool ScriptObject::set(const ScriptVariant *key, const ScriptVariant *value)
 {
-    if (map.findByName(key))
+    if (key->vt != VT_STR)
+    {
+        // TODO: include the invalid key in the error message
+        printf("error: object key must be a string\n");
+        return false;
+    }
+
+    const char *keyString = StrCache_Get(key->strVal);
+    if (map.findByName(keyString))
     {
         if (persistent)
             ScriptVariant_Unref(map.valuePtr());
@@ -42,8 +50,10 @@ void ScriptObject::set(const char *key, const ScriptVariant *value)
     else
     {
         map.gotoLast();
-        map.insertAfter(*value, key);
+        map.insertAfter(*value, keyString);
     }
+
+    return true;
 }
 
 bool ScriptObject::get(ScriptVariant *dst, const ScriptVariant *key)

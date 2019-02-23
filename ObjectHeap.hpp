@@ -24,7 +24,7 @@ void ObjectHeap_Unref(int index);
 ScriptContainer *ObjectHeap_Get(int index);
 ScriptObject *ObjectHeap_GetObject(int index);
 ScriptList *ObjectHeap_GetList(int index);
-void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value);
+bool ObjectHeap_SetObjectMember(int index, const ScriptVariant *key, const ScriptVariant *value);
 void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant *value);
 bool ObjectHeap_InsertInList(int index, size_t indexInList, const ScriptVariant *value);
 void ObjectHeap_ListUnfreed();

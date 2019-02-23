@@ -424,7 +424,7 @@ ScriptList *ObjectHeap_GetList(int index)
     return theHeap.getList(index);
 }
 
-void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant *value)
+bool ObjectHeap_SetObjectMember(int index, const ScriptVariant *key, const ScriptVariant *value)
 {
     ScriptObject *obj = theHeap.getObject(index);
 
@@ -443,7 +443,7 @@ void ObjectHeap_SetObjectMember(int index, const char *key, const ScriptVariant 
         }
     }
 
-    obj->set(key, value);
+    return obj->set(key, value);
 }
 
 void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant *value)
