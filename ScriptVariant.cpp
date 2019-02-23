@@ -732,20 +732,12 @@ HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *cont
 {
     if (container->vt == VT_OBJECT)
     {
-        if (key->vt == VT_STR)
+        if (ObjectHeap_GetObject(container->objVal)->get(dst, key))
         {
-            ScriptObject *object = ObjectHeap_GetObject(container->objVal);
-            if (!object->get(dst, StrCache_Get(key->strVal)))
-            {
-                printf("error: object has no member named %s\n", StrCache_Get(key->strVal));
-                return E_FAIL;
-            }
             return S_OK;
         }
         else
         {
-            // TODO: include the invalid key in the error message
-            printf("error: object key must be a string\n");
             return E_FAIL;
         }
     }

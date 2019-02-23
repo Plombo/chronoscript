@@ -15,13 +15,14 @@ private:
 
     // don't call this directly; use ObjectHeap_SetObjectMember() instead
     void set(const char *key, const ScriptVariant *value);
+    //void set(const ScriptVariant *key, const ScriptVariant *value);
 
 public:
     ScriptObject();
     ~ScriptObject();
 
     // returns true on success, false on error
-    bool get(ScriptVariant *dst, const char *key);
+    bool get(ScriptVariant *dst, const ScriptVariant *key);
 
     void makePersistent() override; // make all values in map persistent
     void print() override;

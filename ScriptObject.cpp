@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "globals.h"
 #include "List.hpp"
 #include "ScriptVariant.hpp"
 #include "StrCache.hpp"
@@ -45,15 +46,25 @@ void ScriptObject::set(const char *key, const ScriptVariant *value)
     }
 }
 
-bool ScriptObject::get(ScriptVariant *dst, const char *key)
+bool ScriptObject::get(ScriptVariant *dst, const ScriptVariant *key)
 {
-    if (map.findByName(key))
+    if (key->vt == VT_STR)
     {
-        *dst = map.retrieve();
-        return true;
+        if (map.findByName(StrCache_Get(key->strVal)))
+        {
+            *dst = map.retrieve();
+            return true;
+        }
+        else
+        {
+            printf("error: object has no member named %s\n", StrCache_Get(key->strVal));
+            return false;
+        }
     }
     else
     {
+        // TODO: include the invalid key in the error message
+        printf("error: object key must be a string\n");
         return false;
     }
 }
