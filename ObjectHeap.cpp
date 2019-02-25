@@ -316,9 +316,12 @@ void ObjectHeap::processOneGray()
     else
     {
         ScriptObject *obj = static_cast<ScriptObject*>(objects[index].container);
-        foreach_list(obj->map, ScriptVariant, iter)
+        for (size_t i = 0; i < (1 << obj->log2_hashTableSize); i++)
         {
-            processOneGraySub(iter.valuePtr());
+            if (obj->hashTable[i].key != -1)
+            {
+                processOneGraySub(&obj->hashTable[i].value);
+            }
         }
     }
     objects[index].gcColor = GC_COLOR_BLACK;
