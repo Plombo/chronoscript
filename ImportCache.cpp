@@ -110,16 +110,16 @@ error:
 
 bool compile(SSABuilder *func)
 {
-    printf("\n~~~~~ %s ~~~~~\n", func->functionName);
+    printf("\n~~~~~ %s (%i params) ~~~~~\n", func->functionName, func->paramCount);
 #if 0
     printf("Instructions before processing:\n");
     func->printInstructionList();
 #endif
     while(func->removeDeadCode());
     func->prepareForRegAlloc();
+#if DEBUG_RA
     printf("\nInstructions after processing:\n");
     func->printInstructionList();
-#if DEBUG_RA
     printf("\n%i temporaries\n\n", func->temporaries.size());
 #endif
 
@@ -178,7 +178,9 @@ bool compile(SSABuilder *func)
     }
 
     // print the final instruction list
+#ifdef DEBUG_RA // only print "Final instruction list" if we've already printed non-final instruction lists
     printf("\nFinal instruction list:\n");
+#endif
     foreach_list(func->instructionList, Instruction*, iter)
     {
         iter.value()->print();
@@ -211,10 +213,12 @@ bool link(SSABuilder *func, List<ExecFunction*> *localFunctions, List<Interprete
         if (localFunctions->findByName(call->functionName))
         {
             call->functionRef = localFunctions->retrieve();
-            printf("linked call to %s\n", call->functionName);
+            //printf("linked call to %s\n", call->functionName);
         }
         else if ((call->functionRef = ImportList_GetFunctionPointer(imports, call->functionName)))
-            printf("linked call to %s (imported)\n", call->functionName);
+        {
+            //printf("linked call to %s (imported)\n", call->functionName);
+        }
         else
         {
             int builtin = getBuiltinIndex(call->functionName);
@@ -222,7 +226,7 @@ bool link(SSABuilder *func, List<ExecFunction*> *localFunctions, List<Interprete
             {
                 call->op = OP_CALL_BUILTIN;
                 call->builtinRef = builtin;
-                printf("linked call to builtin %s\n", call->functionName);
+                //printf("linked call to builtin %s\n", call->functionName);
             }
             else
             {
@@ -324,7 +328,9 @@ Interpreter *compileFile(const char *filename)
     execBuilder.buildExecutable();
     ralloc_free(parser.memCtx);
     free(scriptText);
+#if DEBUG_EXEC_BUILDER
     execBuilder.printInstructions();
+#endif
     return execBuilder.interpreter;
 
 error:
