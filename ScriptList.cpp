@@ -24,16 +24,7 @@ void ScriptList::makePersistent()
     for (i = 0; i < size; i++)
     {
         ScriptVariant *var = storage.getPtr(i);
-        if (var->vt == VT_OBJECT || var->vt == VT_LIST)
-        {
-            //printf("make object %i persistent\n", var->objVal);
-            var->objVal = ObjectHeap_Ref(var->objVal);
-        }
-        else if (var->vt == VT_STR)
-        {
-            //printf("make string %i persistent\n", var->strVal);
-            var->strVal = StrCache_Ref(var->strVal);
-        }
+        ScriptVariant_Ref(var);
     }
 }
 

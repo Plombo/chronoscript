@@ -395,7 +395,7 @@ int ObjectHeap_CreateNewList(size_t initialSize)
 }
 
 // makes temporary object persistent, or refs object if it's already persistent
-int ObjectHeap_Ref(int index)
+void ObjectHeap_Ref(int index)
 {
     ScriptContainer *container = theHeap.getContainer(index);
     if (!container->isPersistent())
@@ -404,7 +404,6 @@ int ObjectHeap_Ref(int index)
     }
 
     theHeap.ref(index);
-    return index;
 }
 
 void ObjectHeap_Unref(int index)

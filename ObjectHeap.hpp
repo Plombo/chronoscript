@@ -19,7 +19,7 @@ void ObjectHeap_ClearTemporary();
 void ObjectHeap_ClearAll();
 int ObjectHeap_CreateNewObject();
 int ObjectHeap_CreateNewList(size_t initialSize);
-int ObjectHeap_Ref(int index);
+void ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);
 ScriptContainer *ObjectHeap_Get(int index);
 ScriptObject *ObjectHeap_GetObject(int index);

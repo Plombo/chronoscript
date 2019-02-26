@@ -11,7 +11,7 @@ extern "C" {
 void StrCache_ClearTemporary();
 void StrCache_ClearAll();
 void StrCache_Unref(int index);
-int StrCache_Ref(int index);
+void StrCache_Ref(int index);
 int StrCache_Pop(int length);
 int StrCache_PopPersistent(int length);
 char *StrCache_Get(int index);

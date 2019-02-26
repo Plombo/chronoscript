@@ -267,7 +267,9 @@ void linkConstants(SSABuilder *func, List<ScriptVariant*> *constants)
                 constants->insertAfter(&c->constValue);
                 c->id = i;
                 if (c->constValue.vt == VT_STR)
-                    c->constValue.strVal = StrCache_Ref(c->constValue.strVal);
+                {
+                    StrCache_Ref(c->constValue.strVal);
+                }
             }
         }
     }
@@ -276,7 +278,9 @@ void linkConstants(SSABuilder *func, List<ScriptVariant*> *constants)
     {
         ScriptVariant *var = &constIter.value()->constValue;
         if (var->vt == VT_STR)
+        {
             StrCache_Unref(var->strVal);
+        }
     }
 }
 

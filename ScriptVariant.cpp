@@ -53,7 +53,8 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
     if (index >= 0)
     {
         var->vt = VT_STR;
-        var->strVal = StrCache_Ref(index);
+        var->strVal = index;
+        StrCache_Ref(index);
     }
     else
     {

@@ -309,10 +309,9 @@ int StrCache_Len(int index)
 }
 
 // note: there's no need for this to return anything anymore
-int StrCache_Ref(int index)
+void StrCache_Ref(int index)
 {
     theCache.ref(index);
-    return index;
 }
 
 // see if a string is already in the persistent cache
