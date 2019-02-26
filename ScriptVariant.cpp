@@ -637,15 +637,10 @@ HRESULT ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, cons
             ScriptVariant_Clear(retvar);
             return E_FAIL;
         }
-        else if (svar->vt == VT_DECIMAL || rightChild->vt == VT_DECIMAL)
+        else
         {
             retvar->dblVal = dbl1 / dbl2;
             retvar->vt = VT_DECIMAL;
-        }
-        else
-        {
-            retvar->lVal = (int32_t)(dbl1 / dbl2);
-            retvar->vt = VT_INTEGER;
         }
     }
     else
