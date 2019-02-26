@@ -233,7 +233,8 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 dst = &function->interpreter->globals[inst->dst];
                 fetchSrc(src0, inst->src0);
                 ScriptVariant_Unref(dst);
-                *dst = *ScriptVariant_Ref(src0);
+                *dst = *src0;
+                ScriptVariant_Ref(dst);
                 break;
             default:
                 printf("error: unknown opcode %i\n", inst->opCode);
@@ -266,7 +267,7 @@ HRESULT Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, 
     HRESULT result = execFunction(function, params, retval);
     if (result == S_OK)
     {
-        *retval = *ScriptVariant_Ref(retval);
+        ScriptVariant_Ref(retval);
     }
     ObjectHeap_ClearTemporary();
     StrCache_ClearTemporary();

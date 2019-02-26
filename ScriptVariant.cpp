@@ -22,27 +22,16 @@ void ScriptVariant_Init(ScriptVariant *var)
     memset(var, 0, sizeof(*var));
 }
 
-// makes persistent version of variant if needed, and returns it
-ScriptVariant *ScriptVariant_Ref(const ScriptVariant *var)
+void ScriptVariant_Ref(const ScriptVariant *var)
 {
-    static ScriptVariant retval;
-
     if (var->vt == VT_STR)
     {
-        retval.strVal = StrCache_Ref(var->strVal);
-        retval.vt = VT_STR;
+        StrCache_Ref(var->strVal);
     }
     else if (var->vt == VT_OBJECT || var->vt == VT_LIST)
     {
-        retval.objVal = ObjectHeap_Ref(var->objVal);
-        retval.vt = var->vt;
+        ObjectHeap_Ref(var->objVal);
     }
-    else
-    {
-        retval = *var;
-    }
-
-    return &retval;
 }
 
 void ScriptVariant_Unref(ScriptVariant *var)

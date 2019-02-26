@@ -54,7 +54,7 @@ bool ScriptVariant_IsTrue(const ScriptVariant *svar);
 bool ScriptVariant_IsEqual(const ScriptVariant *svar, const ScriptVariant *rightChild);
 int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsize);
 
-ScriptVariant *ScriptVariant_Ref(const ScriptVariant *var);
+void ScriptVariant_Ref(const ScriptVariant *var);
 void ScriptVariant_Unref(ScriptVariant *var);
 
 HRESULT ScriptVariant_Bit_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);

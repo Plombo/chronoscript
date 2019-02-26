@@ -435,7 +435,7 @@ bool ObjectHeap_SetObjectMember(int index, const ScriptVariant *key, const Scrip
     if (obj->isPersistent())
     {
         // this will make the value persistent if it isn't already
-        value = ScriptVariant_Ref(value);
+        ScriptVariant_Ref(value);
 
         // a black object can't contain a white value, so make the white value gray
         if ((value->vt == VT_OBJECT || value->vt == VT_LIST) &&
@@ -457,7 +457,7 @@ void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant
     if (list->isPersistent())
     {
         // this will make the value persistent if it isn't already
-        value = ScriptVariant_Ref(value);
+        ScriptVariant_Ref(value);
 
         // a black object can't contain a white value, so make the white value gray
         if ((value->vt == VT_OBJECT || value->vt == VT_LIST) &&
@@ -479,7 +479,7 @@ bool ObjectHeap_InsertInList(int index, size_t indexInList, const ScriptVariant 
     if (list->isPersistent())
     {
         // this will make the value persistent if it isn't already
-        value = ScriptVariant_Ref(value);
+        ScriptVariant_Ref(value);
 
         // a black object can't contain a white value, so make the white value gray
         if ((value->vt == VT_OBJECT || value->vt == VT_LIST) &&
