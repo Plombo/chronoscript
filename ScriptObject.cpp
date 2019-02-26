@@ -51,7 +51,7 @@ ScriptObject::ScriptObject()
 ScriptObject::~ScriptObject()
 {
     // unref hash table keys and (if persistent) values
-    for (size_t i = 0; i < (1 << log2_hashTableSize); i++)
+    for (size_t i = 0; i < (1u << log2_hashTableSize); i++)
     {
         if (hashTable[i].key != -1)
         {
@@ -92,7 +92,7 @@ inline bool keysEqual(int key1, int key2)
 // returns NULL if key is not in the object
 ObjectHashNode *ScriptObject::getNodeForKey(int key)
 {
-    unsigned int position = string_hash(StrCache_Get(key), StrCache_Len(key)) % (1 << log2_hashTableSize);
+    unsigned int position = string_hash(StrCache_Get(key), StrCache_Len(key)) % (1u << log2_hashTableSize);
     while (true)
     {
         ObjectHashNode *node = &hashTable[position];
@@ -133,10 +133,10 @@ static unsigned int ceillog2(unsigned int x)
 void ScriptObject::resizeHashTable(unsigned int minNewSize)
 {
     ObjectHashNode *oldHashTable = hashTable;
-    size_t oldSize = (1 << log2_hashTableSize);
+    size_t oldSize = (1u << log2_hashTableSize);
 
     log2_hashTableSize = ceillog2(minNewSize);
-    size_t newSize = (1 << log2_hashTableSize);
+    size_t newSize = (1u << log2_hashTableSize);
     hashTable = new ObjectHashNode[newSize];
     lastFreeNode = newSize - 1;
 
@@ -167,7 +167,7 @@ ssize_t ScriptObject::getFreePosition()
 
 size_t ScriptObject::mainPositionForKey(int key)
 {
-    return string_hash(StrCache_Get(key), StrCache_Len(key)) % (1 << log2_hashTableSize);
+    return string_hash(StrCache_Get(key), StrCache_Len(key)) % (1u << log2_hashTableSize);
 }
 
 bool ScriptObject::set(int key, const ScriptVariant *value)
@@ -194,7 +194,7 @@ bool ScriptObject::set(int key, const ScriptVariant *value)
         if (freePosition == -1)
         {
             // The hash table is full; it needs to be resized so the element can be inserted.
-            resizeHashTable(1 + (1 << log2_hashTableSize));
+            resizeHashTable(1 + (1u << log2_hashTableSize));
             return set(key, value);
         }
 
@@ -212,7 +212,7 @@ bool ScriptObject::set(int key, const ScriptVariant *value)
         {
             // The colliding node is out of its main position. Move it to the free position.
             *freeNode = *mainPosition;
-            while (otherPosition->next != mainIndex)
+            while (otherPosition->next != (int)mainIndex)
             {
                 otherPosition = &hashTable[otherPosition->next];
             }
@@ -270,7 +270,7 @@ void ScriptObject::makePersistent()
 {
     if (persistent) return;
     persistent = true; // set it up here to avoid infinite recursion in case of cycles
-    for (size_t i = 0; i < (1 << log2_hashTableSize); i++)
+    for (size_t i = 0; i < (1u << log2_hashTableSize); i++)
     {
         if (hashTable[i].key != -1)
         {
@@ -292,7 +292,7 @@ void ScriptObject::print()
     currentlyPrinting = true;
 
     printf("{");
-    for (size_t i = 0; i < (1 << log2_hashTableSize); i++)
+    for (size_t i = 0; i < (1u << log2_hashTableSize); i++)
     {
         if (hashTable[i].key == -1)
         {
@@ -330,7 +330,7 @@ int ScriptObject::toString(char *dst, int dstsize)
     currentlyPrinting = true;
 
     SNPRINTF("{");
-    for (size_t i = 0; i < (1 << log2_hashTableSize); i++)
+    for (size_t i = 0; i < (1u << log2_hashTableSize); i++)
     {
         if (hashTable[i].key == -1)
         {

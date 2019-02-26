@@ -316,7 +316,7 @@ void ObjectHeap::processOneGray()
     else
     {
         ScriptObject *obj = static_cast<ScriptObject*>(objects[index].container);
-        for (size_t i = 0; i < (1 << obj->log2_hashTableSize); i++)
+        for (size_t i = 0; i < (1u << obj->log2_hashTableSize); i++)
         {
             if (obj->hashTable[i].key != -1)
             {
