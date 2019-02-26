@@ -388,53 +388,57 @@ void Export::print()
 
 const char *getOpCodeName(OpCode op)
 {
-    const char *opCodeNames[] = {
-        "noop",
-        "bb_start",
-        "phi",
+    switch (op)
+    {
+        case OP_NOOP:                return "noop";
+        case OP_BB_START:            return "bb_start";
+        case OP_PHI:                 return "phi";
 
-        "jmp",
-        "branch_false",
-        "branch_true",
-        "branch_equal",
-        "return",
-        
-        "mov",
-        "get_global",
+        case OP_JMP:                 return "jmp";
+        case OP_BRANCH_FALSE:        return "branch_false";
+        case OP_BRANCH_TRUE:         return "branch_true";
+        case OP_BRANCH_EQUAL:        return "branch_equal";
+        case OP_RETURN:              return "return";
 
-        "neg",
-        "bool_not",
-        "bit_not",
-        "bool",
+        case OP_MOV:                 return "mov";
+        case OP_GET_GLOBAL:          return "get_global";
 
-        "bit_or",
-        "xor",
-        "bit_and",
-        "eq",
-        "ne",
-        "lt",
-        "gt",
-        "ge",
-        "le",
-        "shl",
-        "shr",
-        "add",
-        "sub",
-        "mul",
-        "div",
-        "mod",
+        case OP_NEG:                 return "neg";
+        case OP_BOOL_NOT:            return "bool_not";
+        case OP_BIT_NOT:             return "bit_not";
+        case OP_BOOL:                return "bool";
 
-        "call",
-        "call_builtin",
+        case OP_BIT_OR:              return "bit_or";
+        case OP_XOR:                 return "xor";
+        case OP_BIT_AND:             return "bit_and";
+        case OP_EQ:                  return "eq";
+        case OP_NE:                  return "ne";
+        case OP_LT:                  return "lt";
+        case OP_GT:                  return "gt";
+        case OP_GE:                  return "ge";
+        case OP_LE:                  return "le";
+        case OP_SHL:                 return "shl";
+        case OP_SHR:                 return "shr";
+        case OP_ADD:                 return "add";
+        case OP_SUB:                 return "sub";
+        case OP_MUL:                 return "mul";
+        case OP_DIV:                 return "div";
+        case OP_MOD:                 return "mod";
 
-        "mkobject",
-        "mklist",
-        "get",
-        "set",
+        case OP_CALL:                return "call";
+        case OP_CALL_BUILTIN:        return "call_builtin";
 
-        "export",
-    };
-    return opCodeNames[op];
+        case OP_MKOBJECT:            return "mkobject";
+        case OP_MKLIST:              return "mklist";
+        case OP_GET:                 return "get";
+        case OP_SET:                 return "set";
+
+        case OP_EXPORT:              return "export";
+
+        case OP_ERR:                 return "???";
+    }
+
+    return "???";
 }
 
 
