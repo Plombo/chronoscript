@@ -44,7 +44,7 @@ ScriptObject::ScriptObject()
     currentlyPrinting = false;
     log2_hashTableSize = 0;
     hashTable = new ObjectHashNode[1];
-    lastFreeNode = 0;
+    lastFreeNode = 1;
 }
 
 // destructor: unrefs all keys and values in hash table
@@ -138,7 +138,7 @@ void ScriptObject::resizeHashTable(unsigned int minNewSize)
     log2_hashTableSize = ceillog2(minNewSize);
     size_t newSize = (1u << log2_hashTableSize);
     hashTable = new ObjectHashNode[newSize];
-    lastFreeNode = newSize - 1;
+    lastFreeNode = newSize;
 
     for (ssize_t i = oldSize - 1; i >= 0; i--)
     {
@@ -154,11 +154,11 @@ ssize_t ScriptObject::getFreePosition()
 {
     while (lastFreeNode > 0)
     {
+        --lastFreeNode;
         if (hashTable[lastFreeNode].key == -1)
         {
             return lastFreeNode;
         }
-        --lastFreeNode;
     }
 
     // there is no free space in the table; it will need to be resized
