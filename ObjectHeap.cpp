@@ -18,13 +18,8 @@ enum GCColor {
     GC_COLOR_BLACK
 };
 
-class HeapMember {
-public:
-    union {
-        ScriptObject *obj;
-        ScriptList *list;
-        ScriptContainer *container;
-    };
+struct HeapMember {
+    ScriptContainer *container;
     bool isList;
     unsigned char gcColor;
     int refcount;
