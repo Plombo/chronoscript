@@ -18,11 +18,6 @@ enum GCColor {
     GC_COLOR_BLACK
 };
 
-enum MemberType {
-    MEMBER_FREE,
-    MEMBER_OBJECT,
-};
-
 class HeapMember {
 public:
     union {
@@ -33,7 +28,6 @@ public:
     bool isList;
     int refcount;
     int gcColor;
-    MemberType type;
 };
 
 class ObjectHeap {
@@ -79,7 +73,7 @@ public:
     // returns true if the given index is a list (not a link to a list)
     inline bool isList(int index)
     {
-        return objects[index].type == MEMBER_OBJECT && objects[index].isList;
+        return objects[index].container != NULL && objects[index].isList;
     }
 
     // get the container with this index
@@ -94,7 +88,7 @@ public:
     // get the garbage collection color of the object with this index
     inline int getGCColor(int index)
     {
-        assert(objects[index].type == MEMBER_OBJECT);
+        assert(objects[index].container != NULL);
         return objects[index].gcColor;
     }
 
@@ -144,7 +138,7 @@ void ObjectHeap::clear()
     {
         for (i = 0; i < size; i++)
         {
-            if (objects[i].type == MEMBER_OBJECT)
+            if (objects[i].container != NULL)
             {
                 delete objects[i].container;
             }
@@ -172,13 +166,12 @@ void ObjectHeap::clearTemporaryReferences()
         int index = tempRefsList.get(i);
 
         // If type is MEMBER_FREE, it just means the index was added twice to tempRefsList. No harm done.
-        if (objects[index].type == MEMBER_OBJECT)
+        if (objects[index].container != NULL)
         {
             if (objects[index].refcount == 0 || !objects[index].container->isPersistent())
             {
                 delete objects[index].container;
                 objects[index].container = NULL;
-                objects[index].type = MEMBER_FREE;
                 free_indices[++top] = index;
             }
         }
@@ -202,7 +195,7 @@ int ObjectHeap::pop()
         __reallocto(free_indices, int*, size, size + HEAP_SIZE_INCREMENT);
         for (i = 0; i < HEAP_SIZE_INCREMENT; i++)
         {
-            objects[size + i].type = MEMBER_FREE;
+            objects[size + i].container = NULL;
             free_indices[i] = size + i;
         }
 
@@ -212,8 +205,7 @@ int ObjectHeap::pop()
         //printf("debug: object heap %p resized to %d \n", this, size);
     }
     i = free_indices[top--];
-    assert(objects[i].type == MEMBER_FREE);
-    objects[i].type = MEMBER_OBJECT;
+    assert(objects[i].container == NULL);
     objects[i].refcount = 0;
     tempRefsList.append(i);
     objects[i].gcColor = GC_COLOR_WHITE;
@@ -238,7 +230,7 @@ int ObjectHeap::popList(size_t initialSize)
 
 void ObjectHeap::ref(int index)
 {
-    assert(index < size && objects[index].type == MEMBER_OBJECT);
+    assert(index < size && objects[index].container != NULL);
     ++objects[index].refcount;
 }
 
@@ -246,7 +238,7 @@ void ObjectHeap::unref(int index)
 {
     assert(index < size);
     // unreffing a free object is possible during garbage collection
-    if (objects[index].type == MEMBER_FREE) return;
+    if (objects[index].container == NULL) return;
 
     --objects[index].refcount;
     assert(objects[index].refcount >= 0);
@@ -259,7 +251,7 @@ void ObjectHeap::unref(int index)
 ScriptContainer *ObjectHeap::getContainer(int index)
 {
     assert(index < size);
-    assert(objects[index].type == MEMBER_OBJECT);
+    assert(objects[index].container != NULL);
     return objects[index].container;
 }
 
@@ -302,7 +294,7 @@ void ObjectHeap::processOneGray()
 {
     int index = grayStack.top();
     grayStack.pop();
-    assert(objects[index].type == MEMBER_OBJECT);
+    assert(objects[index].container != NULL);
     if (objects[index].isList)
     {
         ScriptList *list = static_cast<ScriptList*>(objects[index].container);
@@ -342,12 +334,12 @@ void ObjectHeap::sweep()
     assert(grayStack.isEmpty());
     for (int i = 0; i < size; i++)
     {
-        if (objects[i].type == MEMBER_OBJECT &&
+        if (objects[i].container != NULL &&
             objects[i].gcColor == GC_COLOR_WHITE)
         {
             //printf("delete object %i (gc)\n", i);
-            objects[i].type = MEMBER_FREE;
             delete objects[i].container;
+            objects[i].container = NULL;
             free_indices[++top] = i;
         }
     }
@@ -360,7 +352,7 @@ void ObjectHeap::listUnfreed()
     int i;
     for (i = 0; i < size; i++)
     {
-        if (objects[i].type == MEMBER_OBJECT)
+        if (objects[i].container != NULL)
         {
             objects[i].container->toString(buf, sizeof(buf));
             printf("Unfreed object %i: %s\n", i, buf);
