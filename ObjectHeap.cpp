@@ -26,8 +26,8 @@ public:
         ScriptContainer *container;
     };
     bool isList;
+    unsigned char gcColor;
     int refcount;
-    int gcColor;
 };
 
 class ObjectHeap {
