@@ -26,8 +26,6 @@ struct HeapMember {
 };
 
 class ObjectHeap {
-    friend class GarbageCollector;
-    
 private:
     HeapMember *objects;
     ArrayList<int> tempRefsList;
