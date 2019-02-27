@@ -18,10 +18,10 @@ class ScriptObject : public ScriptContainer {
     friend bool ObjectHeap_SetObjectMember(int, const ScriptVariant *, const ScriptVariant *);
 
 private:
+    bool currentlyPrinting;
     ObjectHashNode *hashTable;
     unsigned int log2_hashTableSize;
     unsigned int lastFreeNode;
-    bool currentlyPrinting;
 
     ObjectHashNode *getNodeForKey(int key);
     ssize_t getFreePosition();

@@ -11,13 +11,13 @@ class ScriptList : public ScriptContainer {
     friend bool ObjectHeap_InsertInList(int, size_t, const ScriptVariant *);
 
 private:
-    ArrayList<ScriptVariant> storage;
     bool currentlyPrinting;
+    ArrayList<ScriptVariant> storage;
 
 public:
     inline ScriptList(size_t initialSize) :
-        storage(initialSize, {{.ptrVal = 0}, VT_EMPTY}),
-        currentlyPrinting(false)
+        currentlyPrinting(false),
+        storage(initialSize, {{.ptrVal = 0}, VT_EMPTY})
     {}
 
     ~ScriptList();
