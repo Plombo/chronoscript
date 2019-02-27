@@ -9,7 +9,7 @@ static bool builtinsInited = false;
 static List<unsigned int> builtinIndices;
 static ScriptVariant globalsObject = {{.ptrVal = NULL}, .vt = VT_EMPTY};
 
-extern size_t script_arg_count;
+extern int script_arg_count;
 extern char **script_args;
 
 // mark the globals object as referenced for GC purposes
@@ -69,7 +69,7 @@ HRESULT builtin_get_args(int numParams, ScriptVariant *params, ScriptVariant *re
     }
 
     int list = ObjectHeap_CreateNewList(script_arg_count);
-    for (size_t i = 0; i < script_arg_count; i++)
+    for (int i = 0; i < script_arg_count; i++)
     {
         int len = strlen(script_args[i]);
         ScriptVariant stringVar;
