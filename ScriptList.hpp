@@ -1,28 +1,29 @@
 #ifndef SCRIPT_LIST_HPP
 #define SCRIPT_LIST_HPP
 
+#include <stdint.h>
 #include "ScriptContainer.hpp"
 #include "ScriptVariant.hpp"
 #include "ArrayList.hpp"
 
 class ScriptList : public ScriptContainer {
     friend class ObjectHeap;
-    friend void ObjectHeap_SetListMember(int, size_t, const ScriptVariant *);
-    friend bool ObjectHeap_InsertInList(int, size_t, const ScriptVariant *);
+    friend void ObjectHeap_SetListMember(int, uint32_t, const ScriptVariant *);
+    friend bool ObjectHeap_InsertInList(int, uint32_t, const ScriptVariant *);
 
 private:
     bool currentlyPrinting;
     ArrayList<ScriptVariant> storage;
 
 public:
-    inline ScriptList(size_t initialSize) :
+    inline ScriptList(uint32_t initialSize) :
         currentlyPrinting(false),
         storage(initialSize, {{.ptrVal = 0}, VT_EMPTY})
     {}
 
     ~ScriptList();
 
-    inline bool get(ScriptVariant *dst, size_t index)
+    inline bool get(ScriptVariant *dst, uint32_t index)
     {
         if (index >= storage.size())
             return false;
@@ -31,12 +32,12 @@ public:
         return true;
     }
 
-    inline size_t size()
+    inline uint32_t size()
     {
         return storage.size();
     }
 
-    inline bool remove(size_t index)
+    inline bool remove(uint32_t index)
     {
         if (index >= storage.size())
             return false;
@@ -53,7 +54,7 @@ public:
 
 private:
     // don't call this directly; use ObjectHeap_SetListMember() instead
-    inline bool set(size_t index, const ScriptVariant &value)
+    inline bool set(uint32_t index, const ScriptVariant &value)
     {
         if (index >= storage.size())
             return false;
@@ -65,7 +66,7 @@ private:
     }
 
     // don't call this directly; use ObjectHeap_InsertInList() instead
-    inline bool insert(size_t index, const ScriptVariant &value)
+    inline bool insert(uint32_t index, const ScriptVariant &value)
     {
         // note that index can be equal to size
         if (index > storage.size())

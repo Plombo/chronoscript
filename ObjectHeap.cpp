@@ -291,7 +291,7 @@ void ObjectHeap::processOneGray()
     if (objects[index].isList)
     {
         ScriptList *list = static_cast<ScriptList*>(objects[index].container);
-        for (size_t i = 0; i < list->size(); i++)
+        for (uint32_t i = 0; i < list->size(); i++)
         {
             ScriptVariant var;
             list->get(&var, i);
@@ -433,7 +433,7 @@ bool ObjectHeap_SetObjectMember(int index, const ScriptVariant *key, const Scrip
     return obj->set(key, value);
 }
 
-void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant *value)
+void ObjectHeap_SetListMember(int index, uint32_t indexInList, const ScriptVariant *value)
 {
     ScriptList *list = theHeap.getList(index);
 
@@ -455,7 +455,7 @@ void ObjectHeap_SetListMember(int index, size_t indexInList, const ScriptVariant
     list->set(indexInList, *value);
 }
 
-bool ObjectHeap_InsertInList(int index, size_t indexInList, const ScriptVariant *value)
+bool ObjectHeap_InsertInList(int index, uint32_t indexInList, const ScriptVariant *value)
 {
     ScriptList *list = theHeap.getList(index);
 

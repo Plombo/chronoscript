@@ -739,7 +739,7 @@ HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *cont
             return E_FAIL;
         }
         ScriptList *list = ObjectHeap_GetList(container->objVal);
-        if (!list->get(dst, (size_t)key->lVal))
+        if (!list->get(dst, key->lVal))
         {
             printf("error: list index %i is out of bounds\n", key->lVal);
             return E_FAIL;

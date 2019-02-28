@@ -2,6 +2,7 @@
 #define ARRAY_LIST_HPP
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "globals.h"
 
@@ -13,10 +14,10 @@ class ArrayList
 {
 private:
     T *array;
-    size_t numElements;
-    size_t capacity;
+    uint32_t numElements;
+    uint32_t capacity;
 
-    inline void resize(size_t newCapacity)
+    inline void resize(uint32_t newCapacity)
     {
         array = (T*) realloc(array, newCapacity * sizeof(T));
         assert(array != NULL);
@@ -24,7 +25,7 @@ private:
     }
 
 public:
-    explicit inline ArrayList(size_t initialCapacity) : numElements(0), capacity(initialCapacity)
+    explicit inline ArrayList(uint32_t initialCapacity) : numElements(0), capacity(initialCapacity)
     {
         if (capacity == 0)
         {
@@ -34,11 +35,11 @@ public:
         array = (T*) malloc(capacity * sizeof(T));
     }
 
-    inline ArrayList(size_t initialSize, const T &value) : ArrayList(initialSize)
+    inline ArrayList(uint32_t initialSize, const T &value) : ArrayList(initialSize)
     {
         numElements = initialSize;
 
-        for (size_t i = 0; i < initialSize; i++)
+        for (uint32_t i = 0; i < initialSize; i++)
         {
             array[i] = value;
         }
@@ -52,25 +53,25 @@ public:
     }
 
     // returns the number of elements in the list
-    inline size_t size() const
+    inline uint32_t size() const
     {
         return numElements;
     }
 
     // returns the element at index
-    inline T get(size_t index) const
+    inline T get(uint32_t index) const
     {
         return array[index];
     }
 
     // returns a pointer to the element at index
-    inline T *getPtr(size_t index)
+    inline T *getPtr(uint32_t index)
     {
         return &array[index];
     }
 
     // sets the element at index to the given value
-    inline void set(size_t index, const T &value)
+    inline void set(uint32_t index, const T &value)
     {
         array[index] = value;
     }
@@ -89,7 +90,7 @@ public:
 
     // inserts the given value into the list at index i, moving everything after it forward
     // runs in linear (not constant) time
-    inline void insert(size_t pos, const T &newElem)
+    inline void insert(uint32_t pos, const T &newElem)
     {
         if (pos == numElements)
         {
@@ -108,14 +109,14 @@ public:
     }
 
     // removes the element at index from the list; runs in linear (not constant) time
-    inline void remove(size_t pos)
+    inline void remove(uint32_t pos)
     {
         memmove(&array[pos], &array[pos + 1], numElements - pos);
         --numElements;
     }
 
     // removes elements from start (inclusive) to end (exclusive)
-    inline void removeRange(size_t start, size_t end)
+    inline void removeRange(uint32_t start, uint32_t end)
     {
         assert(end >= start);
         memmove(&array[start], &array[end], numElements - (end - start));
