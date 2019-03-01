@@ -61,6 +61,7 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
         var->strVal = StrCache_PopPersistent(strlen(str));
         var->vt = VT_STR;
         StrCache_Copy(var->strVal, str);
+        StrCache_SetHash(var->strVal);
     }
 }
 
@@ -482,6 +483,7 @@ inline HRESULT ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVaria
         char *dst = StrCache_Get(strVal);
         int offset = ScriptVariant_ToString(svar, dst, length + 1);
         ScriptVariant_ToString(rightChild, dst + offset, length - offset + 1);
+        StrCache_SetHash(strVal);
 
         retvar->strVal = strVal;
         retvar->vt = VT_STR;

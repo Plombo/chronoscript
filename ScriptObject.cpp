@@ -66,19 +66,6 @@ ScriptObject::~ScriptObject()
     delete[] hashTable;
 }
 
-
-// string hashing function from Lua
-static uint32_t string_hash(const char *str, size_t len, unsigned int seed = 0)
-{
-    unsigned int hash = seed ^ (unsigned int)len;
-    size_t step = (len >> 5) + 1;
-    for (; len >= step; len -= step)
-    {
-        hash ^= ((hash << 5) + (hash >> 2) + (unsigned char)(str[len - 1]));
-    }
-    return hash;
-}
-
 inline bool keysEqual(int key1, int key2, const StrCacheEntry *entry1)
 {
     // Most keys are string constants, so (key1 == key2) will catch most true cases.
@@ -100,11 +87,6 @@ inline bool keysEqual(int key1, int key2, const StrCacheEntry *entry1)
 ObjectHashNode *ScriptObject::getNodeForKey(int key)
 {
     const StrCacheEntry *entry = StrCache_GetEntry(key);
-    if (entry->hash == 0)
-    {
-        StrCache_SetHash(key, string_hash(entry->str, entry->len));
-    }
-
     unsigned int position = entry->hash % (1u << log2_hashTableSize);
     while (true)
     {

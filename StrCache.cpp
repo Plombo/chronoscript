@@ -4,6 +4,7 @@
 #include "globals.h"
 #include "StrCache.hpp"
 #include "ArrayList.hpp"
+#include "stringhash.h"
 
 /*
 The string cache is intended to reduce memory usage; since not all variants are
@@ -61,8 +62,8 @@ public:
     // get a pointer to the entry in the string cache
     inline const StrCacheEntry *getEntry(int index);
 
-    // set the hash of the entry
-    inline void setHash(int index, uint32_t hash);
+    // set the hash of the entry if it doesn't already have one
+    inline void setHash(int index);
 
     void copy(int index, const char *str);
     void ncopy(int index, const char *str, int n);
@@ -222,9 +223,12 @@ inline const StrCacheEntry *StrCache::getEntry(int index)
     return &strcache[index];
 }
 
-void StrCache::setHash(int index, uint32_t hash)
+void StrCache::setHash(int index)
 {
-    strcache[index].hash = hash;
+    if (strcache[index].hash == 0)
+    {
+        strcache[index].hash = string_hash(strcache[index].str, strcache[index].len);
+    }
 }
 
 void StrCache::copy(int index, const char *str)
@@ -324,9 +328,9 @@ const StrCacheEntry *StrCache_GetEntry(int index)
     return theCache.getEntry(index);
 }
 
-void StrCache_SetHash(int index, uint32_t hash)
+void StrCache_SetHash(int index)
 {
-    theCache.setHash(index, hash);
+    theCache.setHash(index);
 }
 
 // note: there's no need for this to return anything anymore

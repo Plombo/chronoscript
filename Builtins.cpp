@@ -76,6 +76,7 @@ HRESULT builtin_get_args(int numParams, ScriptVariant *params, ScriptVariant *re
         stringVar.strVal = StrCache_Pop(len);
         stringVar.vt = VT_STR;
         snprintf(StrCache_Get(stringVar.strVal), len + 1, "%s", script_args[i]);
+        StrCache_SetHash(stringVar.strVal);
         ObjectHeap_SetListMember(list, i, &stringVar);
     }
 
@@ -303,6 +304,7 @@ HRESULT builtin_char_from_integer(int numParams, ScriptVariant *params, ScriptVa
     char *string = StrCache_Get(stringIndex);
     string[0] = params[0].lVal;
     string[1] = 0;
+    StrCache_SetHash(stringIndex);
 
     retval->strVal = stringIndex;
     retval->vt = VT_STR;
@@ -353,6 +355,7 @@ HRESULT builtin_file_read(int numParams, ScriptVariant *params, ScriptVariant *r
         return E_FAIL;
     }
 
+    StrCache_SetHash(stringIndex);
     retval->strVal = stringIndex;
     retval->vt = VT_STR;
 
