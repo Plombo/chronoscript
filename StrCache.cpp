@@ -18,17 +18,11 @@ temporary cache every time a script is done executing.
     p = (t)realloc((p), sizeof(*(p))*(s));\
     memset((p)+(n), 0, sizeof(*(p))*((s)-(n)));
 
-typedef struct {
-    int len;
-    int ref;
-    char *str;
-} Varstr;
-
 #define STRCACHE_INC      64
 
 class StrCache {
 private:
-    Varstr *strcache;
+    StrCacheEntry *strcache;
     int strcache_size;
     int strcache_top;
     int *strcache_index;
@@ -64,6 +58,12 @@ public:
     // get the length of the string at this index
     int len(int index);
 
+    // get a pointer to the entry in the string cache
+    inline const StrCacheEntry *getEntry(int index);
+
+    // set the hash of the entry
+    inline void setHash(int index, uint32_t hash);
+
     void copy(int index, const char *str);
     void ncopy(int index, const char *str, int n);
     
@@ -83,7 +83,7 @@ void StrCache::init()
 {
     int i;
     this->clear(); // just in case
-    strcache = (Varstr*) calloc(STRCACHE_INC, sizeof(*strcache));
+    strcache = (StrCacheEntry*) calloc(STRCACHE_INC, sizeof(*strcache));
     strcache_index = (int*) calloc(STRCACHE_INC, sizeof(*strcache_index));
     for (i = 0; i < STRCACHE_INC; i++)
     {
@@ -178,7 +178,7 @@ int StrCache::pop(int length)
     }
     if (strcache_top < 0) // realloc
     {
-        __reallocto(strcache, Varstr*, strcache_size, strcache_size + STRCACHE_INC);
+        __reallocto(strcache, StrCacheEntry*, strcache_size, strcache_size + STRCACHE_INC);
         __reallocto(strcache_index, int*, strcache_size, strcache_size + STRCACHE_INC);
         for (i = 0; i < STRCACHE_INC; i++)
         {
@@ -199,6 +199,7 @@ int StrCache::pop(int length)
     strcache[i].str = (char*) malloc(length + 1);
     strcache[i].len = length;
     strcache[i].ref = 0;
+    strcache[i].hash = 0;
     tempRefs.append(i);
     return i;
 }
@@ -214,6 +215,16 @@ int StrCache::len(int index)
 {
     //assert(index<strcache_size);
     return strcache[index].len;
+}
+
+inline const StrCacheEntry *StrCache::getEntry(int index)
+{
+    return &strcache[index];
+}
+
+void StrCache::setHash(int index, uint32_t hash)
+{
+    strcache[index].hash = hash;
 }
 
 void StrCache::copy(int index, const char *str)
@@ -306,6 +317,16 @@ char *StrCache_Get(int index)
 int StrCache_Len(int index)
 {
     return theCache.len(index);
+}
+
+const StrCacheEntry *StrCache_GetEntry(int index)
+{
+    return theCache.getEntry(index);
+}
+
+void StrCache_SetHash(int index, uint32_t hash)
+{
+    theCache.setHash(index, hash);
 }
 
 // note: there's no need for this to return anything anymore

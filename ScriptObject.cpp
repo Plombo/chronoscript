@@ -68,7 +68,7 @@ ScriptObject::~ScriptObject()
 
 
 // string hashing function from Lua
-static unsigned int string_hash(const char *str, size_t len, unsigned int seed = 0)
+static uint32_t string_hash(const char *str, size_t len, unsigned int seed = 0)
 {
     unsigned int hash = seed ^ (unsigned int)len;
     size_t step = (len >> 5) + 1;
@@ -79,24 +79,37 @@ static unsigned int string_hash(const char *str, size_t len, unsigned int seed =
     return hash;
 }
 
-inline bool keysEqual(int key1, int key2)
+inline bool keysEqual(int key1, int key2, const StrCacheEntry *entry1)
 {
     // Most keys are string constants, so (key1 == key2) will catch most true cases.
-    // Most non-equal field names will have different lengths, and comparing lengths is faster than strcmp.
+    // Almost all non-equal field names will have different hashes, and comparing hashes is faster than strcmp.
     // If neither of those has told us whether the keys are equal, finally call strcmp to find out for sure.
-    return key1 == key2 ||
-           (StrCache_Len(key1) == StrCache_Len(key2) &&
-            0 == strcmp(StrCache_Get(key1), StrCache_Get(key2)));
+    if (key1 == key2)
+    {
+        return true;
+    }
+    else
+    {
+        const StrCacheEntry *entry2 = StrCache_GetEntry(key2);
+        return (entry1->hash == entry2->hash &&
+                0 == strcmp(entry1->str, entry2->str));
+    }
 }
 
 // returns NULL if key is not in the object
 ObjectHashNode *ScriptObject::getNodeForKey(int key)
 {
-    unsigned int position = string_hash(StrCache_Get(key), StrCache_Len(key)) % (1u << log2_hashTableSize);
+    const StrCacheEntry *entry = StrCache_GetEntry(key);
+    if (entry->hash == 0)
+    {
+        StrCache_SetHash(key, string_hash(entry->str, entry->len));
+    }
+
+    unsigned int position = entry->hash % (1u << log2_hashTableSize);
     while (true)
     {
         ObjectHashNode *node = &hashTable[position];
-        if (node->key != -1 && keysEqual(key, node->key))
+        if (node->key != -1 && keysEqual(key, node->key, entry))
         {
             return node;
         }
@@ -167,7 +180,7 @@ ssize_t ScriptObject::getFreePosition()
 
 size_t ScriptObject::mainPositionForKey(int key)
 {
-    return string_hash(StrCache_Get(key), StrCache_Len(key)) % (1u << log2_hashTableSize);
+    return StrCache_GetEntry(key)->hash % (1u << log2_hashTableSize);
 }
 
 bool ScriptObject::set(int key, const ScriptVariant *value)
@@ -180,7 +193,7 @@ bool ScriptObject::set(int key, const ScriptVariant *value)
     }
 
     // Otherwise, we have to insert a new key.
-    size_t mainIndex = mainPositionForKey(key);
+    size_t mainIndex = mainPositionForKey(key) % (1u << log2_hashTableSize);
     ObjectHashNode *mainPosition = &hashTable[mainIndex];
     if (mainPosition->key == -1) // No collision, so just put the key+value in the main position.
     {
