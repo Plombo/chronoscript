@@ -34,7 +34,7 @@ void ScriptVariant_Ref(const ScriptVariant *var)
     }
 }
 
-void ScriptVariant_Unref(ScriptVariant *var)
+void ScriptVariant_Unref(const ScriptVariant *var)
 {
     if (var->vt == VT_STR)
     {
