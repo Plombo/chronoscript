@@ -9,6 +9,9 @@ if Platform().name == 'win32':
 
 env = Environment(**env_options)
 
+# Link with the C compiler so that it doesn't pull in the standard C++ library
+env.Replace(LINK = env['CC'])
+
 c_sources = [
     'ralloc',
     'ScriptUtils',
@@ -38,6 +41,7 @@ cpp_sources = [
     'script/ParserSet',
     'script/pp_parser',
     'script/pp_expr',
+    'fakestdc++',
 ]
 objects = []
 
