@@ -66,7 +66,6 @@ public:
     inline void setHash(int index);
 
     void copy(int index, const char *str);
-    void ncopy(int index, const char *str, int n);
     
     int findString(const char *str);
 };
@@ -243,18 +242,6 @@ void StrCache::copy(int index, const char *str)
     strcpy(strcache[index].str, str);
 }
 
-void StrCache::ncopy(int index, const char *str, int n)
-{
-    //assert(index<strcache_size);
-    //assert(size>0);
-    if (strcache[index].len < n)
-    {
-        this->resize(index, n);
-    }
-    strncpy(strcache[index].str, str, n);
-    strcache[index].str[n] = 0;
-}
-
 // see if a string is already in the cache
 // return its index if it is, or -1 if it isn't
 int StrCache::findString(const char *str)
@@ -306,11 +293,6 @@ int StrCache_PopPersistent(int length)
 void StrCache_Copy(int index, const char *str)
 {
     theCache.copy(index, str);
-}
-
-void StrCache_NCopy(int index, const char *str, int n)
-{
-    theCache.ncopy(index, str, n);
 }
 
 char *StrCache_Get(int index)
