@@ -162,7 +162,7 @@ int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsi
     switch (svar->vt)
     {
     case VT_EMPTY:
-        return snprintf(buffer, bufsize, "<VT_EMPTY>   Unitialized");
+        return snprintf(buffer, bufsize, "NULL");
     case VT_INTEGER:
         return snprintf(buffer, bufsize, "%d", svar->lVal);
     case VT_DECIMAL:

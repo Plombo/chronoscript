@@ -2017,6 +2017,12 @@ RValue *Parser::constant()
         match();
         return value;
     }
+    else if (check(TOKEN_NULL))
+    {
+        value = bldUtil->mkNull();
+        match();
+        return value;
+    }
     else
     {
         Parser_Error(this, constant);
@@ -2135,6 +2141,7 @@ static bool isKeyword(MY_TOKEN_TYPE type)
         case TOKEN_CONTINUE:
         case TOKEN_BREAK:
         case TOKEN_RETURN:
+        case TOKEN_NULL:
             return true;
         default:
             return false;
