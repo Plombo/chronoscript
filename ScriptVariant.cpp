@@ -65,7 +65,7 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
     }
 }
 
-HRESULT ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal)
+CCResult ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal)
 {
     if (var->vt == VT_INTEGER)
     {
@@ -77,13 +77,13 @@ HRESULT ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal)
     }
     else
     {
-        return E_FAIL;
+        return CC_FAIL;
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
-HRESULT ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal)
+CCResult ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal)
 {
     if (var->vt == VT_INTEGER)
     {
@@ -95,10 +95,10 @@ HRESULT ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal)
     }
     else
     {
-        return E_FAIL;
+        return CC_FAIL;
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 
@@ -147,8 +147,8 @@ bool ScriptVariant_IsEqual(const ScriptVariant *svar, const ScriptVariant *right
                 return false;
         }
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         return (dbl1 == dbl2);
     }
@@ -197,71 +197,71 @@ void ScriptVariant_Copy(ScriptVariant *svar, const ScriptVariant *rightChild)
     *svar = *rightChild;
 }
 
-HRESULT ScriptVariant_Bit_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Bit_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
         retvar->lVal = svar->lVal | rightChild->lVal;
         retvar->vt = VT_INTEGER;
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         printf("Invalid operands for bitwise 'or' operation (requires 2 integers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
-HRESULT ScriptVariant_Xor(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Xor(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
         retvar->lVal = svar->lVal ^ rightChild->lVal;
         retvar->vt = VT_INTEGER;
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         printf("Invalid operands for bitwise 'xor' operation (requires 2 integers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
-HRESULT ScriptVariant_Bit_And(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Bit_And(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
         retvar->lVal = svar->lVal & rightChild->lVal;
         retvar->vt = VT_INTEGER;
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         printf("Invalid operands for bitwise 'xor' operation (requires 2 integers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
-HRESULT ScriptVariant_Eq(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Eq(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     retvar->lVal = ScriptVariant_IsEqual(svar, rightChild);
     retvar->vt = VT_INTEGER;
-    return S_OK;
+    return CC_OK;
 }
 
 
-HRESULT ScriptVariant_Ne(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Ne(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     retvar->lVal = !ScriptVariant_IsEqual(svar, rightChild);
     retvar->vt = VT_INTEGER;
-    return S_OK;
+    return CC_OK;
 }
 
 
-HRESULT ScriptVariant_Lt(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Lt(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
 
@@ -287,8 +287,8 @@ HRESULT ScriptVariant_Lt(ScriptVariant *retvar, const ScriptVariant *svar, const
                 break;
         }
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         retvar->lVal = (dbl1 < dbl2);
     }
@@ -298,12 +298,12 @@ HRESULT ScriptVariant_Lt(ScriptVariant *retvar, const ScriptVariant *svar, const
     }
 
     retvar->vt = VT_INTEGER;
-    return S_OK;
+    return CC_OK;
 }
 
 
 
-HRESULT ScriptVariant_Gt(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Gt(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
 
@@ -329,8 +329,8 @@ HRESULT ScriptVariant_Gt(ScriptVariant *retvar, const ScriptVariant *svar, const
                 break;
         }
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         retvar->lVal = (dbl1 > dbl2);
     }
@@ -340,12 +340,12 @@ HRESULT ScriptVariant_Gt(ScriptVariant *retvar, const ScriptVariant *svar, const
     }
 
     retvar->vt = VT_INTEGER;
-    return S_OK;
+    return CC_OK;
 }
 
 
 
-HRESULT ScriptVariant_Ge(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Ge(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
 
@@ -371,8 +371,8 @@ HRESULT ScriptVariant_Ge(ScriptVariant *retvar, const ScriptVariant *svar, const
                 break;
         }
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         retvar->lVal = (dbl1 >= dbl2);
     }
@@ -382,11 +382,11 @@ HRESULT ScriptVariant_Ge(ScriptVariant *retvar, const ScriptVariant *svar, const
     }
 
     retvar->vt = VT_INTEGER;
-    return S_OK;
+    return CC_OK;
 }
 
 
-HRESULT ScriptVariant_Le(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Le(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
 
@@ -412,8 +412,8 @@ HRESULT ScriptVariant_Le(ScriptVariant *retvar, const ScriptVariant *svar, const
                 break;
         }
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         retvar->lVal = (dbl1 <= dbl2);
     }
@@ -423,45 +423,45 @@ HRESULT ScriptVariant_Le(ScriptVariant *retvar, const ScriptVariant *svar, const
     }
 
     retvar->vt = VT_INTEGER;
-    return S_OK;
+    return CC_OK;
 }
 
 
-HRESULT ScriptVariant_Shl(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Shl(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
         retvar->lVal = ((uint32_t)svar->lVal) << ((uint32_t)rightChild->lVal);
         retvar->vt = VT_INTEGER;
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         printf("Invalid operands for << operation (requires 2 integers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
 
-HRESULT ScriptVariant_Shr(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Shr(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
         retvar->lVal = ((uint32_t)svar->lVal) >> ((uint32_t)rightChild->lVal);
         retvar->vt = VT_INTEGER;
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         printf("Invalid operands for << operation (requires 2 integers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
 
-inline HRESULT ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild,
+inline CCResult ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild,
                                         int (*stringPopFunc)(int))
 {
     double dbl1, dbl2;
@@ -470,8 +470,8 @@ inline HRESULT ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVaria
         retvar->lVal = svar->lVal + rightChild->lVal;
         retvar->vt = VT_INTEGER;
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         retvar->dblVal = dbl1 + dbl2;
         retvar->vt = VT_DECIMAL;
@@ -492,28 +492,28 @@ inline HRESULT ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVaria
     {
         printf("Invalid operands for addition (must be number + number or string + string)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 
 // used when running a script
-HRESULT ScriptVariant_Add(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Add(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     return ScriptVariant_AddGeneric(retvar, svar, rightChild, StrCache_Pop);
 }
 
 
 // used for constant folding when compiling a script
-HRESULT ScriptVariant_AddFolding(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_AddFolding(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     return ScriptVariant_AddGeneric(retvar, svar, rightChild, StrCache_PopPersistent);
 }
 
 
-HRESULT ScriptVariant_Sub(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Sub(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     if (svar->vt == rightChild->vt)
@@ -532,11 +532,11 @@ HRESULT ScriptVariant_Sub(ScriptVariant *retvar, const ScriptVariant *svar, cons
         {
             printf("Invalid operands for subtraction (must be 2 numbers)\n");
             ScriptVariant_Clear(retvar);
-            return E_FAIL;
+            return CC_FAIL;
         }
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         if (svar->vt == VT_DECIMAL || rightChild->vt == VT_DECIMAL)
         {
@@ -553,14 +553,14 @@ HRESULT ScriptVariant_Sub(ScriptVariant *retvar, const ScriptVariant *svar, cons
     {
         printf("Invalid operands for subtraction (must be 2 numbers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 
-HRESULT ScriptVariant_Mul(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Mul(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
@@ -573,8 +573,8 @@ HRESULT ScriptVariant_Mul(ScriptVariant *retvar, const ScriptVariant *svar, cons
         retvar->dblVal = svar->dblVal * rightChild->dblVal;
         retvar->vt = VT_DECIMAL;
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         if (svar->vt == VT_DECIMAL || rightChild->vt == VT_DECIMAL)
         {
@@ -591,14 +591,14 @@ HRESULT ScriptVariant_Mul(ScriptVariant *retvar, const ScriptVariant *svar, cons
     {
         printf("Invalid operands for multiplication (must be 2 numbers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 
-HRESULT ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
@@ -607,7 +607,7 @@ HRESULT ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, cons
         {
             printf("Attempt to divide by 0!\n");
             ScriptVariant_Clear(retvar);
-            return E_FAIL;
+            return CC_FAIL;
         }
         else
         {
@@ -620,14 +620,14 @@ HRESULT ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, cons
         retvar->dblVal = svar->dblVal / rightChild->dblVal;
         retvar->vt = VT_DECIMAL;
     }
-    else if (ScriptVariant_DecimalValue(svar, &dbl1) == S_OK &&
-            ScriptVariant_DecimalValue(rightChild, &dbl2) == S_OK)
+    else if (ScriptVariant_DecimalValue(svar, &dbl1) == CC_OK &&
+            ScriptVariant_DecimalValue(rightChild, &dbl2) == CC_OK)
     {
         if (dbl2 == 0)
         {
             printf("Attempt to divide by 0!\n");
             ScriptVariant_Clear(retvar);
-            return E_FAIL;
+            return CC_FAIL;
         }
         else
         {
@@ -639,18 +639,18 @@ HRESULT ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, cons
     {
         printf("Invalid operands for division (must be 2 numbers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 
-HRESULT ScriptVariant_Mod(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Mod(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     int32_t l1, l2;
-    if (ScriptVariant_IntegerValue(svar, &l1) == S_OK &&
-            ScriptVariant_IntegerValue(rightChild, &l2) == S_OK)
+    if (ScriptVariant_IntegerValue(svar, &l1) == CC_OK &&
+            ScriptVariant_IntegerValue(rightChild, &l2) == CC_OK)
     {
         retvar->lVal = l1 % l2;
         retvar->vt = VT_INTEGER;
@@ -659,73 +659,73 @@ HRESULT ScriptVariant_Mod(ScriptVariant *retvar, const ScriptVariant *svar, cons
     {
         printf("Invalid operands for '%%' (requires 2 numbers)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
-HRESULT ScriptVariant_Neg(ScriptVariant *retvar, const ScriptVariant *svar)
+CCResult ScriptVariant_Neg(ScriptVariant *retvar, const ScriptVariant *svar)
 {
     switch (svar->vt)
     {
     case VT_DECIMAL:
         retvar->dblVal = -(svar->dblVal);
         retvar->vt = VT_DECIMAL;
-        return S_OK;
+        return CC_OK;
     case VT_INTEGER:
         retvar->lVal = -(svar->lVal);
         retvar->vt = VT_INTEGER;
-        return S_OK;
+        return CC_OK;
     default:
         printf("Invalid operand for negation operator (requires a number)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
 
-HRESULT ScriptVariant_Boolean_Not(ScriptVariant *retvar, const ScriptVariant *svar)
+CCResult ScriptVariant_Boolean_Not(ScriptVariant *retvar, const ScriptVariant *svar)
 {
     retvar->lVal = !ScriptVariant_IsTrue(svar);
     retvar->vt = VT_INTEGER;
-    return S_OK;
+    return CC_OK;
 }
 
-HRESULT ScriptVariant_Bit_Not(ScriptVariant *retvar, const ScriptVariant *svar)
+CCResult ScriptVariant_Bit_Not(ScriptVariant *retvar, const ScriptVariant *svar)
 {
     if (svar->vt == VT_INTEGER)
     {
         retvar->lVal = svar->lVal;
         retvar->vt = VT_INTEGER;
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         printf("Invalid operand for '~' operator (requires an integer)\n");
         ScriptVariant_Clear(retvar);
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
-HRESULT ScriptVariant_ToBoolean(ScriptVariant *retvar, const ScriptVariant *svar)
+CCResult ScriptVariant_ToBoolean(ScriptVariant *retvar, const ScriptVariant *svar)
 {
     retvar->lVal = ScriptVariant_IsTrue(svar);
     retvar->vt = VT_INTEGER;
-    return S_OK;
+    return CC_OK;
 }
 
-HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key)
+CCResult ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key)
 {
     if (container->vt == VT_OBJECT)
     {
         if (ObjectHeap_GetObject(container->objVal)->get(dst, key))
         {
-            return S_OK;
+            return CC_OK;
         }
         else
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
     }
     else if (container->vt == VT_LIST)
@@ -733,40 +733,40 @@ HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *cont
         if (key->vt != VT_INTEGER)
         {
             printf("error: list index must be an integer\n");
-            return E_FAIL;
+            return CC_FAIL;
         }
         if (key->lVal < 0)
         {
             printf("error: list index cannot be negative\n");
-            return E_FAIL;
+            return CC_FAIL;
         }
         ScriptList *list = ObjectHeap_GetList(container->objVal);
         if (!list->get(dst, key->lVal))
         {
             printf("error: list index %i is out of bounds\n", key->lVal);
-            return E_FAIL;
+            return CC_FAIL;
         }
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         // TODO: include the invalid container in the error message
         printf("error: cannot fetch a member from a non-container\n");
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
-HRESULT ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value)
+CCResult ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value)
 {
     if (container->vt == VT_OBJECT)
     {
         if (ObjectHeap_SetObjectMember(container->objVal, key, value))
         {
-            return S_OK;
+            return CC_OK;
         }
         else
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
     }
     else if (container->vt == VT_LIST)
@@ -774,21 +774,21 @@ HRESULT ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptV
         if (key->vt != VT_INTEGER)
         {
             printf("error: list index must be an integer\n");
-            return E_FAIL;
+            return CC_FAIL;
         }
         if (key->lVal < 0)
         {
             printf("error: list index cannot be negative\n");
-            return E_FAIL;
+            return CC_FAIL;
         }
         ObjectHeap_SetListMember(container->objVal, (size_t)key->lVal, value);
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         // TODO: include the invalid container in the error message
         printf("error: cannot set a member of a non-container\n");
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 

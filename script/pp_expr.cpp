@@ -14,7 +14,7 @@ private:
 
 public:
     inline pp_expr(pp_parser *parser) : parser(parser) { match(); }
-    inline HRESULT eval(int *result) { return cond_expr(result); }
+    inline CCResult eval(int *result) { return cond_expr(result); }
 
 private:
     void match();
@@ -22,14 +22,14 @@ private:
     bool check_binary_op(int precedenceLevel);
     bool check_unary_op();
     int apply_binary_op(PP_TOKEN_TYPE op, int lhs, int rhs);
-    HRESULT expect_fail(const char *expected);
+    CCResult expect_fail(const char *expected);
 
-    HRESULT cond_expr(int *result);
-    HRESULT cond_expr2(int *result);
-    HRESULT binary_expr(int *result, int precedenceLevel);
-    HRESULT binary_expr2(int *result, int precedenceLevel);
-    HRESULT unary_expr(int *result);
-    HRESULT primary_expr(int *result);
+    CCResult cond_expr(int *result);
+    CCResult cond_expr2(int *result);
+    CCResult binary_expr(int *result, int precedenceLevel);
+    CCResult binary_expr2(int *result, int precedenceLevel);
+    CCResult unary_expr(int *result);
+    CCResult primary_expr(int *result);
 };
 
 /**
@@ -141,73 +141,73 @@ bool pp_expr::check_unary_op()
             token->theType == PP_TOKEN_BITWISE_NOT);
 }
 
-HRESULT pp_expr::cond_expr(int *result)
+CCResult pp_expr::cond_expr(int *result)
 {
     if (FAILED(binary_expr(result, 1)))
-        return E_FAIL;
+        return CC_FAIL;
     if (check(PP_TOKEN_CONDITIONAL))
         return cond_expr2(result);
-    return S_OK;
+    return CC_OK;
 }
 
-HRESULT pp_expr::cond_expr2(int *result)
+CCResult pp_expr::cond_expr2(int *result)
 {
     int resultTrue, resultFalse;
     match(); // PP_TOKEN_CONDITIONAL
     if (FAILED(cond_expr(&resultTrue)))
-        return E_FAIL;
+        return CC_FAIL;
     if (!check(PP_TOKEN_COLON))
         return expect_fail("':'");
     match();
     if (FAILED(cond_expr(&resultFalse)))
-        return E_FAIL;
+        return CC_FAIL;
     *result = *result ? resultTrue : resultFalse;
-    return S_OK;
+    return CC_OK;
 }
 
-HRESULT pp_expr::binary_expr(int *result, int precedenceLevel)
+CCResult pp_expr::binary_expr(int *result, int precedenceLevel)
 {
     if (precedenceLevel == 10)
     {
         if (FAILED(unary_expr(result)))
-            return E_FAIL;
+            return CC_FAIL;
     }
     else if (FAILED(binary_expr(result, precedenceLevel+1)))
-        return E_FAIL;
+        return CC_FAIL;
     return binary_expr2(result, precedenceLevel);
 }
 
-HRESULT pp_expr::binary_expr2(int *result, int precedenceLevel)
+CCResult pp_expr::binary_expr2(int *result, int precedenceLevel)
 {
     int rhs;
-    if (!check_binary_op(precedenceLevel)) return S_OK;
+    if (!check_binary_op(precedenceLevel)) return CC_OK;
     PP_TOKEN_TYPE op = token->theType;
     match();
     if (precedenceLevel == 10)
     {
         if (FAILED(unary_expr(&rhs)))
-            return E_FAIL;
+            return CC_FAIL;
     }
     else if (FAILED(binary_expr(&rhs, precedenceLevel+1)))
-        return E_FAIL;
+        return CC_FAIL;
     *result = apply_binary_op(op, *result, rhs);
     return binary_expr2(result, precedenceLevel);
 }
 
-HRESULT pp_expr::unary_expr(int *result)
+CCResult pp_expr::unary_expr(int *result)
 {
     if (check_unary_op())
     {
         PP_TOKEN_TYPE op = token->theType;
         match();
-        if (FAILED(unary_expr(result))) return E_FAIL;
+        if (FAILED(unary_expr(result))) return CC_FAIL;
         *result = applyUnaryOp(op, *result);
-        return S_OK;
+        return CC_OK;
     }
     else return primary_expr(result);
 }
 
-HRESULT pp_expr::primary_expr(int *result)
+CCResult pp_expr::primary_expr(int *result)
 {
     if (check(PP_TOKEN_IDENTIFIER) && !strcmp(parser->token.theSource, "defined"))
     {
@@ -227,22 +227,22 @@ HRESULT pp_expr::primary_expr(int *result)
             *result = parser->isDefined(token->theSource);
             match();
         }
-        return S_OK;
+        return CC_OK;
     }
     else if (check(PP_TOKEN_LPAREN))
     {
         match();
-        if (FAILED(cond_expr(result))) return E_FAIL;
+        if (FAILED(cond_expr(result))) return CC_FAIL;
         if (!check(PP_TOKEN_RPAREN)) return expect_fail("')'");
         match();
-        return S_OK;
+        return CC_OK;
     }
     else if (check(PP_TOKEN_IDENTIFIER))
     {
         // undefined identifiers evaluate to 0
         match();
         *result = 0;
-        return S_OK;
+        return CC_OK;
     }
     else if (check(PP_TOKEN_INTCONSTANT))
     {
@@ -251,7 +251,7 @@ HRESULT pp_expr::primary_expr(int *result)
         else
             *result = strtol(token->theSource, NULL, 10);
         match();
-        return S_OK;
+        return CC_OK;
     }
     else if (check(PP_TOKEN_HEXCONSTANT))
     {
@@ -259,19 +259,19 @@ HRESULT pp_expr::primary_expr(int *result)
                !strncmp(token->theSource, "0X", 2));
         *result = strtol(token->theSource + 2, NULL, 16);
         match();
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         pp_error(parser, "unexpected token '%s'", token->theSource);
-        return E_FAIL;
+        return CC_FAIL;
     }
 }
 
-HRESULT pp_expr::expect_fail(const char *expected)
+CCResult pp_expr::expect_fail(const char *expected)
 {
     pp_error(parser, "expected %s", expected);
-    return E_FAIL;
+    return CC_FAIL;
 }
 
 extern "C" int pp_expr_eval_expression(pp_parser *parser)

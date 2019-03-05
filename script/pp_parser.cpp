@@ -240,9 +240,9 @@ static void pp_message(pp_parser *self, const char *messageType, const char *mes
 
 /**
  * Writes an error message to the log.
- * @return E_FAIL
+ * @return CC_FAIL
  */
-HRESULT pp_error(pp_parser *self, const char *format, ...)
+CCResult pp_error(pp_parser *self, const char *format, ...)
 {
     char buf[1024] = {""};
     va_list arglist;
@@ -252,7 +252,7 @@ HRESULT pp_error(pp_parser *self, const char *format, ...)
     va_end(arglist);
     pp_message(self, "error", buf);
 
-    return E_FAIL;
+    return CC_FAIL;
 }
 
 /**
@@ -273,7 +273,7 @@ void pp_warning(pp_parser *self, const char *format, ...)
  * Gets the next parsable token from the lexer.
  * @param skip_whitespace true to ignore whitespace, false otherwise
  */
-HRESULT pp_parser::lexToken(bool skipWhitespace)
+CCResult pp_parser::lexToken(bool skipWhitespace)
 {
     bool success = true;
 
@@ -292,7 +292,7 @@ HRESULT pp_parser::lexToken(bool skipWhitespace)
 
         if (!success)
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
 
         if (skipWhitespace && token.theType == PP_TOKEN_WHITESPACE)
@@ -306,7 +306,7 @@ HRESULT pp_parser::lexToken(bool skipWhitespace)
     }
 
     memcpy(&last_token, &token, sizeof(pp_token));
-    return S_OK;
+    return CC_OK;
 }
 
 /**
@@ -343,7 +343,7 @@ int pp_parser::peekToken()
  * lexer if necessary.  This is useful for expanding macros.
  * @param skip_whitespace true to ignore whitespace, false otherwise
  */
-HRESULT pp_parser::lexTokenEssential(bool skipWhitespace)
+CCResult pp_parser::lexTokenEssential(bool skipWhitespace)
 {
     pp_parser *parser = this;
 
@@ -351,7 +351,7 @@ HRESULT pp_parser::lexTokenEssential(bool skipWhitespace)
     {
         if(FAILED(parser->lexToken(skipWhitespace)))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
 
         if(parser->token.theType == PP_TOKEN_EOF && parser->parent)
@@ -371,7 +371,7 @@ HRESULT pp_parser::lexTokenEssential(bool skipWhitespace)
         memcpy(&this->token, &parser->token, sizeof(pp_token));
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 /**
@@ -639,13 +639,13 @@ pp_token *pp_parser::emitToken()
 }
 
 // this->token contains the first token of the macro/message if this->overread is true
-HRESULT pp_parser::readLine(char *buf, size_t bufsize)
+CCResult pp_parser::readLine(char *buf, size_t bufsize)
 {
     int total_length = 1;
 
     if(FAILED(lexToken(true)))
     {
-        return E_FAIL;
+        return CC_FAIL;
     }
     buf[0] = '\0';
 
@@ -665,24 +665,24 @@ HRESULT pp_parser::readLine(char *buf, size_t bufsize)
         {
             // Prevent buffer overflow
             pp_error(this, "length of macro or message contents is too long; must be <= %i characters", bufsize);
-            return E_FAIL;
+            return CC_FAIL;
         }
 
         strcat(buf, token.theSource);
         total_length += strlen(token.theSource);
         if(FAILED(lexToken(false)))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 /**
  * Implements the C "stringify" operator.
  */
-HRESULT pp_parser::stringify()
+CCResult pp_parser::stringify()
 {
     const char *source = (const char*) params->retrieve();
     bool in_string = false;
@@ -719,7 +719,7 @@ HRESULT pp_parser::stringify()
     }
 
     strncat(token.theSource, "\"", 1);
-    return S_OK;
+    return CC_OK;
 }
 
 /**
@@ -742,13 +742,13 @@ void pp_parser::concatenate(const char *token1, const char *token2)
  * Parses a C preprocessor directive.  When this function is called, the token
  * '#' has just been detected by the compiler.
  */
-HRESULT pp_parser::parseDirective()
+CCResult pp_parser::parseDirective()
 {
     char directiveName[MAX_TOKEN_LENGTH + 1] = {""};
 
     if(FAILED(lexToken(true)))
     {
-        return E_FAIL;
+        return CC_FAIL;
     }
 
     strcpy(directiveName, token.theSource);
@@ -763,7 +763,7 @@ HRESULT pp_parser::parseDirective()
              !strcmp(directiveName, "else") ||
              !strcmp(directiveName, "endif")))
         {
-            return S_OK;
+            return CC_OK;
         }
     }
 
@@ -774,7 +774,7 @@ HRESULT pp_parser::parseDirective()
 
         if(FAILED(lexToken(true)))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
 
 #if PP_TEST
@@ -807,7 +807,7 @@ HRESULT pp_parser::parseDirective()
         if (isImport)
         {
             ctx->imports.insertAfter(NULL, filename);
-            return S_OK;
+            return CC_OK;
         }
         else
         {
@@ -820,7 +820,7 @@ HRESULT pp_parser::parseDirective()
 
         if(FAILED(lexToken(true)))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
         if(token.theType != PP_TOKEN_IDENTIFIER)
         {
@@ -836,7 +836,7 @@ HRESULT pp_parser::parseDirective()
     {
         if(FAILED(lexToken(true)))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
         if(pp_is_builtin_macro(token.theSource))
         {
@@ -860,7 +860,7 @@ HRESULT pp_parser::parseDirective()
             ctx->func_macros.remove();
         }
 
-        return S_OK;
+        return CC_OK;
     }
     else if (!strcmp(directiveName, "if") ||
              !strcmp(directiveName, "ifdef") ||
@@ -878,7 +878,7 @@ HRESULT pp_parser::parseDirective()
         // this->token is about to be clobbered, so save whether this is a warning or error
         if(FAILED(readLine(text, sizeof(text))))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
 
         if (!strcmp(directiveName, "warning"))
@@ -893,21 +893,21 @@ HRESULT pp_parser::parseDirective()
     else if (token.theType == PP_TOKEN_NEWLINE)
     {
         // null directive - do nothing
-        return S_OK;
+        return CC_OK;
     }
     else
     {
         return pp_error(this, "unknown directive '#%s'", directiveName);
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 /**
  * Includes a source file specified with the #include directive.
  * @param filename the path to include
  */
-HRESULT pp_parser::include(char *filename)
+CCResult pp_parser::include(char *filename)
 {
     char *buffer;
     int length;
@@ -954,7 +954,7 @@ HRESULT pp_parser::include(char *filename)
     includeParser->freeFilename = true;
     includeParser->freeSourceCode = true;
 
-    return S_OK;
+    return CC_OK;
 }
 
 /**
@@ -962,7 +962,7 @@ HRESULT pp_parser::include(char *filename)
  * The length of the contents is limited to MACRO_CONTENTS_SIZE (512) characters.
  * @param name the macro name
  */
-HRESULT pp_parser::define(char *name)
+CCResult pp_parser::define(char *name)
 {
     char *contents = NULL;
     bool is_function = false; // true if this is a function-style #define; false otherwise
@@ -1067,7 +1067,7 @@ HRESULT pp_parser::define(char *name)
         ctx->macros.insertAfter(contents, name);
     }
 
-    return S_OK;
+    return CC_OK;
 
 error:
     funcParams->gotoFirst();
@@ -1077,14 +1077,14 @@ error:
     {
         free(contents);
     }
-    return E_FAIL;
+    return CC_FAIL;
 }
 
 /**
  * Handles conditional directives.
  * @param directive the type of conditional directive
  */
-HRESULT pp_parser::conditional(const char *directive)
+CCResult pp_parser::conditional(const char *directive)
 {
     int result;
     if (!strcmp(directive, "if") || !strcmp(directive, "ifdef") || !strcmp(directive, "ifndef"))
@@ -1097,11 +1097,11 @@ HRESULT pp_parser::conditional(const char *directive)
         if(ctx->conditionals.others > (ctx->conditionals.others & 0x5555555555555555ll))
         {
             ctx->conditionals.top = cs_false;
-            return S_OK;
+            return CC_OK;
         }
         if(FAILED(evalConditional(directive, &result)))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
         ctx->conditionals.top = result ? cs_true : cs_false;
     }
@@ -1121,7 +1121,7 @@ HRESULT pp_parser::conditional(const char *directive)
             ctx->conditionals.top = cs_true;
             if(FAILED(evalConditional(directive, &result)))
             {
-                return E_FAIL;
+                return CC_FAIL;
             }
             ctx->conditionals.top = result ? cs_true : cs_false;
         }
@@ -1147,23 +1147,23 @@ HRESULT pp_parser::conditional(const char *directive)
         return pp_error(this, "unknown conditional directive type '%s'", directive);
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
-HRESULT pp_parser::evalConditional(const char *directive, int *result) // FIXME: shouldn't result be bool?
+CCResult pp_parser::evalConditional(const char *directive, int *result) // FIXME: shouldn't result be bool?
 {
     if (!strcmp(directive, "ifdef") || !strcmp(directive, "ifndef"))
     {
         if (FAILED(lexToken(true)))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
         *result = ctx->macros.findByName(token.theSource);
         if (!strcmp(directive, "ifndef"))
         {
             *result = !(*result);
         }
-        return S_OK;
+        return CC_OK;
     }
     if (!strcmp(directive, "if") || !strcmp(directive, "elif"))
     {
@@ -1172,7 +1172,7 @@ HRESULT pp_parser::evalConditional(const char *directive, int *result) // FIXME:
 
         if(FAILED(readLine(buf, sizeof(buf))))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
         subparser = pp_parser_alloc(this, filename, buf, PP_CONDITIONAL);
         //subparser->parent = NULL;
@@ -1183,9 +1183,9 @@ HRESULT pp_parser::evalConditional(const char *directive, int *result) // FIXME:
         child = NULL;
         if(*result < 0)
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
-        return S_OK;
+        return CC_OK;
     }
     else
     {
@@ -1218,7 +1218,7 @@ void pp_parser::insertMacro(char *name)
  * Pre: the macro is defined in func_macros
  * Pre: the last token retrieved was a PP_TOKEN_LPAREN
  */
-HRESULT pp_parser::insertFunctionMacro(char *name)
+CCResult pp_parser::insertFunctionMacro(char *name)
 {
     int numParams, paramCount = 0, paramMacros = 0, parenLevel = 0, type;
     List<char*> *paramDefs; // note that params is different from self->params
@@ -1239,7 +1239,7 @@ HRESULT pp_parser::insertFunctionMacro(char *name)
     {
         if(FAILED(lexTokenEssential(false)))
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
         type = token.theType;
         bool write = false;
@@ -1347,7 +1347,7 @@ HRESULT pp_parser::insertFunctionMacro(char *name)
     pp_parser_alloc_macro(this, funcParams->retrieve(), paramDefs, PP_FUNCTION_MACRO);
     this->child->macroName = strdup(name);
 
-    return S_OK;
+    return CC_OK;
 }
 
 /**

@@ -6,11 +6,11 @@
 #include "Builtins.hpp"
 #include "SSABuilder.hpp" // for opcodes
 
-typedef HRESULT (*UnaryOperation)(ScriptVariant *dst, const ScriptVariant *src);
-typedef HRESULT (*BinaryOperation)(ScriptVariant *dst, const ScriptVariant *src1, const ScriptVariant *src2);
+typedef CCResult (*UnaryOperation)(ScriptVariant *dst, const ScriptVariant *src);
+typedef CCResult (*BinaryOperation)(ScriptVariant *dst, const ScriptVariant *src1, const ScriptVariant *src2);
 
 // does the actual work of executing the script
-static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
+static CCResult execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
     int index = 0;
     ScriptVariant temps[function->numTemps];
@@ -109,7 +109,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                     retval->vt = VT_EMPTY;
                     retval->ptrVal = NULL;
                 }
-                return S_OK;
+                return CC_OK;
 
             // move
             case OP_MOV:
@@ -173,7 +173,7 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                     fetchSrc(paramTemp, function->callParams[inst->paramsIndex+i+1]);
                     callParams[i] = *paramTemp;
                 }
-                HRESULT callResult;
+                CCResult callResult;
                 if (inst->opCode == OP_CALL_BUILTIN)
                 {
                     BuiltinScriptFunction target = getBuiltinByIndex(inst->callTarget);
@@ -238,23 +238,23 @@ static HRESULT execFunction(ExecFunction *function, ScriptVariant *params, Scrip
                 break;
             default:
                 printf("error: unknown opcode %i\n", inst->opCode);
-                return E_FAIL;
+                return CC_FAIL;
         }
         if (!jumped) index++;
     }
-    return S_OK;
+    return CC_OK;
 
 start_backtrace:
     printf("\n\nAn exception occurred in script function %s() in %s\n",
         function->functionName,
         function->interpreter->fileName);
-    return E_FAIL;
+    return CC_FAIL;
 
 continue_backtrace:
     printf("called from %s() in %s\n",
         function->functionName,
         function->interpreter->fileName);
-    return E_FAIL;
+    return CC_FAIL;
 }
 
 ExecFunction *Interpreter::getFunctionNamed(const char *name)
@@ -262,10 +262,10 @@ ExecFunction *Interpreter::getFunctionNamed(const char *name)
     return functions.findByName(name) ? functions.retrieve() : NULL;
 }
 
-HRESULT Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
+CCResult Interpreter::runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
-    HRESULT result = execFunction(function, params, retval);
-    if (result == S_OK)
+    CCResult result = execFunction(function, params, retval);
+    if (result == CC_OK)
     {
         ScriptVariant_Ref(retval);
     }

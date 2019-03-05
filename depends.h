@@ -10,28 +10,22 @@
 #define DEPENDS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
-typedef int HRESULT;
+typedef bool CCResult;
 
-#ifdef S_OK
-#undef S_OK
-#endif
-#define S_OK   ((HRESULT)0)
-
-#ifdef E_FAIL
-#undef E_FAIL
-#endif
-#define E_FAIL ((HRESULT)-1)
+#define CC_OK   ((CCResult) true)
+#define CC_FAIL ((CCResult) false)
 
 #ifdef FAILED
 #undef FAILED
 #endif
-#define FAILED(status) (((HRESULT)(status))<0)
+#define FAILED(status) (CC_FAIL == (status))
 
 #ifdef SUCCEEDED
 #undef SUCCEEDED
 #endif
-#define SUCCEEDED(status) (((HRESULT)(status))>=0)
+#define SUCCEEDED(status) (CC_OK == (status))
 
 #ifndef FALSE
 #define FALSE 0

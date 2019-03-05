@@ -448,7 +448,7 @@ void SSABuildUtil::addParam(const char *name)
 Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *src1)
 {
     ScriptVariant result;
-    HRESULT success;
+    CCResult success;
 
     switch (op)
     {
@@ -474,7 +474,7 @@ Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *s
     case OP_MUL: success = ScriptVariant_Mul(&result, src0, src1); break;
     case OP_DIV: success = ScriptVariant_Div(&result, src0, src1); break;
     case OP_MOD: success = ScriptVariant_Mod(&result, src0, src1); break;
-    default: success = E_FAIL;
+    default: success = CC_FAIL;
     }
 
     if (SUCCEEDED(success))

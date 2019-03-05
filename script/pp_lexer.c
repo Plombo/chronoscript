@@ -84,10 +84,10 @@ void pp_lexer_Clear(pp_lexer *plexer)
 *  embodies the start state of the FSA.
 *
 *  Parameters: theNextToken -- address of the next CToken found in the stream
-*  Returns: S_OK
-*           E_FAIL
+*  Returns: CC_OK
+*           CC_FAIL
 ******************************************************************************/
-HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
+CCResult pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
 {
     for(;;)
     {
@@ -100,7 +100,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
         if ( !strncmp( plexer->pcurChar, "\0", 1))    //A null character marks the end of the stream
         {
             MAKETOKEN( PP_TOKEN_EOF );
-            return S_OK;
+            return CC_OK;
         }
 
         //Windows line break (\r\n)
@@ -114,7 +114,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             plexer->pcurChar += 2;
             plexer->offset += 2;
             MAKETOKEN( PP_TOKEN_NEWLINE );
-            return S_OK;
+            return CC_OK;
         }
 
         //newline (\n), carriage return (\r), or form feed (\f)
@@ -129,7 +129,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             plexer->pcurChar++;
             plexer->offset++;
             MAKETOKEN( PP_TOKEN_NEWLINE );
-            return S_OK;
+            return CC_OK;
         }
 
         //Backslash-escaped Windows line break (\r\n)
@@ -143,7 +143,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             plexer->pcurChar += 3;
             plexer->offset += 3;
             MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return S_OK;
+            return CC_OK;
         }
 
         //Backslash-escaped newline (\n), carriage return (\r), or form feed (\f)
@@ -158,7 +158,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             plexer->pcurChar += 2;
             plexer->offset += 2;
             MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return S_OK;
+            return CC_OK;
         }
 
         //tab
@@ -173,7 +173,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             plexer->pcurChar++;
             plexer->offset++;
             MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return S_OK;
+            return CC_OK;
         }
 
         //space
@@ -182,7 +182,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             //increment the offset counter
             CONSUMECHARACTER;
             MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return S_OK;
+            return CC_OK;
         }
 
         //non-breaking space (A0 in Windows-1252 and ISO-8859-* encodings)
@@ -195,7 +195,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             plexer->offset++;
             plexer->theTextPosition.col++;
             MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return S_OK;
+            return CC_OK;
         }
 
         //an Identifier starts with an alphabetical character or underscore
@@ -241,21 +241,21 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
                 CONSUMECHARACTER;
                 CONSUMECHARACTER;
                 MAKETOKEN( PP_TOKEN_ERROR );
-                return S_OK;
+                return CC_OK;
             }
             if (!strncmp( plexer->pcurChar, "'", 1))
             {
                 CONSUMECHARACTER;
 
                 MAKETOKEN( PP_TOKEN_STRING_LITERAL );
-                return S_OK;
+                return CC_OK;
             }
             else
             {
                 CONSUMECHARACTER;
                 CONSUMECHARACTER;
                 MAKETOKEN( PP_TOKEN_ERROR );
-                return S_OK;
+                return CC_OK;
             }
         }
 
@@ -268,14 +268,14 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
                 pp_lexer_SkipComment(plexer, COMMENT_SLASH);
                 //CONSUMECHARACTER;
                 //MAKETOKEN( PP_TOKEN_COMMENT_SLASH );
-                //return S_OK;
+                //return CC_OK;
             }
             else if ( !strncmp( plexer->pcurChar, "*", 1))
             {
                 pp_lexer_SkipComment(plexer, COMMENT_STAR);
                 //CONSUMECHARACTER;
                 //MAKETOKEN( PP_TOKEN_COMMENT_STAR_BEGIN );
-                //return S_OK;
+                //return CC_OK;
             }
 
             //Now complete the symbol scan for regular symbols.
@@ -283,12 +283,12 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             {
                 CONSUMECHARACTER;
                 MAKETOKEN( PP_TOKEN_DIV_ASSIGN );
-                return S_OK;
+                return CC_OK;
             }
             else
             {
                 MAKETOKEN( PP_TOKEN_DIV );
-                return S_OK;
+                return CC_OK;
             }
         }
 
@@ -298,7 +298,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             CONSUMECHARACTER;
             CONSUMECHARACTER;
             MAKETOKEN( PP_TOKEN_CONCATENATE );
-            return S_OK;
+            return CC_OK;
         }
 
         //Preprocessor directive
@@ -306,7 +306,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
         {
             CONSUMECHARACTER;
             MAKETOKEN( PP_TOKEN_DIRECTIVE );
-            return S_OK;
+            return CC_OK;
         }
 
         //a Symbol starts with one of these characters
@@ -337,7 +337,7 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
              * deal with them if necessary. */
             MAKETOKEN( PP_TOKEN_ERROR );
             //HandleCompileError( *theNextToken, UNRECOGNIZED_CHARACTER );
-            return S_OK;
+            return CC_OK;
         }
     }
 }
@@ -347,10 +347,10 @@ HRESULT pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
 *  recognized as an identifier.  After it is extracted, this method determines
 *  if the identifier is a keyword.
 *  Parameters: theNextToken -- address of the next CToken found in the stream
-*  Returns: S_OK
-*           E_FAIL
+*  Returns: CC_OK
+*           CC_FAIL
 ******************************************************************************/
-HRESULT pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken)
+CCResult pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken)
 {
     int len = 0;
 
@@ -363,7 +363,7 @@ HRESULT pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken)
         {
             printf("Warning: unable to lex token longer than %d characters\n", MAX_TOKEN_LENGTH);
             MAKETOKEN( PP_TOKEN_IDENTIFIER );
-            return E_FAIL;
+            return CC_FAIL;
         }
     }
     while ((*plexer->pcurChar >= '0' && *plexer->pcurChar <= '9')  ||
@@ -373,7 +373,7 @@ HRESULT pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken)
 
     MAKETOKEN(PP_TOKEN_IDENTIFIER);
 
-    return S_OK;
+    return CC_OK;
 }
 
 /******************************************************************************
@@ -381,10 +381,10 @@ HRESULT pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken)
 *  only extracts the digits that make up the number.  No conversion from string
 *  to numeral is performed here.
 *  Parameters: theNextToken -- address of the next CToken found in the stream
-*  Returns: S_OK
-*           E_FAIL
+*  Returns: CC_OK
+*           CC_FAIL
 ******************************************************************************/
-HRESULT pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken)
+CCResult pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken)
 {
     //copy the source that makes up this token
     //a constant is one of these:
@@ -482,17 +482,17 @@ HRESULT pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken)
             MAKETOKEN( PP_TOKEN_INTCONSTANT );
         }
     }
-    return S_OK;
+    return CC_OK;
 }
 
 /******************************************************************************
 *  StringLiteral -- This method extracts a string literal from the character
 *  stream.
 *  Parameters: theNextToken -- address of the next CToken found in the stream
-*  Returns: S_OK
-*           E_FAIL
+*  Returns: CC_OK
+*           CC_FAIL
 ******************************************************************************/
-HRESULT pp_lexer_GetTokenStringLiteral(pp_lexer *plexer, pp_token *theNextToken)
+CCResult pp_lexer_GetTokenStringLiteral(pp_lexer *plexer, pp_token *theNextToken)
 {
     //copy the source that makes up this token
     //an identifier is a string of letters, digits and/or underscores
@@ -517,16 +517,16 @@ HRESULT pp_lexer_GetTokenStringLiteral(pp_lexer *plexer, pp_token *theNextToken)
     CONSUMECHARACTER;
 
     MAKETOKEN( PP_TOKEN_STRING_LITERAL );
-    return S_OK;
+    return CC_OK;
 }
 /******************************************************************************
 *  Symbol -- This method extracts a symbol from the character stream.  For the
 *  purposes of lexing, comments are considered symbols.
 *  Parameters: theNextToken -- address of the next CToken found in the stream
-*  Returns: S_OK
-*           E_FAIL
+*  Returns: CC_OK
+*           CC_FAIL
 ******************************************************************************/
-HRESULT pp_lexer_GetTokenSymbol(pp_lexer *plexer, pp_token *theNextToken)
+CCResult pp_lexer_GetTokenSymbol(pp_lexer *plexer, pp_token *theNextToken)
 {
     //">>="
     if ( !strncmp( plexer->pcurChar, ">>=", 3))
@@ -844,16 +844,16 @@ HRESULT pp_lexer_GetTokenSymbol(pp_lexer *plexer, pp_token *theNextToken)
         MAKETOKEN( PP_TOKEN_CONDITIONAL);
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 /******************************************************************************
 *  Comment -- This method extracts a symbol from the character stream.
 *  Parameters: theNextToken -- address of the next CToken found in the stream
-*  Returns: S_OK
-*           E_FAIL
+*  Returns: CC_OK
+*           CC_FAIL
 ******************************************************************************/
-HRESULT pp_lexer_SkipComment(pp_lexer *plexer, COMMENT_TYPE theType)
+CCResult pp_lexer_SkipComment(pp_lexer *plexer, COMMENT_TYPE theType)
 {
 
     if (theType == COMMENT_SLASH)
@@ -929,6 +929,6 @@ HRESULT pp_lexer_SkipComment(pp_lexer *plexer, COMMENT_TYPE theType)
         };
     }
 
-    return S_OK;
+    return CC_OK;
 }
 

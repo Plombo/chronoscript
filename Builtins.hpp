@@ -4,7 +4,7 @@
 #include "depends.h"
 #include "ScriptVariant.hpp"
 
-typedef HRESULT (*BuiltinScriptFunction)(int numParams, ScriptVariant *params, ScriptVariant *retval);
+typedef CCResult (*BuiltinScriptFunction)(int numParams, ScriptVariant *params, ScriptVariant *retval);
 
 // returns index of builtin with the given name, or -1 if it doesn't exist
 int getBuiltinIndex(const char *functionName);

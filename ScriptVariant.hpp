@@ -48,8 +48,8 @@ void ScriptVariant_Clear(ScriptVariant *var);
 void ScriptVariant_Init(ScriptVariant *var);
 void ScriptVariant_Copy(ScriptVariant *svar, const ScriptVariant *rightChild);
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
-HRESULT ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal);
-HRESULT ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal);
+CCResult ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal);
+CCResult ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal);
 bool ScriptVariant_IsTrue(const ScriptVariant *svar);
 bool ScriptVariant_IsEqual(const ScriptVariant *svar, const ScriptVariant *rightChild);
 int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsize);
@@ -57,32 +57,32 @@ int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsi
 void ScriptVariant_Ref(const ScriptVariant *var);
 void ScriptVariant_Unref(const ScriptVariant *var);
 
-HRESULT ScriptVariant_Bit_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Xor(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Bit_And(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Eq(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Ne(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Lt(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Gt(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Ge(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Le(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Add(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_AddFolding(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild); // used for constant folding when compiling a script
-HRESULT ScriptVariant_Sub(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Shl(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Shr(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Mul(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-HRESULT ScriptVariant_Mod(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Bit_Or(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Xor(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Bit_And(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Eq(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Ne(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Lt(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Gt(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Ge(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Le(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Add(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_AddFolding(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild); // used for constant folding when compiling a script
+CCResult ScriptVariant_Sub(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Shl(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Shr(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Mul(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Mod(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
 
 // note that these are changed from OpenBOR - they now return new value instead of modifying in place
-HRESULT ScriptVariant_Neg(ScriptVariant *dst, const ScriptVariant *svar);
-HRESULT ScriptVariant_Boolean_Not(ScriptVariant *dst, const ScriptVariant *svar);
-HRESULT ScriptVariant_Bit_Not(ScriptVariant *dst, const ScriptVariant *svar);
-HRESULT ScriptVariant_ToBoolean(ScriptVariant *dst, const ScriptVariant *svar);
+CCResult ScriptVariant_Neg(ScriptVariant *dst, const ScriptVariant *svar);
+CCResult ScriptVariant_Boolean_Not(ScriptVariant *dst, const ScriptVariant *svar);
+CCResult ScriptVariant_Bit_Not(ScriptVariant *dst, const ScriptVariant *svar);
+CCResult ScriptVariant_ToBoolean(ScriptVariant *dst, const ScriptVariant *svar);
 
-HRESULT ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key);
-HRESULT ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value);
+CCResult ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key);
+CCResult ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value);
 
 #ifdef __cplusplus
 };

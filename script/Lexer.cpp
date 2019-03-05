@@ -112,7 +112,7 @@ void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEX
 }
 
 //Construct from a pp_token
-HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
+CCResult Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
 {
     ptoken->theTextPosition = ppToken->theTextPosition;
     ptoken->charOffset = ppToken->charOffset;
@@ -207,7 +207,7 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
                     {
                         printf("Error: Invalid octal escape: %03o > %i > 255\n", value, value);
                         ptoken->theType = TOKEN_ERROR;
-                        return E_FAIL;
+                        return CC_FAIL;
                     }
                     *dest++ = value;
                     break;
@@ -221,7 +221,7 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
                     {
                         printf("Error: Invalid hex escape\n");
                         ptoken->theType = TOKEN_ERROR;
-                        return E_FAIL;
+                        return CC_FAIL;
                     }
                     int value = hex_digit_value(*src);
                     src++;
@@ -397,14 +397,14 @@ HRESULT Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
     case PP_EPSILON:
     case PP_END_OF_TOKENS:
         ptoken->theType = TOKEN_ERROR;
-        return E_FAIL;
+        return CC_FAIL;
     default:
         printf("Script error: unknown token type %d\n", ppToken->theType);
         ptoken->theType = TOKEN_ERROR;
-        return E_FAIL;
+        return CC_FAIL;
     }
 
-    return S_OK;
+    return CC_OK;
 }
 
 Lexer::Lexer(pp_context *pcontext, const char *thePath, char *theSource, TEXTPOS theStartingPosition)
@@ -421,10 +421,10 @@ Lexer::Lexer(pp_context *pcontext, const char *thePath, char *theSource, TEXTPOS
 *  embodies the start state of the FSA.
 *
 *  Parameters: theNextToken -- address of the next CToken found in the stream
-*  Returns: S_OK
-*           E_FAIL
+*  Returns: CC_OK
+*           CC_FAIL
 ******************************************************************************/
-HRESULT Lexer::getNextToken(Token *theNextToken)
+CCResult Lexer::getNextToken(Token *theNextToken)
 {
     pp_token *ppToken;
 
@@ -434,7 +434,7 @@ HRESULT Lexer::getNextToken(Token *theNextToken)
         ppToken = preprocessor.emitToken();
         if (ppToken == NULL)
         {
-            return E_FAIL;
+            return CC_FAIL;
         }
     }
     while (ppToken->theType == PP_TOKEN_WHITESPACE || ppToken->theType == PP_TOKEN_NEWLINE);

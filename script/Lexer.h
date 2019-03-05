@@ -70,7 +70,7 @@ private:
     TEXTPOS theTokenPosition;
 public:
     Lexer(pp_context *context, const char *thePath, char *theSource, TEXTPOS theStartingPosition);
-    HRESULT getNextToken(Token *theNextToken);
+    CCResult getNextToken(Token *theNextToken);
 } Lexer;
 #else
 typedef struct Lexer Lexer;

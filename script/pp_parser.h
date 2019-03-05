@@ -101,23 +101,23 @@ public:
     bool overread;
 
     pp_parser(pp_context *ctx, const char *filename, char *sourceCode, TEXTPOS initialPosition);
-    HRESULT lexToken(bool skipWhitespace);
+    CCResult lexToken(bool skipWhitespace);
     bool isDefined(const char *name);
     pp_token *emitToken();
 private:
     int peekToken();
-    HRESULT lexTokenEssential(bool skipWhitespace);
-    HRESULT readLine(char *buf, size_t bufsize);
-    HRESULT stringify();
+    CCResult lexTokenEssential(bool skipWhitespace);
+    CCResult readLine(char *buf, size_t bufsize);
+    CCResult stringify();
     void concatenate(const char *token1, const char *token2);
-    HRESULT parseDirective();
-    HRESULT include(char *filename);
-    HRESULT define(char *name);
-    HRESULT conditional(const char *directive);
-    HRESULT evalConditional(const char *directive, int *result);
+    CCResult parseDirective();
+    CCResult include(char *filename);
+    CCResult define(char *name);
+    CCResult conditional(const char *directive);
+    CCResult evalConditional(const char *directive, int *result);
     void insertParam(char* name);
     void insertMacro(char *name);
-    HRESULT insertFunctionMacro(char *name);
+    CCResult insertFunctionMacro(char *name);
     void insertBuiltinMacro(const char *name);
 };
 #else
@@ -128,7 +128,7 @@ typedef struct pp_parser pp_parser;
 extern "C" {
 #endif
 
-HRESULT pp_error(pp_parser *self, const char *format, ...);
+CCResult pp_error(pp_parser *self, const char *format, ...);
 void pp_warning(pp_parser *self, const char *format, ...);
 
 #ifdef __cplusplus

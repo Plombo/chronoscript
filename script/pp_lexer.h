@@ -101,12 +101,12 @@ typedef struct pp_lexer
 void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, unsigned int charOffset);
 void pp_lexer_Init(pp_lexer *plexer, const char *theSource, TEXTPOS theStartingPosition);
 void pp_lexer_Clear(pp_lexer *plexer);
-HRESULT pp_lexer_GetNextToken(pp_lexer *plexer, pp_token *theNextToken);
-HRESULT pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken);
-HRESULT pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken);
-HRESULT pp_lexer_GetTokenStringLiteral(pp_lexer *plexer, pp_token *theNextToken);
-HRESULT pp_lexer_GetTokenSymbol(pp_lexer *plexer, pp_token *theNextToken);
-HRESULT pp_lexer_SkipComment(pp_lexer *lexer, COMMENT_TYPE theType);
+CCResult pp_lexer_GetNextToken(pp_lexer *plexer, pp_token *theNextToken);
+CCResult pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken);
+CCResult pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken);
+CCResult pp_lexer_GetTokenStringLiteral(pp_lexer *plexer, pp_token *theNextToken);
+CCResult pp_lexer_GetTokenSymbol(pp_lexer *plexer, pp_token *theNextToken);
+CCResult pp_lexer_SkipComment(pp_lexer *lexer, COMMENT_TYPE theType);
 
 #ifdef __cplusplus
 }; // extern "C"

@@ -99,7 +99,7 @@ public:
     ~Interpreter();
 
     ExecFunction *getFunctionNamed(const char *name);
-    HRESULT runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval);
+    CCResult runFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval);
 };
 
 
