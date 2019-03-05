@@ -275,22 +275,22 @@ void pp_warning(pp_parser *self, const char *format, ...)
  */
 CCResult pp_parser::lexToken(bool skipWhitespace)
 {
-    bool success = true;
+    CCResult success = CC_OK;
 
-    while (success)
+    while (CC_OK == success)
     {
         if (overread)
         {
             memcpy(&token, &last_token, sizeof(pp_token));
             overread = false;
-            success = true;
+            success = CC_OK;
         }
         else
         {
-            success = SUCCEEDED(pp_lexer_GetNextToken(&lexer, &token));
+            success = pp_lexer_GetNextToken(&lexer, &token);
         }
 
-        if (!success)
+        if (CC_FAIL == success)
         {
             return CC_FAIL;
         }
@@ -323,7 +323,7 @@ int pp_parser::peekToken()
 
     while (true)
     {
-        if (FAILED(pp_lexer_GetNextToken(&this->lexer, &tempToken)))
+        if (CC_FAIL == pp_lexer_GetNextToken(&this->lexer, &tempToken))
         {
             memcpy(&this->lexer, &tempLexer, sizeof(pp_lexer));
             return -1;
@@ -349,7 +349,7 @@ CCResult pp_parser::lexTokenEssential(bool skipWhitespace)
 
     while(1)
     {
-        if(FAILED(parser->lexToken(skipWhitespace)))
+        if (CC_FAIL == parser->lexToken(skipWhitespace))
         {
             return CC_FAIL;
         }
@@ -381,12 +381,12 @@ CCResult pp_parser::lexTokenEssential(bool skipWhitespace)
 pp_token *pp_parser::emitToken()
 {
     bool emitme = false;
-    bool success = true;
+    CCResult success = CC_OK;
     pp_token token2;
     pp_token *child_token;
     int i;
 
-    while (success && !emitme)
+    while ((success == CC_OK) && !emitme)
     {
         // get token from subparser ("child") if one exists
         if (child)
@@ -445,7 +445,7 @@ pp_token *pp_parser::emitToken()
         {
             emitme = false;
         }
-        else if (FAILED(lexToken(false))) // lex the next token if no token is obtained from the subparser
+        else if (CC_FAIL == lexToken(false)) // lex the next token if no token is obtained from the subparser
         {
             break;
         }
@@ -466,14 +466,14 @@ pp_token *pp_parser::emitToken()
                 if (peekToken() == PP_TOKEN_CONCATENATE)
                 {
                     memcpy(&token2, &this->token, sizeof(pp_token));
-                    success = SUCCEEDED(lexToken(true)); // lex '##'
+                    success = lexToken(true); // lex '##'
                     assert(this->token.theType == PP_TOKEN_CONCATENATE);
-                    if (!success)
+                    if (success != CC_OK)
                     {
                         break;
                     }
-                    success = SUCCEEDED(lexToken(true)); // lex second token
-                    if (!success)
+                    success = lexToken(true); // lex second token
+                    if (success != CC_OK)
                     {
                         break;
                     }
@@ -547,8 +547,8 @@ pp_token *pp_parser::emitToken()
             case PP_TOKEN_DIRECTIVE:
                 if (this->type == PP_FUNCTION_MACRO)
                 {
-                    success = SUCCEEDED(lexToken(true));
-                    if (!success)
+                    success = lexToken(true);
+                    if (success != CC_OK)
                     {
                         break;
                     }
@@ -556,7 +556,7 @@ pp_token *pp_parser::emitToken()
                     if (this->token.theType == PP_TOKEN_IDENTIFIER &&
                         params->findByName(this->token.theSource))
                     {
-                        if (FAILED(stringify()))
+                        if (CC_FAIL == stringify())
                         {
                             return NULL;
                         }
@@ -572,7 +572,7 @@ pp_token *pp_parser::emitToken()
                 {
                     /* only parse the "#" symbol when it's at the beginning of a
                      * line (ignoring whitespace) */
-                    if (FAILED(parseDirective()))
+                    if (CC_FAIL == parseDirective())
                     {
                         return NULL;
                     }
@@ -608,13 +608,13 @@ pp_token *pp_parser::emitToken()
                 else if (peekToken() == PP_TOKEN_LPAREN &&
                          ctx->func_macros.findByName(token2.theSource))
                 {
-                    success = SUCCEEDED(lexToken(true));
+                    success = lexToken(true);
                     assert(this->token.theType == PP_TOKEN_LPAREN);
-                    if (!success)
+                    if (success != CC_OK)
                     {
                         break;
                     }
-                    if (FAILED(insertFunctionMacro(token2.theSource)))
+                    if (CC_FAIL == insertFunctionMacro(token2.theSource))
                     {
                         return NULL;
                     }
@@ -643,7 +643,7 @@ CCResult pp_parser::readLine(char *buf, size_t bufsize)
 {
     int total_length = 1;
 
-    if(FAILED(lexToken(true)))
+    if (CC_FAIL == lexToken(true))
     {
         return CC_FAIL;
     }
@@ -670,7 +670,7 @@ CCResult pp_parser::readLine(char *buf, size_t bufsize)
 
         strcat(buf, token.theSource);
         total_length += strlen(token.theSource);
-        if(FAILED(lexToken(false)))
+        if (CC_FAIL == lexToken(false))
         {
             return CC_FAIL;
         }
@@ -746,7 +746,7 @@ CCResult pp_parser::parseDirective()
 {
     char directiveName[MAX_TOKEN_LENGTH + 1] = {""};
 
-    if(FAILED(lexToken(true)))
+    if (CC_FAIL == lexToken(true))
     {
         return CC_FAIL;
     }
@@ -772,7 +772,7 @@ CCResult pp_parser::parseDirective()
         char filename[128] = {""};
         bool isImport = !strcmp(directiveName, "import");
 
-        if(FAILED(lexToken(true)))
+        if (CC_FAIL == lexToken(true))
         {
             return CC_FAIL;
         }
@@ -781,7 +781,7 @@ CCResult pp_parser::parseDirective()
         if(token.theType == PP_TOKEN_LT)
         {
             char *end;
-            if(FAILED(readLine(filename, sizeof(filename))))
+            if (CC_FAIL == readLine(filename, sizeof(filename)))
             {
                 return pp_error(this, "unable to read rest of line?");
             }
@@ -818,7 +818,7 @@ CCResult pp_parser::parseDirective()
     {
         char name[MAX_TOKEN_LENGTH];
 
-        if(FAILED(lexToken(true)))
+        if (CC_FAIL == lexToken(true))
         {
             return CC_FAIL;
         }
@@ -834,7 +834,7 @@ CCResult pp_parser::parseDirective()
     }
     else if (!strcmp(directiveName, "undef"))
     {
-        if(FAILED(lexToken(true)))
+        if (CC_FAIL == lexToken(true))
         {
             return CC_FAIL;
         }
@@ -876,7 +876,7 @@ CCResult pp_parser::parseDirective()
         char text[256] = {""};
 
         // this->token is about to be clobbered, so save whether this is a warning or error
-        if(FAILED(readLine(text, sizeof(text))))
+        if (CC_FAIL == readLine(text, sizeof(text)))
         {
             return CC_FAIL;
         }
@@ -1004,15 +1004,15 @@ CCResult pp_parser::define(char *name)
     }
 
     // do NOT skip whitespace here - the '(' must come immediately after the name!
-    if(FAILED(lexToken(false)))
+    if (CC_FAIL == lexToken(false))
     {
         goto error;
     }
 
-    if(token.theType == PP_TOKEN_LPAREN) // function-style #define
+    if (token.theType == PP_TOKEN_LPAREN) // function-style #define
     {
         is_function = true;
-        if(FAILED(lexToken(true)))
+        if (CC_FAIL == lexToken(true))
         {
             goto error;
         }
@@ -1023,7 +1023,7 @@ CCResult pp_parser::define(char *name)
                 // All of the below types are technically valid macro names
             case PP_TOKEN_IDENTIFIER:
                 funcParams->insertAfter(NULL, token.theSource);
-                if(FAILED(lexToken(true)))
+                if (CC_FAIL == lexToken(true))
                 {
                     goto error;
                 }
@@ -1050,7 +1050,7 @@ CCResult pp_parser::define(char *name)
     // Read macro contents
     contents = (char*) malloc(MACRO_CONTENTS_SIZE);
     contents[0] = '\0';
-    if(FAILED(readLine(contents, MACRO_CONTENTS_SIZE)))
+    if (CC_FAIL == readLine(contents, MACRO_CONTENTS_SIZE))
     {
         goto error;
     }
@@ -1099,7 +1099,7 @@ CCResult pp_parser::conditional(const char *directive)
             ctx->conditionals.top = cs_false;
             return CC_OK;
         }
-        if(FAILED(evalConditional(directive, &result)))
+        if (CC_FAIL == evalConditional(directive, &result))
         {
             return CC_FAIL;
         }
@@ -1119,7 +1119,7 @@ CCResult pp_parser::conditional(const char *directive)
         {
             // unconditionally enable parsing long enough to parse the condition
             ctx->conditionals.top = cs_true;
-            if(FAILED(evalConditional(directive, &result)))
+            if (CC_FAIL == evalConditional(directive, &result))
             {
                 return CC_FAIL;
             }
@@ -1154,7 +1154,7 @@ CCResult pp_parser::evalConditional(const char *directive, int *result) // FIXME
 {
     if (!strcmp(directive, "ifdef") || !strcmp(directive, "ifndef"))
     {
-        if (FAILED(lexToken(true)))
+        if (CC_FAIL == lexToken(true))
         {
             return CC_FAIL;
         }
@@ -1170,7 +1170,7 @@ CCResult pp_parser::evalConditional(const char *directive, int *result) // FIXME
         pp_parser *subparser;
         char buf[1024];
 
-        if(FAILED(readLine(buf, sizeof(buf))))
+        if (CC_FAIL == readLine(buf, sizeof(buf)))
         {
             return CC_FAIL;
         }
@@ -1237,7 +1237,7 @@ CCResult pp_parser::insertFunctionMacro(char *name)
     ctx->macros.gotoFirst(); // this line seems completely pointless?
     do
     {
-        if(FAILED(lexTokenEssential(false)))
+        if (CC_FAIL == lexTokenEssential(false))
         {
             return CC_FAIL;
         }
