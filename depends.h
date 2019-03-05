@@ -17,13 +17,6 @@ typedef bool CCResult;
 #define CC_OK   ((CCResult) true)
 #define CC_FAIL ((CCResult) false)
 
-#ifndef FALSE
-#define FALSE 0
-#endif
-#ifndef TRUE
-#define TRUE 1
-#endif
-
 #define MAX_STR_LEN    127
 #define MAX_STR_VAR_LEN    63
 

@@ -50,11 +50,11 @@ bool ParserSet::first(PRODUCTION theProduction, MY_TOKEN_TYPE theToken)
     {
         if (*ptr == theToken)
         {
-            return TRUE;
+            return true;
         }
         ptr++;
     }
-    return FALSE;
+    return false;
 }
 
 bool ParserSet::follow(PRODUCTION theProduction, MY_TOKEN_TYPE theToken)
@@ -65,10 +65,10 @@ bool ParserSet::follow(PRODUCTION theProduction, MY_TOKEN_TYPE theToken)
     {
         if (*ptr == theToken)
         {
-            return TRUE;
+            return true;
         }
         ptr++;
     }
-    return FALSE;
+    return false;
 }
 
