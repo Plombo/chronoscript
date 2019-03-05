@@ -428,8 +428,25 @@ bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
  * performs no action and all member variables and base classes are
  * trivially destructible themselves.
  */
-#include <type_traits>
-#define HAS_TRIVIAL_DESTRUCTOR(T) std::is_trivially_destructible<T>::value
+#if (defined(__clang__) && defined(__has_feature))
+#   if __has_feature(has_trivial_destructor)
+#      define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#   endif
+#elif defined(__GNUC__)
+#   if ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
+#      define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#   endif
+#elif defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#   define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#endif
+#ifndef HAS_TRIVIAL_DESTRUCTOR
+#   if __cplusplus >= 201103L
+#      include <type_traits>
+#      define HAS_TRIVIAL_DESTRUCTOR(T) std::is_trivially_destructible<T>::value
+#   else
+#      define HAS_TRIVIAL_DESTRUCTOR(T) (false)
+#   endif
+#endif
 
 /**
  * Declare C++ new and delete operators which use ralloc.
