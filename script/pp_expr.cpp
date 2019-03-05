@@ -143,10 +143,14 @@ bool pp_expr::check_unary_op()
 
 CCResult pp_expr::cond_expr(int *result)
 {
-    if (FAILED(binary_expr(result, 1)))
+    if (CC_FAIL == binary_expr(result, 1))
+    {
         return CC_FAIL;
+    }
     if (check(PP_TOKEN_CONDITIONAL))
+    {
         return cond_expr2(result);
+    }
     return CC_OK;
 }
 
@@ -154,13 +158,19 @@ CCResult pp_expr::cond_expr2(int *result)
 {
     int resultTrue, resultFalse;
     match(); // PP_TOKEN_CONDITIONAL
-    if (FAILED(cond_expr(&resultTrue)))
+    if (CC_FAIL == cond_expr(&resultTrue))
+    {
         return CC_FAIL;
+    }
     if (!check(PP_TOKEN_COLON))
+    {
         return expect_fail("':'");
+    }
     match();
-    if (FAILED(cond_expr(&resultFalse)))
+    if (CC_FAIL == cond_expr(&resultFalse))
+    {
         return CC_FAIL;
+    }
     *result = *result ? resultTrue : resultFalse;
     return CC_OK;
 }
@@ -169,11 +179,15 @@ CCResult pp_expr::binary_expr(int *result, int precedenceLevel)
 {
     if (precedenceLevel == 10)
     {
-        if (FAILED(unary_expr(result)))
+        if (CC_FAIL == unary_expr(result))
+        {
             return CC_FAIL;
+        }
     }
-    else if (FAILED(binary_expr(result, precedenceLevel+1)))
+    else if (CC_FAIL == binary_expr(result, precedenceLevel+1))
+    {
         return CC_FAIL;
+    }
     return binary_expr2(result, precedenceLevel);
 }
 
@@ -185,11 +199,15 @@ CCResult pp_expr::binary_expr2(int *result, int precedenceLevel)
     match();
     if (precedenceLevel == 10)
     {
-        if (FAILED(unary_expr(&rhs)))
+        if (CC_FAIL == unary_expr(&rhs))
+        {
             return CC_FAIL;
+        }
     }
-    else if (FAILED(binary_expr(&rhs, precedenceLevel+1)))
+    else if (CC_FAIL == binary_expr(&rhs, precedenceLevel+1))
+    {
         return CC_FAIL;
+    }
     *result = apply_binary_op(op, *result, rhs);
     return binary_expr2(result, precedenceLevel);
 }
@@ -200,11 +218,17 @@ CCResult pp_expr::unary_expr(int *result)
     {
         PP_TOKEN_TYPE op = token->theType;
         match();
-        if (FAILED(unary_expr(result))) return CC_FAIL;
+        if (CC_FAIL == unary_expr(result))
+        {
+            return CC_FAIL;
+        }
         *result = applyUnaryOp(op, *result);
         return CC_OK;
     }
-    else return primary_expr(result);
+    else
+    {
+        return primary_expr(result);
+    }
 }
 
 CCResult pp_expr::primary_expr(int *result)
@@ -215,15 +239,24 @@ CCResult pp_expr::primary_expr(int *result)
         if (parser->token.theType == PP_TOKEN_LPAREN)
         {
             parser->lexToken(true);
-            if (parser->token.theType != PP_TOKEN_IDENTIFIER) return expect_fail("<identifier>");
+            if (parser->token.theType != PP_TOKEN_IDENTIFIER)
+            {
+                return expect_fail("<identifier>");
+            }
             *result = parser->isDefined(token->theSource);
             parser->lexToken(true);
-            if (parser->token.theType != PP_TOKEN_RPAREN) return expect_fail("')'");
+            if (parser->token.theType != PP_TOKEN_RPAREN)
+            {
+                return expect_fail("')'");
+            }
             match();
         }
         else
         {
-            if (parser->token.theType != PP_TOKEN_IDENTIFIER) return expect_fail("<identifier>");
+            if (parser->token.theType != PP_TOKEN_IDENTIFIER)
+            {
+                return expect_fail("<identifier>");
+            }
             *result = parser->isDefined(token->theSource);
             match();
         }
@@ -232,8 +265,14 @@ CCResult pp_expr::primary_expr(int *result)
     else if (check(PP_TOKEN_LPAREN))
     {
         match();
-        if (FAILED(cond_expr(result))) return CC_FAIL;
-        if (!check(PP_TOKEN_RPAREN)) return expect_fail("')'");
+        if (CC_FAIL == cond_expr(result))
+        {
+            return CC_FAIL;
+        }
+        if (!check(PP_TOKEN_RPAREN))
+        {
+            return expect_fail("')'");
+        }
         match();
         return CC_OK;
     }
@@ -247,9 +286,13 @@ CCResult pp_expr::primary_expr(int *result)
     else if (check(PP_TOKEN_INTCONSTANT))
     {
         if(token->theSource[0] == '0') // octal
+        {
             *result = strtol(token->theSource, NULL, 8);
+        }
         else
+        {
             *result = strtol(token->theSource, NULL, 10);
+        }
         match();
         return CC_OK;
     }
@@ -278,8 +321,10 @@ extern "C" int pp_expr_eval_expression(pp_parser *parser)
 {
     pp_expr expr(parser);
     int result;
-    if (FAILED(expr.eval(&result)))
+    if (CC_FAIL == expr.eval(&result))
+    {
         return 0;
+    }
     return result;
 }
 
