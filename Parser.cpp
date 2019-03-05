@@ -89,7 +89,7 @@ void Parser::match()
         memcpy(&theNextToken, &theNextNextToken, sizeof(Token));
         rewound = false;
     }
-    else if (FAILED(theLexer.getNextToken(&theNextToken)))
+    else if (CC_FAIL == theLexer.getNextToken(&theNextToken))
     {
         Parser_Error(this, error);
     }
@@ -2067,7 +2067,7 @@ void Parser::handleError(PRODUCTION offender)
     //grabbing tokens until we find one we can use
     do
     {
-        while (!SUCCEEDED(theLexer.getNextToken(&theNextToken)));
+        while (theLexer.getNextToken(&theNextToken) != CC_OK);
         if (theNextToken.theType == TOKEN_EOF)
         {
             break;

@@ -126,7 +126,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
             case OP_BOOL:
                 fetchDst();
                 fetchSrc(src0, inst->src0);
-                if (FAILED(unaryOps[inst->opCode - OP_NEG](dst, src0)))
+                if (unaryOps[inst->opCode - OP_NEG](dst, src0) == CC_FAIL)
                 {
                     printf("error: an exception occurred when executing %s instruction\n",
                         getOpCodeName((OpCode)inst->opCode));
@@ -154,7 +154,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
-                if (FAILED(binaryOps[inst->opCode - OP_BIT_OR](dst, src0, src1)))
+                if (binaryOps[inst->opCode - OP_BIT_OR](dst, src0, src1) == CC_FAIL)
                 {
                     printf("error: an exception occurred when executing %s instruction\n",
                         getOpCodeName((OpCode)inst->opCode));
@@ -184,7 +184,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
                     ExecFunction *target = function->callTargets[inst->callTarget];
                     callResult = execFunction(target, callParams, dst);
                 }
-                if (FAILED(callResult))
+                if (CC_FAIL == callResult)
                 {
                     if (inst->opCode == OP_CALL_BUILTIN)
                     {
@@ -211,7 +211,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
                 fetchSrc(src2, inst->src2);
-                if (FAILED(ScriptVariant_ContainerSet(src0, src1, src2)))
+                if (CC_FAIL == ScriptVariant_ContainerSet(src0, src1, src2))
                 {
                     printf("error: SET operation failed\n");
                     goto start_backtrace;
@@ -221,7 +221,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);
-                if (FAILED(ScriptVariant_ContainerGet(dst, src0, src1)))
+                if (CC_FAIL == ScriptVariant_ContainerGet(dst, src0, src1))
                 {
                     printf("error: GET operation failed\n");
                     goto start_backtrace;

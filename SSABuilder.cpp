@@ -477,7 +477,7 @@ Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *s
     default: success = CC_FAIL;
     }
 
-    if (SUCCEEDED(success))
+    if (success == CC_OK)
     {
         return builder->addConstant(result);
     }

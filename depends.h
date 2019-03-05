@@ -17,16 +17,6 @@ typedef bool CCResult;
 #define CC_OK   ((CCResult) true)
 #define CC_FAIL ((CCResult) false)
 
-#ifdef FAILED
-#undef FAILED
-#endif
-#define FAILED(status) (CC_FAIL == (status))
-
-#ifdef SUCCEEDED
-#undef SUCCEEDED
-#endif
-#define SUCCEEDED(status) (CC_OK == (status))
-
 #ifndef FALSE
 #define FALSE 0
 #endif
