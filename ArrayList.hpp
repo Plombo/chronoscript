@@ -102,7 +102,7 @@ public:
             {
                 resize(capacity * 2);
             }
-            memmove(&array[pos + 1], &array[pos], numElements - pos);
+            memmove(&array[pos + 1], &array[pos], sizeof(T) * (numElements - pos));
             array[pos] = newElem;
             ++numElements;
         }
@@ -111,7 +111,7 @@ public:
     // removes the element at index from the list; runs in linear (not constant) time
     inline void remove(uint32_t pos)
     {
-        memmove(&array[pos], &array[pos + 1], numElements - pos);
+        memmove(&array[pos], &array[pos + 1], sizeof(T) * (numElements - pos - 1));
         --numElements;
     }
 
@@ -119,7 +119,7 @@ public:
     inline void removeRange(uint32_t start, uint32_t end)
     {
         assert(end >= start);
-        memmove(&array[start], &array[end], numElements - (end - start));
+        memmove(&array[start], &array[end], sizeof(T) * (numElements - end));
         numElements -= (end - start);
     }
 
