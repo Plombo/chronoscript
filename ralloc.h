@@ -55,17 +55,16 @@ extern "C" {
 #include <stdbool.h>
 #include <assert.h>
 
-#define MALLOCLIKE __attribute__((__malloc__))
-#define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
-
-#ifndef likely
-#  ifdef HAVE___BUILTIN_EXPECT
-#    define likely(x)   __builtin_expect(!!(x), 1)
-#    define unlikely(x) __builtin_expect(!!(x), 0)
-#  else
-#    define likely(x)   (x)
-#    define unlikely(x) (x)
-#  endif
+#ifdef __GNUC__ // defined by both GCC and Clang
+#  define MALLOCLIKE        __attribute__((__malloc__))
+#  define PRINTFLIKE(f, a)  __attribute__ ((format(__printf__, f, a)))
+#  define likely(x)         __builtin_expect(!!(x), 1)
+#  define unlikely(x)       __builtin_expect(!!(x), 0)
+#else
+#  define MALLOCLIKE
+#  define PRINTFLIKE(f, a)
+#  define likely(x)         (x)
+#  define unlikely(x)       (x)
 #endif
 
 /**
