@@ -116,7 +116,7 @@ void Parser::switchToInitFunction()
     if (!initBld)
     {
         initBld = new(memCtx) SSABuilder(memCtx, "@init");
-        initBldUtil = new SSABuildUtil(initBld, &execBuilder->globals);
+        initBldUtil = new(initBld) SSABuildUtil(initBld, &execBuilder->globals);
         BasicBlock *startBlock = initBldUtil->createBBAfter(NULL);
         initBld->sealBlock(startBlock);
         initBldUtil->setCurrentBlock(startBlock);
@@ -264,7 +264,7 @@ void Parser::externalDecl2(bool variableonly)
     else if (!variableonly && parserSet.first(Productions::funcDecl, theNextToken.theType))
     {
         bld = new(memCtx) SSABuilder(memCtx, token.theSource);
-        bldUtil = new SSABuildUtil(bld, &execBuilder->globals);
+        bldUtil = new(bld) SSABuildUtil(bld, &execBuilder->globals);
         BasicBlock *startBlock = bldUtil->createBBAfter(NULL);
         bld->sealBlock(startBlock);
         bldUtil->setCurrentBlock(startBlock);

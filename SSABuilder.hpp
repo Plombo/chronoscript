@@ -463,6 +463,7 @@ public:
 
 class SSABuildUtil
 {
+    DECLARE_RALLOC_CXX_OPERATORS(SSABuildUtil);
 private:
     SSABuilder *builder;
     StackedSymbolTable symbolTable;
