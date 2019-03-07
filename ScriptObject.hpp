@@ -33,7 +33,7 @@ private:
     bool set(int key, const ScriptVariant *value);
 
 public:
-    ScriptObject();
+    ScriptObject(unsigned int initialSize);
     ~ScriptObject();
 
     // returns true on success, false on error

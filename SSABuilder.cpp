@@ -599,7 +599,7 @@ RValue *SSABuildUtil::mkGetGlobal(RValue *src)
 
 RValue *SSABuildUtil::mkObject()
 {
-    Expression *inst = new(builder->memCtx) Expression(OP_MKOBJECT, builder->valueId());
+    Expression *inst = new(builder->memCtx) Expression(OP_MKOBJECT, builder->valueId(), mkConstInt(0));
     builder->insertInstruction(inst, currentBlock);
     return inst->value();
 }

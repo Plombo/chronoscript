@@ -1933,6 +1933,7 @@ RValue *Parser::primaryExpr()
 
 RValue *Parser::object()
 {
+    int32_t numMembers = 0;
     match(); // TOKEN_LCURLY
 
     RValue *object = bldUtil->mkObject();
@@ -1952,12 +1953,16 @@ RValue *Parser::object()
         checkAndMatchOrErrorReturn(TOKEN_COLON, kv_pair, bldUtil->undef());
         RValue *value = assignmentExpr();
         bldUtil->mkSet(object, key, value);
+        ++numMembers;
         if (check(TOKEN_COMMA))
         {
             match();
         }
         else break;
     }
+
+    // the initial number of members in the object is the parameter to the MKOBJECT instruction
+    object->asTemporary()->expr->setSrc(0, bldUtil->mkConstInt(numMembers));
 
     checkAndMatchOrErrorReturn(TOKEN_RCURLY, object, bldUtil->undef());
     return object;

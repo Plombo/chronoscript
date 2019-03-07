@@ -215,7 +215,7 @@ CCResult builtin_globals(int numParams, ScriptVariant *params, ScriptVariant *re
     if (globalsObject.vt == VT_EMPTY)
     {
         // globals object doesn't exist yet; create it
-        globalsObject.objVal = ObjectHeap_CreateNewObject();
+        globalsObject.objVal = ObjectHeap_CreateNewObject(8);
         globalsObject.vt = VT_OBJECT;
         ScriptVariant_Ref(&globalsObject);
     }

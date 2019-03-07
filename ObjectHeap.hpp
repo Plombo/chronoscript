@@ -17,7 +17,7 @@
 // public API
 void ObjectHeap_ClearTemporary();
 void ObjectHeap_ClearAll();
-int ObjectHeap_CreateNewObject();
+int ObjectHeap_CreateNewObject(unsigned int initialSize);
 int ObjectHeap_CreateNewList(size_t initialSize);
 void ObjectHeap_Ref(int index);
 void ObjectHeap_Unref(int index);

@@ -38,13 +38,14 @@ ScriptContainer::~ScriptContainer()
 {
 }
 
-ScriptObject::ScriptObject()
+ScriptObject::ScriptObject(unsigned int initialSize)
 {
     persistent = false;
     currentlyPrinting = false;
     log2_hashTableSize = 0;
-    hashTable = new ObjectHashNode[1];
+    hashTable = NULL;
     lastFreeNode = 1;
+    resizeHashTable(initialSize);
 }
 
 // destructor: unrefs all keys and values in hash table
@@ -135,14 +136,17 @@ void ScriptObject::resizeHashTable(unsigned int minNewSize)
     hashTable = new ObjectHashNode[newSize];
     lastFreeNode = newSize;
 
-    for (ssize_t i = oldSize - 1; i >= 0; i--)
+    if (oldHashTable != NULL)
     {
-        if (oldHashTable[i].key != -1)
+        for (ssize_t i = oldSize - 1; i >= 0; i--)
         {
-            set(oldHashTable[i].key, &oldHashTable[i].value);
+            if (oldHashTable[i].key != -1)
+            {
+                set(oldHashTable[i].key, &oldHashTable[i].value);
+            }
         }
+        delete[] oldHashTable;
     }
-    delete[] oldHashTable;
 }
 
 ssize_t ScriptObject::getFreePosition()

@@ -49,7 +49,7 @@ public:
     void clearTemporaryReferences();
 
     // create a new object with refcount 1 and return its index
-    int popObject();
+    int popObject(unsigned int initialSize);
 
     // create a new list with refcount 1 and return its index
     int popList(size_t initialSize);
@@ -205,10 +205,10 @@ int ObjectHeap::pop()
     return i;
 }
 
-int ObjectHeap::popObject()
+int ObjectHeap::popObject(unsigned int initialSize)
 {
     int index = pop();
-    objects[index].container = new ScriptObject;
+    objects[index].container = new ScriptObject(initialSize);
     objects[index].isList = false;
     return index;
 }
@@ -368,9 +368,9 @@ void ObjectHeap_ClearAll()
 }
 
 // returns global index of newly created object (non-persistent)
-int ObjectHeap_CreateNewObject()
+int ObjectHeap_CreateNewObject(unsigned int initialSize)
 {
-    return theHeap.popObject();
+    return theHeap.popObject(initialSize);
 }
 
 // returns global index of newly created list (non-persistent)

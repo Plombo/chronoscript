@@ -198,8 +198,9 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
             // operations to create/modify/access objects and lists
             case OP_MKOBJECT:
                 fetchDst();
+                fetchSrc(src0, inst->src0);
                 dst->vt = VT_OBJECT;
-                dst->objVal = ObjectHeap_CreateNewObject();
+                dst->objVal = ObjectHeap_CreateNewObject(src0->lVal);
                 break;
             case OP_MKLIST:
                 fetchDst();
