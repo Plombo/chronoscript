@@ -7,6 +7,7 @@
  */
 
 #include "Parser.hpp"
+#include "Builtins.hpp"
 
 #define errorWithMessage(pr, ...) {                  \
     pp_error(&(theLexer.preprocessor), __VA_ARGS__); \
@@ -1825,7 +1826,28 @@ RValue *Parser::postfixExpr2(RValue *src)
         }
         RValue *fieldName = bldUtil->mkConstString(theNextToken.theSource);
         match();
-        return postfixExpr2(bldUtil->mkGet(src, fieldName));
+        if (check(TOKEN_LPAREN)) // method call
+        {
+            match();
+
+            const char *methodName = StrCache_Get(fieldName->asConstant()->constValue.strVal);
+            int methodIndex = getMethodIndex(methodName);
+            if (methodIndex == -1)
+            {
+                errorWithMessage(postfix_expr2, "there is no method called '%s'", methodName);
+                return bldUtil->undef();
+            }
+
+            FunctionCall *call = bldUtil->startMethodCall(methodIndex, src);
+            argExprList(call);
+            checkAndMatchOrErrorReturn(TOKEN_RPAREN, postfix_expr2, bldUtil->undef());
+            bldUtil->insertFunctionCall(call);
+            return src;
+        }
+        else // get field value
+        {
+            return postfixExpr2(bldUtil->mkGet(src, fieldName));
+        }
     }
     else if (check(TOKEN_LBRACKET))
     {

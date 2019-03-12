@@ -8,6 +8,7 @@
 #include "ralloc.h"
 #include "List.hpp"
 #include "ScriptUtils.h"
+#include "Builtins.hpp"
 
 void BasicBlock::addPred(BasicBlock *newPred)
 {
@@ -639,6 +640,15 @@ Export *SSABuildUtil::mkExport(GlobalVarRef *dst, RValue *src)
 FunctionCall *SSABuildUtil::startFunctionCall(const char *name)
 {
     return new(builder->memCtx) FunctionCall(name, builder->valueId());
+}
+
+FunctionCall *SSABuildUtil::startMethodCall(int methodIndex, RValue *target)
+{
+    FunctionCall *call = new(builder) FunctionCall(getMethodName(methodIndex), builder->valueId());
+    call->op = OP_CALL_METHOD;
+    call->builtinRef = methodIndex;
+    call->appendOperand(target);
+    return call;
 }
 
 // inserts a finished function call instruction at the end of the current block

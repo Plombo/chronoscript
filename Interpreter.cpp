@@ -165,6 +165,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
             // function call
             case OP_CALL:
             case OP_CALL_BUILTIN:
+            case OP_CALL_METHOD:
             {
                 fetchDst();
                 int numParams = function->callParams[inst->paramsIndex];
@@ -177,6 +178,11 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
                 if (inst->opCode == OP_CALL_BUILTIN)
                 {
                     BuiltinScriptFunction target = getBuiltinByIndex(inst->callTarget);
+                    callResult = target(numParams, callParams, dst);
+                }
+                else if (inst->opCode == OP_CALL_METHOD)
+                {
+                    BuiltinScriptFunction target = getMethodByIndex(inst->callTarget);
                     callResult = target(numParams, callParams, dst);
                 }
                 else // inst->opCode == OP_CALL

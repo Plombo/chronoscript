@@ -427,6 +427,7 @@ const char *getOpCodeName(OpCode op)
 
         case OP_CALL:                return "call";
         case OP_CALL_BUILTIN:        return "call_builtin";
+        case OP_CALL_METHOD:         return "call_method";
 
         case OP_MKOBJECT:            return "mkobject";
         case OP_MKLIST:              return "mklist";

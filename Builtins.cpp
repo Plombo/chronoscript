@@ -7,6 +7,7 @@
 
 static bool builtinsInited = false;
 static List<unsigned int> builtinIndices;
+static List<unsigned int> methodIndices;
 static ScriptVariant globalsObject = {{.ptrVal = NULL}, .vt = VT_EMPTY};
 
 extern int script_arg_count;
@@ -362,11 +363,28 @@ CCResult builtin_file_read(int numParams, ScriptVariant *params, ScriptVariant *
     return CC_OK;
 }
 
-#define DEF_BUILTIN(name) { builtin_##name, #name }
+CCResult method_append(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    return builtin_list_append(numParams, params, retval);
+}
+
+CCResult method_insert(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    return builtin_list_insert(numParams, params, retval);
+}
+
+CCResult method_remove(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    return builtin_list_remove(numParams, params, retval);
+}
+
+
 struct Builtin {
     BuiltinScriptFunction function;
     const char *name;
 };
+
+#define DEF_BUILTIN(name) { builtin_##name, #name }
 // define each builtin IN ALPHABETICAL ORDER or binary search won't work
 static Builtin builtinsArray[] = {
     DEF_BUILTIN(char_from_integer),
@@ -384,15 +402,29 @@ static Builtin builtinsArray[] = {
 };
 #undef DEF_BUILTIN
 
+#define DEF_METHOD(name) { method_##name, #name }
+static Builtin methodsArray[] = {
+    DEF_METHOD(append),
+    DEF_METHOD(insert),
+    DEF_METHOD(remove),
+};
+#undef DEF_METHOD
+
+
 // initialize builtin lists for public use
 static void initBuiltins()
 {
     if (builtinsInited) return;
-    size_t numBuiltins = sizeof(builtinsArray) / sizeof(Builtin);
-
+    const unsigned int numBuiltins = sizeof(builtinsArray) / sizeof(Builtin);
     for (unsigned int i = 0; i < numBuiltins; i++)
     {
         builtinIndices.insertAfter(i, builtinsArray[i].name);
+    }
+
+    const unsigned int numMethods = sizeof(methodsArray) / sizeof(Builtin);
+    for (unsigned int i = 0; i < numMethods; i++)
+    {
+        methodIndices.insertAfter(i, methodsArray[i].name);
     }
 
     builtinsInited = true;
@@ -416,5 +448,27 @@ BuiltinScriptFunction getBuiltinByIndex(int index)
 const char *getBuiltinName(int index)
 {
     return builtinsArray[index].name;
+}
+
+// returns index of method with the given name, or -1 if it doesn't exist
+int getMethodIndex(const char *methodName)
+{
+    if (!builtinsInited) initBuiltins();
+    if (methodIndices.findByName(methodName))
+    {
+        return methodIndices.retrieve();
+    }
+    else return -1;
+}
+
+// returns the method with the given index
+BuiltinScriptFunction getMethodByIndex(int index)
+{
+    return methodsArray[index].function;
+}
+
+const char *getMethodName(int index)
+{
+    return methodsArray[index].name;
 }
 

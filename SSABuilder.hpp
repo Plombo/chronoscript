@@ -52,6 +52,7 @@ enum OpCode
     // function call
     OP_CALL,
     OP_CALL_BUILTIN,
+    OP_CALL_METHOD,
 
     // object/list operations
     OP_MKOBJECT,
@@ -238,7 +239,7 @@ public:
     virtual bool isExpression();
     virtual bool isJump();
     inline bool isPhi() { return op == OP_PHI; }
-    inline bool isFunctionCall() { return op == OP_CALL || op == OP_CALL_BUILTIN; }
+    inline bool isFunctionCall() { return op == OP_CALL || op == OP_CALL_BUILTIN || op == OP_CALL_METHOD; }
 
     inline Expression *asExpression();
     inline Phi *asPhi();
@@ -502,6 +503,7 @@ public:
     
     // creates a function call instruction but doesn't put it in the instruction list yet
     FunctionCall *startFunctionCall(const char *name);
+    FunctionCall *startMethodCall(int methodIndex, RValue *target);
     // inserts a finished function call instruction at the end of the current block
     void insertFunctionCall(FunctionCall *call);
 

@@ -95,11 +95,11 @@ void FunctionBuilder::createExecInstruction(ExecInstruction *inst, Instruction *
     {
         // call target
         FunctionCall *ssaCall = ssaInst->asFunctionCall();
-        if (ssaInst->op == OP_CALL_BUILTIN)
+        if (ssaInst->op == OP_CALL_BUILTIN || ssaInst->op == OP_CALL_METHOD)
         {
             inst->callTarget = ssaCall->builtinRef;
         }
-        else
+        else // ssaInst->op == OP_CALL
         {
             ExecFunction *target = ssaCall->functionRef;
             assert(target);
@@ -160,7 +160,7 @@ void FunctionBuilder::run()
         if (inst->isFunctionCall())
         {
             numParams += inst->operands.size() + 1;
-            if (inst->op != OP_CALL_BUILTIN) ++numCalls;
+            if (inst->op == OP_CALL) ++numCalls;
         }
         foreach_list(inst->operands, RValue*, srcIter)
         {
@@ -254,11 +254,22 @@ void ExecBuilder::printInstructions()
             printf("%s ", getOpCodeName((OpCode)inst->opCode));
 
             // parameters/sources
-            if (inst->opCode == OP_CALL || inst->opCode == OP_CALL_BUILTIN)
+            if (inst->opCode == OP_CALL || inst->opCode == OP_CALL_BUILTIN || inst->opCode == OP_CALL_METHOD)
             {
-                const char *functionName = (inst->opCode == OP_CALL_BUILTIN)
-                    ? getBuiltinName(inst->callTarget)
-                    : func->callTargets[inst->callTarget]->functionName;
+                const char *functionName;
+                if (inst->opCode == OP_CALL_BUILTIN)
+                {
+                    functionName = getBuiltinName(inst->callTarget);
+                }
+                else if (inst->opCode == OP_CALL_METHOD)
+                {
+                    functionName = getMethodName(inst->callTarget);
+                }
+                else
+                {
+                    functionName = func->callTargets[inst->callTarget]->functionName;
+                }
+
                 printf("%s ", functionName);
                 uint16_t paramCount16 = func->callParams[inst->paramsIndex];
                 assert(paramCount16 >> 8 == FILE_NONE);
