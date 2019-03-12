@@ -194,7 +194,13 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
                 {
                     if (inst->opCode == OP_CALL_BUILTIN)
                     {
-                        printf("\n\nan exception occurred in a builtin script function\n"); // TODO: function name
+                        printf("\n\nAn exception occurred in builtin script function '%s'\n",
+                               getBuiltinName(inst->callTarget));
+                    }
+                    else if (inst->opCode == OP_CALL_METHOD)
+                    {
+                        printf("\n\nAn exception occurred in script method '%s'\n",
+                               getMethodName(inst->callTarget));
                     }
                     goto continue_backtrace;
                 }
