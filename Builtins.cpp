@@ -368,6 +368,11 @@ CCResult method_append(int numParams, ScriptVariant *params, ScriptVariant *retv
     return builtin_list_append(numParams, params, retval);
 }
 
+CCResult method_char_at(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    return builtin_string_char_at(numParams, params, retval);
+}
+
 CCResult method_insert(int numParams, ScriptVariant *params, ScriptVariant *retval)
 {
     return builtin_list_insert(numParams, params, retval);
@@ -405,6 +410,7 @@ static Builtin builtinsArray[] = {
 #define DEF_METHOD(name) { method_##name, #name }
 static Builtin methodsArray[] = {
     DEF_METHOD(append),
+    DEF_METHOD(char_at),
     DEF_METHOD(insert),
     DEF_METHOD(remove),
 };
