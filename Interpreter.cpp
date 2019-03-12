@@ -48,14 +48,11 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
     };
     
     #define fetchSrc(dst, src) { \
-        int regFile = src >> 8;\
-        int regIndex = src & 0xff;\
-            if (regFile > FILE_CONSTANT)\
+            if ((src >> 8) > FILE_CONSTANT)\
             {\
-                regIndex += 256 * (regFile - FILE_CONSTANT);\
-                regFile = FILE_CONSTANT;\
+                dst = &srcFiles[FILE_CONSTANT][(src & 0xff) + 256 * ((src >> 8) - FILE_CONSTANT)];\
             }\
-            dst = &srcFiles[regFile][regIndex];\
+            else dst = &srcFiles[src >> 8][src & 0xff];\
         }
     #define fetchDst() dst = &temps[inst->dst];
 
