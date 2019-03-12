@@ -1842,7 +1842,7 @@ RValue *Parser::postfixExpr2(RValue *src)
             argExprList(call);
             checkAndMatchOrErrorReturn(TOKEN_RPAREN, postfix_expr2, bldUtil->undef());
             bldUtil->insertFunctionCall(call);
-            return src;
+            return postfixExpr2(call->value());
         }
         else // get field value
         {
