@@ -39,6 +39,8 @@ public:
     // returns true on success, false on error
     bool get(ScriptVariant *dst, const ScriptVariant *key);
 
+    bool hasKey(const ScriptVariant *key);
+
     void makePersistent() override; // make all values in map persistent
     void print() override;
     int toString(char *dst, int dstsize) override;

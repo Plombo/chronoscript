@@ -373,6 +373,27 @@ CCResult method_char_at(int numParams, ScriptVariant *params, ScriptVariant *ret
     return builtin_string_char_at(numParams, params, retval);
 }
 
+CCResult method_has_key(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (params[0].vt != VT_OBJECT)
+    {
+        printf("error: only objects have the has_key() method\n");
+        return CC_FAIL;
+    }
+    else if (numParams != 2)
+    {
+        // the object the method is called on is included in numParams, so use numParams-1 in the error message
+        printf("error: object.has_key(key) expects 1 argument, got %d instead\n", numParams - 1);
+        return CC_FAIL;
+    }
+    // no need to check that params[1] is a string; the function will just return false in that case
+
+    ScriptObject *obj = ObjectHeap_GetObject(params[0].objVal);
+    retval->lVal = (int32_t) obj->hasKey(&params[1]);
+    retval->vt = VT_INTEGER;
+    return CC_OK;
+}
+
 CCResult method_insert(int numParams, ScriptVariant *params, ScriptVariant *retval)
 {
     return builtin_list_insert(numParams, params, retval);
@@ -411,6 +432,7 @@ static Builtin builtinsArray[] = {
 static Builtin methodsArray[] = {
     DEF_METHOD(append),
     DEF_METHOD(char_at),
+    DEF_METHOD(has_key),
     DEF_METHOD(insert),
     DEF_METHOD(remove),
 };

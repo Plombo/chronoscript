@@ -265,6 +265,19 @@ bool ScriptObject::get(ScriptVariant *dst, const ScriptVariant *key)
     }
 }
 
+bool ScriptObject::hasKey(const ScriptVariant *key)
+{
+    if (key->vt == VT_STR)
+    {
+        ObjectHashNode *node = getNodeForKey(key->strVal);
+        return (node != NULL);
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void ScriptObject::makePersistent()
 {
     if (persistent) return;
