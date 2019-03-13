@@ -48,7 +48,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
     };
     
     #define fetchSrc(dst, src) { \
-            if ((src >> 8) > FILE_CONSTANT)\
+            if (unlikely((src >> 8) > FILE_CONSTANT))\
             {\
                 dst = &srcFiles[FILE_CONSTANT][(src & 0xff) + 256 * ((src >> 8) - FILE_CONSTANT)];\
             }\
