@@ -811,7 +811,7 @@ CCResult pp_parser::parseDirective()
     }
     else if (!strcmp(directiveName, "define"))
     {
-        char name[MAX_TOKEN_LENGTH];
+        char name[MAX_TOKEN_LENGTH + 1];
 
         if (CC_FAIL == lexToken(true))
         {
