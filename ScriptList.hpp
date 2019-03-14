@@ -50,7 +50,7 @@ public:
 
     void makePersistent() override; // make all values in list persistent
     void print() override;
-    int toString(char *dst, int dstsize) override;
+    int toString(char *dst, int dstsize, bool json) override;
 
 private:
     // don't call this directly; use ObjectHeap_SetListMember() instead

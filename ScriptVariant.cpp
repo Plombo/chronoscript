@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include "ScriptVariant.hpp"
 #include "ObjectHeap.hpp"
+#include "ScriptUtils.h"
 
 void ScriptVariant_Clear(ScriptVariant *var)
 {
@@ -173,9 +174,25 @@ int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsi
         return snprintf(buffer, bufsize, "%s", StrCache_Get(svar->strVal));
     case VT_OBJECT:
     case VT_LIST:
-        return ObjectHeap_Get(svar->objVal)->toString(buffer, bufsize);
+        return ObjectHeap_Get(svar->objVal)->toString(buffer, bufsize, false);
     default:
         return snprintf(buffer, bufsize, "<Unprintable VARIANT type.>");
+    }
+}
+
+int ScriptVariant_ToJSON(const ScriptVariant *svar, char *buffer, size_t bufsize)
+{
+    switch (svar->vt)
+    {
+        case VT_EMPTY:
+            return snprintf(buffer, bufsize, "null");
+        case VT_STR:
+            return escapeString(buffer, bufsize, StrCache_Get(svar->strVal), StrCache_Len(svar->strVal));
+        case VT_OBJECT:
+        case VT_LIST:
+            return ObjectHeap_Get(svar->objVal)->toString(buffer, bufsize, true);
+        default:
+            return ScriptVariant_ToString(svar, buffer, bufsize);
     }
 }
 

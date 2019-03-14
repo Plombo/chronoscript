@@ -58,10 +58,10 @@ void ScriptList::print()
     currentlyPrinting = false;
 }
 
-int ScriptList::toString(char *dst, int dstsize)
+int ScriptList::toString(char *dst, int dstsize, bool json)
 {
-#define SNPRINTF(...) { int n = snprintf(dst, dstsize, __VA_ARGS__); dst += n; length += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
-    char buf[256];
+#define SWRITE(expr)  { int n = (expr); dst += n; length += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
+#define SNPRINTF(...) SWRITE(snprintf(dst, dstsize, __VA_ARGS__))
     bool first = true;
     int length = 0;
 
@@ -73,17 +73,26 @@ int ScriptList::toString(char *dst, int dstsize)
     currentlyPrinting = true;
 
     SNPRINTF("[");
-    for (size_t i = 0; i < storage.size(); i++)
+    for (uint32_t i = 0; i < storage.size(); i++)
     {
         if (!first) SNPRINTF(", ");
         first = false;
-        ScriptVariant_ToString(storage.getPtr(i), buf, sizeof(buf));
-        SNPRINTF("%s", buf);
+
+        const ScriptVariant *value = storage.getPtr(i);
+        if (json || value->vt == VT_STR)
+        {
+            SWRITE(ScriptVariant_ToJSON(value, dst, dstsize));
+        }
+        else
+        {
+            SWRITE(ScriptVariant_ToString(value, dst, dstsize));
+        }
     }
     SNPRINTF("]");
     currentlyPrinting = false;
     return length;
 #undef SNPRINTF
+#undef SWRITE
 }
 
 

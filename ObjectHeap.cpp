@@ -341,14 +341,14 @@ void ObjectHeap::sweep()
 // list all unfreed objects in heap with printf
 void ObjectHeap::listUnfreed()
 {
-    char buf[256];
     int i;
     for (i = 0; i < size; i++)
     {
         if (objects[i].container != NULL)
         {
-            objects[i].container->toString(buf, sizeof(buf));
-            printf("Unfreed object %i: %s\n", i, buf);
+            printf("Unfreed object %i: \n", i);
+            objects[i].container->print();
+            printf("\n");
         }
     }
 }

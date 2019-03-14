@@ -44,7 +44,7 @@ public:
 
     void makePersistent() override; // make all values in map persistent
     void print() override;
-    int toString(char *dst, int dstsize) override;
+    int toString(char *dst, int dstsize, bool json) override;
 };
 
 #endif

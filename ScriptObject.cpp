@@ -32,6 +32,7 @@
 #include "StrCache.hpp"
 #include "ScriptObject.hpp"
 #include "ObjectHeap.hpp"
+#include "ScriptUtils.h"
 
 // this has to be defined somewhere...since there's no ScriptContainer.cpp, let's put it here
 ScriptContainer::~ScriptContainer()
@@ -353,10 +354,10 @@ void ScriptObject::print()
     currentlyPrinting = false;
 }
 
-int ScriptObject::toString(char *dst, int dstsize)
+int ScriptObject::toString(char *dst, int dstsize, bool json)
 {
-#define SNPRINTF(...) { int n = snprintf(dst, dstsize, __VA_ARGS__); dst += n; length += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
-    char buf[256];
+#define SWRITE(expr)  { int n = (expr); dst += n; length += n; dstsize -= n; if (dstsize < 0) dstsize = 0; }
+#define SNPRINTF(...) SWRITE(snprintf(dst, dstsize, __VA_ARGS__))
     bool first = true;
     int length = 0;
 
@@ -377,14 +378,24 @@ int ScriptObject::toString(char *dst, int dstsize)
 
         if (!first) SNPRINTF(", ");
         first = false;
-        SNPRINTF("\"%s\": ", StrCache_Get(hashTable[i].key));
-        ScriptVariant_ToString(&hashTable[i].value, buf, sizeof(buf));
-        SNPRINTF("%s", buf);
+
+        SWRITE(escapeString(dst, dstsize, StrCache_Get(hashTable[i].key), StrCache_Len(hashTable[i].key)));
+        SNPRINTF(": ");
+
+        if (json || hashTable[i].value.vt == VT_STR)
+        {
+            SWRITE(ScriptVariant_ToJSON(&hashTable[i].value, dst, dstsize));
+        }
+        else
+        {
+            SWRITE(ScriptVariant_ToString(&hashTable[i].value, dst, dstsize));
+        }
     }
     SNPRINTF("}");
     currentlyPrinting = false;
     return length;
 #undef SNPRINTF
+#undef SWRITE
 }
 
 

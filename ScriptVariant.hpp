@@ -53,6 +53,7 @@ CCResult ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal);
 bool ScriptVariant_IsTrue(const ScriptVariant *svar);
 bool ScriptVariant_IsEqual(const ScriptVariant *svar, const ScriptVariant *rightChild);
 int ScriptVariant_ToString(const ScriptVariant *svar, char *buffer, size_t bufsize);
+int ScriptVariant_ToJSON(const ScriptVariant *svar, char *buffer, size_t bufsize);
 
 void ScriptVariant_Ref(const ScriptVariant *var);
 void ScriptVariant_Unref(const ScriptVariant *var);
