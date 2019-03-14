@@ -28,7 +28,7 @@ void printEscapedString(const char *string)
             case '\n': printf("\\n"); break;
             case '\f': printf("\\f"); break;
             case '\v': printf("\\v"); break;
-            case '\\': printf("\\"); break;
+            case '\\': printf("\\\\"); break;
             case '"':  printf("\\\""); break;
             default:
             {
@@ -69,7 +69,7 @@ int escapeString(char *dst, int dstSize, const char *src, int srcLength)
             case '\n': SNPRINTF("\\n"); break;
             case '\f': SNPRINTF("\\f"); break;
             case '\v': SNPRINTF("\\v"); break;
-            case '\\': SNPRINTF("\\"); break;
+            case '\\': SNPRINTF("\\\\"); break;
             case '"':  SNPRINTF("\\\""); break;
             default:
             {
