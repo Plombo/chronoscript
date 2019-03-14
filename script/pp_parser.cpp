@@ -1241,11 +1241,6 @@ CCResult pp_parser::insertFunctionMacro(char *name)
 
         switch(type)
         {
-        case PP_TOKEN_NEWLINE:
-            if(paramBuffer[0] != '\0')
-            {
-                return pp_error(this, "unexpected newline in parameter list for function '%s'", name);
-            }
         case PP_TOKEN_EOF:
             return pp_error(this, "unexpected end of file in parameter list for function '%s'", name);
         case PP_TOKEN_LPAREN:
@@ -1318,6 +1313,10 @@ CCResult pp_parser::insertFunctionMacro(char *name)
                 write = false;
             else
                 write = true;
+            break;
+        case PP_TOKEN_NEWLINE: // replace with a regular space
+            snprintf(token.theSource, sizeof(token.theSource), "%c", ' ');
+            write = true;
             break;
         default:
             write = true;
