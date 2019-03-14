@@ -278,6 +278,32 @@ bool ScriptObject::hasKey(const ScriptVariant *key)
     }
 }
 
+// create a list containing the keys of this object
+int ScriptObject::createKeysList()
+{
+    unsigned int size = 1u << log2_hashTableSize, actualSize = 0;
+    int list = ObjectHeap_CreateNewList(size);
+    ScriptVariant variant = {{.strVal = -1}, .vt = VT_STR};
+    for (unsigned int i = 0; i < size; i++)
+    {
+        if (hashTable[i].key != -1)
+        {
+            variant.strVal = hashTable[i].key;
+            ObjectHeap_SetListMember(list, actualSize, &variant);
+            ++actualSize;
+        }
+    }
+
+    // if actualSize is less than size (there is unused space in the hash table), remove unused list entries
+    ScriptList *theList = ObjectHeap_GetList(list);
+    while (theList->size() > actualSize)
+    {
+        theList->remove(theList->size() - 1);
+    }
+
+    return list;
+}
+
 void ScriptObject::makePersistent()
 {
     if (persistent) return;

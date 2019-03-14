@@ -60,6 +60,8 @@ void main()
     trip();
     trip2();
     trip3();
+
+    log(object3.keys());
     return object3;
 }
 
