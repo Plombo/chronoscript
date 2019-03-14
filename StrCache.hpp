@@ -26,7 +26,6 @@ char *StrCache_Get(int index);
 int StrCache_Len(int index);
 const StrCacheEntry *StrCache_GetEntry(int index);
 void StrCache_SetHash(int index);
-void StrCache_Copy(int index, const char *str);
 int StrCache_FindString(const char *str);
 
 #ifdef __cplusplus

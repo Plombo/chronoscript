@@ -60,7 +60,7 @@ void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSourc
     ptoken->theType = theType;
     ptoken->theTextPosition = theTextPosition;
     ptoken->charOffset = charOffset;
-    strcpy(ptoken->theSource, theSource );
+    snprintf(ptoken->theSource, sizeof(ptoken->theSource), "%s", theSource);
 }
 
 
@@ -166,7 +166,7 @@ CCResult pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
         {
             //increment the offset counter by TABSIZE
             int numSpaces = TABSIZE - (plexer->theTextPosition.col % TABSIZE);
-            strcpy(plexer->theTokenSource, "    ");
+            snprintf(plexer->theTokenSource, sizeof(plexer->theTokenSource), "%s", "    ");
             plexer->theTokenSource[numSpaces] = '\0';
             plexer->theTokenLen = numSpaces;
             plexer->theTextPosition.col += numSpaces;

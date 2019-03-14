@@ -17,7 +17,7 @@ void Symbol_Init(Symbol *symbol, const char *theName, ScriptVariant *pvar)
     memset(symbol, 0, sizeof(Symbol));
     if(theName)
     {
-        strcpy(symbol->name, theName);
+        snprintf(symbol->name, sizeof(symbol->name), "%s", theName);
     }
     else
     {
@@ -38,7 +38,7 @@ SymbolTable::SymbolTable(const char *theName)
     nextSymbolCount = 0;
     if (theName)
     {
-        strcpy(this->name, theName);
+        snprintf(this->name, sizeof(this->name), "%s", theName);
     }
     else
     {

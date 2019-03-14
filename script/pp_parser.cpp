@@ -63,15 +63,10 @@ pp_context::pp_context()
     num_conditionals = 0;
 
     // initialize the builtin macros other than __FILE__ and __LINE__
-    strcpy(buf, "\"");
-    strncat(buf, datetime + 4, 7);
-    strncat(buf, datetime + 20, 4);
-    strcat(buf, "\"");
+    snprintf(buf, sizeof(buf), "\"%.7s%.4s\"", datetime + 4, datetime + 20);
     macros.insertAfter(strdup(buf), "__DATE__");
 
-    strcpy(buf, "\"");
-    strncat(buf, datetime + 11, 8);
-    strcat(buf, "\"");
+    snprintf(buf, sizeof(buf), "\"%.8s\"", datetime + 11);
     macros.insertAfter(strdup(buf), "__TIME__");
 
     // add some builtin macros for boolean values
@@ -751,7 +746,7 @@ CCResult pp_parser::parseDirective()
         return CC_FAIL;
     }
 
-    strcpy(directiveName, token.theSource);
+    snprintf(directiveName, sizeof(directiveName), "%s", token.theSource);
 
     // most directives shouldn't be parsed if we're in the middle of a conditional false
     if(ctx->conditionals.all > (ctx->conditionals.all & 0x5555555555555555ll))
@@ -796,7 +791,7 @@ CCResult pp_parser::parseDirective()
 #endif
             if(token.theType == PP_TOKEN_STRING_LITERAL)
             {
-                strcpy(filename, this->token.theSource + 1); // trim first " mark
+                snprintf(filename, sizeof(filename), "%s", this->token.theSource + 1); // trim first " mark
                 filename[strlen(filename) - 1] = '\0'; // trim last " mark
             }
             else
@@ -829,7 +824,7 @@ CCResult pp_parser::parseDirective()
         }
 
         // Parse macro name and contents
-        strcpy(name, token.theSource);
+        snprintf(name, sizeof(name), "%s", token.theSource);
         return define(name);
     }
     else if (!strcmp(directiveName, "undef"))
@@ -1383,9 +1378,7 @@ void pp_parser::insertBuiltinMacro(const char *name)
     char value[256];
     if(!strcmp(name, "__FILE__"))
     {
-        value[0] = '"';
-        strncpy(value + 1, filename, 253);
-        strcat(value, "\"");
+        snprintf(value, sizeof(value), "\"%s\"", filename);
     }
     else if(!strcmp(name, "__LINE__"))
     {

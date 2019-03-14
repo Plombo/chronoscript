@@ -64,8 +64,6 @@ public:
 
     // set the hash of the entry if it doesn't already have one
     inline void setHash(int index);
-
-    void copy(int index, const char *str);
     
     int findString(const char *str);
 };
@@ -230,18 +228,6 @@ void StrCache::setHash(int index)
     }
 }
 
-void StrCache::copy(int index, const char *str)
-{
-    //assert(index<strcache_size);
-    //assert(size>0);
-    int len = strlen(str);
-    if (strcache[index].len < len)
-    {
-        this->resize(index, len);
-    }
-    strcpy(strcache[index].str, str);
-}
-
 // see if a string is already in the cache
 // return its index if it is, or -1 if it isn't
 int StrCache::findString(const char *str)
@@ -288,11 +274,6 @@ int StrCache_PopPersistent(int length)
     int index = theCache.pop(length);
     theCache.ref(index);
     return index;
-}
-
-void StrCache_Copy(int index, const char *str)
-{
-    theCache.copy(index, str);
 }
 
 char *StrCache_Get(int index)

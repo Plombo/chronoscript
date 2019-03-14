@@ -108,7 +108,7 @@ void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEX
     ptoken->theType = theType;
     ptoken->theTextPosition = theTextPosition;
     ptoken->charOffset = charOffset;
-    strcpy(ptoken->theSource, theSource );
+    snprintf(ptoken->theSource, sizeof(ptoken->theSource), "%s", theSource);
 }
 
 //Construct from a pp_token
@@ -116,7 +116,7 @@ CCResult Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
 {
     ptoken->theTextPosition = ppToken->theTextPosition;
     ptoken->charOffset = ppToken->charOffset;
-    strncpy(ptoken->theSource, ppToken->theSource, MAX_TOKEN_LENGTH);
+    snprintf(ptoken->theSource, sizeof(ptoken->theSource), "%s", ppToken->theSource);
 
     switch (ppToken->theType)
     {
