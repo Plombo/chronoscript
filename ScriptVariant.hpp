@@ -79,6 +79,8 @@ CCResult ScriptVariant_Rem(ScriptVariant *retvar, const ScriptVariant *svar, con
 CCResult ScriptVariant_Neg(ScriptVariant *dst, const ScriptVariant *svar);
 CCResult ScriptVariant_Boolean_Not(ScriptVariant *dst, const ScriptVariant *svar);
 CCResult ScriptVariant_Bit_Not(ScriptVariant *dst, const ScriptVariant *svar);
+CCResult ScriptVariant_Inc(ScriptVariant *dst, const ScriptVariant *svar);
+CCResult ScriptVariant_Dec(ScriptVariant *dst, const ScriptVariant *svar);
 CCResult ScriptVariant_ToBoolean(ScriptVariant *dst, const ScriptVariant *svar);
 
 CCResult ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key);

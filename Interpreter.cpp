@@ -26,6 +26,8 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
         ScriptVariant_Neg,
         ScriptVariant_Boolean_Not,
         ScriptVariant_Bit_Not,
+        ScriptVariant_Inc,
+        ScriptVariant_Dec,
         ScriptVariant_ToBoolean
     };
     BinaryOperation binaryOps[] = {
@@ -120,6 +122,8 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
             case OP_NEG:
             case OP_BOOL_NOT:
             case OP_BIT_NOT:
+            case OP_INC:
+            case OP_DEC:
             case OP_BOOL:
                 fetchDst();
                 fetchSrc(src0, inst->src0);

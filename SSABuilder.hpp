@@ -29,6 +29,8 @@ enum OpCode
     OP_NEG,
     OP_BOOL_NOT,
     OP_BIT_NOT,
+    OP_INC,
+    OP_DEC,
     OP_BOOL,
     
     // binary ops

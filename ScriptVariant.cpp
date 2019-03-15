@@ -706,6 +706,38 @@ CCResult ScriptVariant_Bit_Not(ScriptVariant *retvar, const ScriptVariant *svar)
     }
 }
 
+CCResult ScriptVariant_Inc(ScriptVariant *retvar, const ScriptVariant *svar)
+{
+    if (svar->vt == VT_INTEGER)
+    {
+        retvar->lVal = svar->lVal + 1;
+        retvar->vt = VT_INTEGER;
+        return CC_OK;
+    }
+    else
+    {
+        printf("Invalid operand for '++' operator (requires an integer)\n");
+        ScriptVariant_Clear(retvar);
+        return CC_FAIL;
+    }
+}
+
+CCResult ScriptVariant_Dec(ScriptVariant *retvar, const ScriptVariant *svar)
+{
+    if (svar->vt == VT_INTEGER)
+    {
+        retvar->lVal = svar->lVal - 1;
+        retvar->vt = VT_INTEGER;
+        return CC_OK;
+    }
+    else
+    {
+        printf("Invalid operand for '--' operator (requires an integer)\n");
+        ScriptVariant_Clear(retvar);
+        return CC_FAIL;
+    }
+}
+
 CCResult ScriptVariant_ToBoolean(ScriptVariant *retvar, const ScriptVariant *svar)
 {
     retvar->lVal = ScriptVariant_IsTrue(svar);

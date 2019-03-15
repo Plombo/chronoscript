@@ -406,6 +406,8 @@ const char *getOpCodeName(OpCode op)
         case OP_NEG:                 return "neg";
         case OP_BOOL_NOT:            return "bool_not";
         case OP_BIT_NOT:             return "bit_not";
+        case OP_INC:                 return "inc";
+        case OP_DEC:                 return "dec";
         case OP_BOOL:                return "bool";
 
         case OP_BIT_OR:              return "bit_or";

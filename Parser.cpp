@@ -1746,7 +1746,7 @@ RValue *Parser::unaryExpr()
     }
     else if (check(TOKEN_INC_OP) || check(TOKEN_DEC_OP))
     {
-        OpCode op = check(TOKEN_INC_OP) ? OP_ADD : OP_SUB;
+        OpCode op = check(TOKEN_INC_OP) ? OP_INC : OP_DEC;
         match();
         RValue *src = postfixExpr();
         if (!src->lvalue)
@@ -1754,7 +1754,7 @@ RValue *Parser::unaryExpr()
             errorWithMessage(unary_expr, "cannot increment or decrement an unassignable value");
             return bldUtil->undef();
         }
-        RValue *prefixed = bldUtil->mkBinaryOp(op, src, bldUtil->mkConstInt(1));
+        RValue *prefixed = bldUtil->mkUnaryOp(op, src);
         bldUtil->mkAssignment(src->lvalue, prefixed);
         return prefixed;
     }
@@ -1863,9 +1863,9 @@ RValue *Parser::postfixExpr2(RValue *src)
             errorWithMessage(postfix_expr2, "cannot increment or decrement an unassignable value");
             return bldUtil->undef();
         }
-        OpCode op = check(TOKEN_INC_OP) ? OP_ADD : OP_SUB;
+        OpCode op = check(TOKEN_INC_OP) ? OP_INC : OP_DEC;
         match();
-        RValue *postfixed = bldUtil->mkBinaryOp(op, src, bldUtil->mkConstInt(1));
+        RValue *postfixed = bldUtil->mkUnaryOp(op, src);
         bldUtil->mkAssignment(src->lvalue, postfixed);
         src->lvalue = NULL;
         // return the value from before the increment/decrement
