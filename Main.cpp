@@ -24,20 +24,22 @@ void doTest(const char *filename)
     {
         ScriptVariant retval;
         printf("\n\nRunning function 'main'...\n");
-        interpreter->runFunction(interpreter->functions.retrieve(), NULL, &retval);
-        char buf[256];
-        if (retval.vt == VT_OBJECT)
+        if (interpreter->runFunction(interpreter->functions.retrieve(), NULL, &retval) == CC_OK)
         {
-            printf("Returned value: ");
-            ObjectHeap_GetObject(retval.objVal)->print();
-            printf("\n");
+            char buf[256];
+            if (retval.vt == VT_OBJECT)
+            {
+                printf("Returned value: ");
+                ObjectHeap_GetObject(retval.objVal)->print();
+                printf("\n");
+            }
+            else
+            {
+                ScriptVariant_ToString(&retval, buf, sizeof(buf));
+                printf("\nReturned value: %s\n", buf);
+            }
+            ScriptVariant_Unref(&retval);
         }
-        else
-        {
-            ScriptVariant_ToString(&retval, buf, sizeof(buf));
-            printf("\nReturned value: %s\n", buf);
-        }
-        ScriptVariant_Unref(&retval);
     }
 }
 
