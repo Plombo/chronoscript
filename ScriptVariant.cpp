@@ -67,24 +67,6 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
     }
 }
 
-CCResult ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal)
-{
-    if (var->vt == VT_INTEGER)
-    {
-        *pVal = var->lVal;
-    }
-    else if (var->vt == VT_DECIMAL)
-    {
-        *pVal = (int32_t)var->dblVal;
-    }
-    else
-    {
-        return CC_FAIL;
-    }
-
-    return CC_OK;
-}
-
 CCResult ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal)
 {
     if (var->vt == VT_INTEGER)
@@ -666,16 +648,14 @@ CCResult ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, con
 
 CCResult ScriptVariant_Rem(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
-    int32_t l1, l2;
-    if (ScriptVariant_IntegerValue(svar, &l1) == CC_OK &&
-            ScriptVariant_IntegerValue(rightChild, &l2) == CC_OK)
+    if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
     {
-        retvar->lVal = l1 % l2;
+        retvar->lVal = svar->lVal % rightChild->lVal;
         retvar->vt = VT_INTEGER;
     }
     else
     {
-        printf("Invalid operands for '%%' (requires 2 numbers)\n");
+        printf("Invalid operands for '%%' (requires 2 integers)\n");
         ScriptVariant_Clear(retvar);
         return CC_FAIL;
     }

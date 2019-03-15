@@ -48,7 +48,6 @@ void ScriptVariant_Clear(ScriptVariant *var);
 void ScriptVariant_Init(ScriptVariant *var);
 void ScriptVariant_Copy(ScriptVariant *svar, const ScriptVariant *rightChild);
 void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str);
-CCResult ScriptVariant_IntegerValue(const ScriptVariant *var, int32_t *pVal);
 CCResult ScriptVariant_DecimalValue(const ScriptVariant *var, double *pVal);
 bool ScriptVariant_IsTrue(const ScriptVariant *svar);
 bool ScriptVariant_IsEqual(const ScriptVariant *svar, const ScriptVariant *rightChild);
