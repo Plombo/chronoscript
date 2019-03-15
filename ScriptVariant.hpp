@@ -74,7 +74,7 @@ CCResult ScriptVariant_Shl(ScriptVariant *retvar, const ScriptVariant *svar, con
 CCResult ScriptVariant_Shr(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
 CCResult ScriptVariant_Mul(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
 CCResult ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
-CCResult ScriptVariant_Mod(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
+CCResult ScriptVariant_Rem(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild);
 
 // note that these are changed from OpenBOR - they now return new value instead of modifying in place
 CCResult ScriptVariant_Neg(ScriptVariant *dst, const ScriptVariant *svar);

@@ -423,7 +423,7 @@ const char *getOpCodeName(OpCode op)
         case OP_SUB:                 return "sub";
         case OP_MUL:                 return "mul";
         case OP_DIV:                 return "div";
-        case OP_MOD:                 return "mod";
+        case OP_REM:                 return "rem";
 
         case OP_CALL:                return "call";
         case OP_CALL_BUILTIN:        return "call_builtin";

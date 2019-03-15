@@ -1117,7 +1117,7 @@ OpCode Parser::assignmentOp()
     else if (check(TOKEN_MOD_ASSIGN))
     {
         match();
-        return OP_MOD;
+        return OP_REM;
     }
     else
     {
@@ -1694,7 +1694,7 @@ OpCode Parser::multOp()
     else if (check(TOKEN_MOD))
     {
         match();
-        return OP_MOD;
+        return OP_REM;
     }
     else
     {

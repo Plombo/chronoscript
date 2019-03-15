@@ -44,7 +44,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
         ScriptVariant_Sub,
         ScriptVariant_Mul,
         ScriptVariant_Div,
-        ScriptVariant_Mod,
+        ScriptVariant_Rem,
     };
     
     #define fetchSrc(dst, src) { \
@@ -147,7 +147,7 @@ static CCResult execFunction(ExecFunction *function, ScriptVariant *params, Scri
             case OP_SUB:
             case OP_MUL:
             case OP_DIV:
-            case OP_MOD:
+            case OP_REM:
                 fetchDst();
                 fetchSrc(src0, inst->src0);
                 fetchSrc(src1, inst->src1);

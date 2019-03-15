@@ -47,7 +47,7 @@ enum OpCode
     OP_SUB,
     OP_MUL,
     OP_DIV,
-    OP_MOD,
+    OP_REM,
 
     // function call
     OP_CALL,

@@ -474,7 +474,7 @@ Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *s
     case OP_SUB: success = ScriptVariant_Sub(&result, src0, src1); break;
     case OP_MUL: success = ScriptVariant_Mul(&result, src0, src1); break;
     case OP_DIV: success = ScriptVariant_Div(&result, src0, src1); break;
-    case OP_MOD: success = ScriptVariant_Mod(&result, src0, src1); break;
+    case OP_REM: success = ScriptVariant_Rem(&result, src0, src1); break;
     default: success = CC_FAIL;
     }
 

@@ -664,7 +664,7 @@ CCResult ScriptVariant_Div(ScriptVariant *retvar, const ScriptVariant *svar, con
 }
 
 
-CCResult ScriptVariant_Mod(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
+CCResult ScriptVariant_Rem(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     int32_t l1, l2;
     if (ScriptVariant_IntegerValue(svar, &l1) == CC_OK &&
