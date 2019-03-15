@@ -694,7 +694,7 @@ CCResult ScriptVariant_Bit_Not(ScriptVariant *retvar, const ScriptVariant *svar)
 {
     if (svar->vt == VT_INTEGER)
     {
-        retvar->lVal = svar->lVal;
+        retvar->lVal = ~svar->lVal;
         retvar->vt = VT_INTEGER;
         return CC_OK;
     }
