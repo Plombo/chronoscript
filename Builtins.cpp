@@ -529,6 +529,61 @@ CCResult method_char_at(int numParams, ScriptVariant *params, ScriptVariant *ret
     return builtin_string_char_at(numParams, params, retval);
 }
 
+// string.substring(start[, end])
+// returns the substring of characters from start (inclusive) to end (exclusive)
+CCResult method_substring(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    // this is a method, so we're guaranteed at least 1 param, so accessing params[0] here is safe
+    if (params[0].vt != VT_STR)
+    {
+        printf("Error: only strings have the substring() method\n");
+        return CC_FAIL;
+    }
+    else if (numParams != 2 && numParams != 3)
+    {
+        printf("Error: the substring(start[, end]) method requires 1 or 2 parameters, not %i\n", numParams);
+        return CC_FAIL;
+    }
+    else if (params[1].vt != VT_INTEGER || (numParams > 2 && params[2].vt != VT_INTEGER))
+    {
+        printf("Error: the parameter(s) of the substring() method must be integers\n");
+        return CC_FAIL;
+    }
+
+    int sourceLength = StrCache_Len(params[0].strVal);
+    const char *sourceString = StrCache_Get(params[0].strVal);
+    int start = params[1].lVal;
+    int end = (numParams > 2) ? params[2].lVal : sourceLength;
+    int length = end - start;
+
+    if (start < 0 || start >= sourceLength)
+    {
+        printf("Error: start position %i is not a valid index in the string '%s' with length %i\n",
+            start, sourceString, sourceLength);
+        return CC_FAIL;
+    }
+    else if (end < start)
+    {
+        printf("Error: end (%i) is before start (%i)\n", end, start);
+        return CC_FAIL;
+    }
+    else if (end > sourceLength)
+    {
+        printf("Error: end (%i) is beyond the end of the string '%s' with length %i\n",
+            end, sourceString, sourceLength);
+        return CC_FAIL;
+    }
+
+    int newStrIndex = StrCache_Pop(length);
+    char *newString = StrCache_Get(newStrIndex);
+    memcpy(newString, sourceString + start, length);
+    newString[length] = '\0';
+
+    retval->strVal = newStrIndex;
+    retval->vt = VT_STR;
+    return CC_OK;
+}
+
 // list methods
 CCResult method_append(int numParams, ScriptVariant *params, ScriptVariant *retval)
 {
@@ -622,6 +677,7 @@ static Builtin methodsArray[] = {
     DEF_METHOD(insert),
     DEF_METHOD(keys),
     DEF_METHOD(remove),
+    DEF_METHOD(substring),
 };
 #undef DEF_METHOD
 
