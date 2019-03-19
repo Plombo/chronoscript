@@ -421,7 +421,7 @@ CCResult pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken)
         {
             CONSUMECHARACTER;
 
-            if (*plexer->pcurChar == '-')
+            if (*plexer->pcurChar == '-' || *plexer->pcurChar == '+')
             {
                 CONSUMECHARACTER;
             }
@@ -451,7 +451,7 @@ CCResult pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken)
             {
                 CONSUMECHARACTER;
 
-                if (*plexer->pcurChar == '-')
+                if (*plexer->pcurChar == '-' || *plexer->pcurChar == '+')
                 {
                     CONSUMECHARACTER;
                 }
