@@ -291,8 +291,64 @@ CCResult builtin_string_length(int numParams, ScriptVariant *params, ScriptVaria
     return CC_OK;
 }
 
-// to_integer(variant)
-// converts the variant to an integer
+// to_decimal(value)
+// converts the value to a double
+//      for integers: convert to double
+//      for decimals: no-op
+//      for strings: parse double
+CCResult builtin_to_decimal(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 1)
+    {
+        printf("Error: to_decimal(value) requires exactly 1 parameter\n");
+        return CC_FAIL;
+    }
+
+    if (params[0].vt == VT_INTEGER)
+    {
+        retval->dblVal = (double) params[0].lVal;
+        retval->vt = VT_DECIMAL;
+        return CC_OK;
+    }
+    else if (params[0].vt == VT_DECIMAL)
+    {
+        *retval = params[0];
+        return CC_OK;
+    }
+    else if (params[0].vt == VT_STR)
+    {
+        // Parse double-precision floating point value from string.
+        const char *str = StrCache_Get(params[0].strVal);
+        char *endptr;
+        errno = 0;
+        double val = strtod(str, &endptr);
+        if (errno == ERANGE)
+        {
+            printf("Error: '%s' is too large or small to fit in a decimal (double-precision float)\n", str);
+            return CC_FAIL;
+        }
+        else if (endptr == str || *endptr != '\0')
+        {
+            printf("Error: '%s' is not a number\n", str);
+            return CC_FAIL;
+        }
+        else if (errno != 0)
+        {
+            printf("Error: when converting '%s' to decimal: %s\n", str, strerror(errno));
+            return CC_FAIL;
+        }
+
+        retval->dblVal = val;
+        retval->vt = VT_DECIMAL;
+        return CC_OK;
+    }
+
+    printf("Error: to_decimal(value) only accepts an integer, decimal, or string as its parameter\n");
+    return CC_FAIL;
+}
+
+// to_integer(value)
+// converts the value to an integer
 //      for integers: no-op
 //      for decimals: truncate
 //      for strings: parse integer
@@ -529,6 +585,7 @@ static Builtin builtinsArray[] = {
     DEF_BUILTIN(log_write),
     DEF_BUILTIN(string_char_at),
     DEF_BUILTIN(string_length),
+    DEF_BUILTIN(to_decimal),
     DEF_BUILTIN(to_integer),
 };
 #undef DEF_BUILTIN
