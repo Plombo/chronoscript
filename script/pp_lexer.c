@@ -247,7 +247,7 @@ CCResult pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             {
                 CONSUMECHARACTER;
 
-                MAKETOKEN( PP_TOKEN_STRING_LITERAL );
+                MAKETOKEN( PP_TOKEN_CHAR_LITERAL );
                 return CC_OK;
             }
             else
