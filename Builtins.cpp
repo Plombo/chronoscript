@@ -1,5 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
+#include <errno.h>
+#include "globals.h"
 #include "Builtins.hpp"
 #include "ScriptVariant.hpp"
 #include "List.hpp"
@@ -286,6 +291,81 @@ CCResult builtin_string_length(int numParams, ScriptVariant *params, ScriptVaria
     return CC_OK;
 }
 
+// to_integer(variant)
+// converts the variant to an integer
+//      for integers: no-op
+//      for decimals: truncate
+//      for strings: parse integer
+CCResult builtin_to_integer(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 1)
+    {
+        printf("Error: to_integer(value) requires exactly 1 parameter\n");
+        return CC_FAIL;
+    }
+
+    switch (params[0].vt)
+    {
+        case VT_INTEGER:
+        {
+            *retval = params[0];
+            return CC_OK;
+        }
+        case VT_DECIMAL:
+        {
+            // truncate floating-point value, as long as it's in the range of a signed 32-bit integer
+            double dbl = params[0].dblVal;
+            if (isnan(dbl) || isinf(dbl))
+            {
+                printf("Error: cannot convert NaN or infinity to an integer\n");
+                return CC_FAIL;
+            }
+            else if (dbl < INT32_MIN || dbl > INT32_MAX)
+            {
+                printf("Error: %f is too large or small to fit in a 32-bit integer\n", dbl);
+                return CC_FAIL;
+            }
+
+            retval->lVal = (int32_t) dbl;
+            retval->vt = VT_INTEGER;
+            return CC_OK;
+        }
+        case VT_STR:
+        {
+            // Parse 32-bit int from string. Accept values that would fit in a 32-bit signed or unsigned int, but
+            // not anything that would overflow 32 bits.
+            const char *str = StrCache_Get(params[0].strVal);
+            char *endptr;
+            errno = 0;
+            int64_t int64val = strtoll(str, &endptr, 10);
+            if (errno == ERANGE || int64val < INT32_MIN || int64val > UINT32_MAX)
+            {
+                printf("Error: '%s' is too large or small to fit in a 32-bit integer\n", str);
+                return CC_FAIL;
+            }
+            else if (endptr == str || *endptr != '\0')
+            {
+                printf("Error: '%s' is not an integer\n", str);
+                return CC_FAIL;
+            }
+            else if (errno != 0 && int64val == 0)
+            {
+                printf("Error: when converting '%s' to integer: %s\n", str, strerror(errno));
+                return CC_FAIL;
+            }
+
+            retval->lVal = (int32_t) int64val;
+            retval->vt = VT_INTEGER;
+            return CC_OK;
+        }
+        default:
+        {
+            printf("Error: to_integer(value) only accepts an integer, decimal, or string as its parameter\n");
+            return CC_FAIL;
+        }
+    }
+}
+
 // char_from_integer(ascii)
 // returns a 1-character string with the character described by the ASCII value
 CCResult builtin_char_from_integer(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -449,6 +529,7 @@ static Builtin builtinsArray[] = {
     DEF_BUILTIN(log_write),
     DEF_BUILTIN(string_char_at),
     DEF_BUILTIN(string_length),
+    DEF_BUILTIN(to_integer),
 };
 #undef DEF_BUILTIN
 
