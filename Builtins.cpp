@@ -422,6 +422,29 @@ CCResult builtin_to_integer(int numParams, ScriptVariant *params, ScriptVariant 
     }
 }
 
+// to_string(value)
+// converts the value to a string
+CCResult builtin_to_string(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 1)
+    {
+        printf("Error: to_string(value) requires exactly 1 parameter\n");
+        return CC_FAIL;
+    }
+    else if (params[0].vt == VT_STR)
+    {
+        *retval = params[0];
+        return CC_OK;
+    }
+
+    int length = ScriptVariant_ToString(&params[0], NULL, 0);
+    int strCacheIndex = StrCache_Pop(length);
+    ScriptVariant_ToString(&params[0], StrCache_Get(strCacheIndex), length + 1);
+    retval->strVal = strCacheIndex;
+    retval->vt = VT_STR;
+    return CC_OK;
+}
+
 // char_from_integer(ascii)
 // returns a 1-character string with the character described by the ASCII value
 CCResult builtin_char_from_integer(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -587,6 +610,7 @@ static Builtin builtinsArray[] = {
     DEF_BUILTIN(string_length),
     DEF_BUILTIN(to_decimal),
     DEF_BUILTIN(to_integer),
+    DEF_BUILTIN(to_string),
 };
 #undef DEF_BUILTIN
 
