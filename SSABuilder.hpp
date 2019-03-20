@@ -439,7 +439,7 @@ public:
     Constant *addConstant(ScriptVariant sv);
     
     // dead code elimination
-    bool removeDeadCode();
+    void removeDeadCode();
     void prepareForRegAlloc();
     
     void printInstructionList();

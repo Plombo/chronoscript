@@ -257,16 +257,13 @@ void SSABuilder::printInstructionList()
     }
 }
 
-// returns true if dead code was removed
-// XXX: this would be more efficient with an iterator that lets us delete members
-bool SSABuilder::removeDeadCode()
+// dead code elimination pass
+void SSABuilder::removeDeadCode()
 {
-    bool codeRemoved = false;
     instructionList.gotoFirst();
-    int i, size = instructionList.size();
-    for (i = 0; i < size; i++)
+    foreach_list(instructionList, Instruction *, iter)
     {
-        Instruction *inst = instructionList.retrieve();
+        Instruction *inst = iter.value();
         if (inst->isExpression())
         {
             Expression *expr = inst->asExpression();
@@ -277,14 +274,11 @@ bool SSABuilder::removeDeadCode()
                 {
                     iter.value()->unref(expr);
                 }
-                instructionList.remove();
-                codeRemoved = true;
+                iter.remove();
                 continue;
             }
         }
-        instructionList.gotoNext();
     }
-    return codeRemoved;
 }
 
 void SSABuilder::prepareForRegAlloc()

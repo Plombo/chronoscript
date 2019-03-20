@@ -115,7 +115,7 @@ bool compile(SSABuilder *func)
     printf("Instructions before processing:\n");
     func->printInstructionList();
 #endif
-    while(func->removeDeadCode());
+    func->removeDeadCode();
     func->prepareForRegAlloc();
 #if DEBUG_RA
     printf("\nInstructions after processing:\n");
