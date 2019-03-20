@@ -273,11 +273,35 @@ Expression::Expression(OpCode opCode, int valueId, RValue *src0, RValue *src1)
         appendOperand(src0);
     if (src1)
         appendOperand(src1);
+    deadVisited = false;
 }
 
 bool Expression::isDead()
 {
-    return dst->isDead();
+    if (dst->isDead())
+    {
+        return true;
+    }
+
+    /* Two or more dead instructions may reference each other in a cycle, in which case dst->isDead() will
+       return false. We have to mark phi instructions like this as dead to avoid bogus "use of undefined value"
+       errors. For other kinds of expressions, it's just a bonus. */
+    if (deadVisited)
+    {
+        return true;
+    }
+    deadVisited = true;
+    foreach_list(dst->users, Instruction *, iter)
+    {
+        Instruction *inst = iter.value();
+        if (!inst->isExpression() || !inst->asExpression()->isDead())
+        {
+            deadVisited = false;
+            return false;
+        }
+    }
+    deadVisited = false;
+    return true;
 }
 
 void Expression::print()

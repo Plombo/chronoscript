@@ -264,6 +264,8 @@ public:
     virtual bool isExpression();
     virtual bool isTrivial();
     virtual bool isDead();
+private:
+    bool deadVisited; // used by isDead()
 };
 
 class NoOp : public Instruction
