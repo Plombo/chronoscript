@@ -152,27 +152,6 @@ CCResult builtin_list_insert(int numParams, ScriptVariant *params, ScriptVariant
     return CC_OK;
 }
 
-// list_length(list)
-// returns the length of the list as an integer
-CCResult builtin_list_length(int numParams, ScriptVariant *params, ScriptVariant *retval)
-{
-    if (numParams != 1)
-    {
-        printf("Error: list_length(list) requires exactly 1 parameter\n");
-        return CC_FAIL;
-    }
-    else if (params[0].vt != VT_LIST)
-    {
-        printf("Error: list_length: parameter must be a list\n");
-        return CC_FAIL;
-    }
-
-    retval->lVal = ObjectHeap_GetList(params[0].objVal)->size();
-    retval->vt = VT_INTEGER;
-
-    return CC_OK;
-}
-
 // list_remove(list, position)
 // removes the element at the given position from the list
 CCResult builtin_list_remove(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -266,27 +245,6 @@ CCResult builtin_string_char_at(int numParams, ScriptVariant *params, ScriptVari
 
     retval->vt = VT_INTEGER;
     retval->lVal = string[index];
-
-    return CC_OK;
-}
-
-// string_length(string)
-// returns the length of the string
-CCResult builtin_string_length(int numParams, ScriptVariant *params, ScriptVariant *retval)
-{
-    if (numParams != 1)
-    {
-        printf("Error: string_length(string) requires exactly 1 parameter\n");
-        return CC_FAIL;
-    }
-    else if (params[0].vt != VT_STR)
-    {
-        printf("Error: string_length(string): parameter must be a string\n");
-        return CC_FAIL;
-    }
-
-    retval->vt = VT_INTEGER;
-    retval->lVal = StrCache_Len(params[0].strVal);
 
     return CC_OK;
 }
@@ -584,6 +542,34 @@ CCResult method_substring(int numParams, ScriptVariant *params, ScriptVariant *r
     return CC_OK;
 }
 
+// string.length() / list.length()
+CCResult method_length(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 1)
+    {
+        printf("Error: the length() method takes no parameters\n");
+        return CC_FAIL;
+    }
+
+    if (params[0].vt == VT_STR)
+    {
+        retval->lVal = StrCache_Len(params[0].strVal);
+        retval->vt = VT_INTEGER;
+        return CC_OK;
+    }
+    else if (params[0].vt == VT_LIST)
+    {
+        retval->lVal = ObjectHeap_GetList(params[0].objVal)->size();
+        retval->vt = VT_INTEGER;
+        return CC_OK;
+    }
+    else
+    {
+        printf("Error: invalid type for length() method\n");
+        return CC_FAIL;
+    }
+}
+
 // list methods
 CCResult method_append(int numParams, ScriptVariant *params, ScriptVariant *retval)
 {
@@ -657,12 +643,10 @@ static Builtin builtinsArray[] = {
     DEF_BUILTIN(globals),
     DEF_BUILTIN(list_append),
     DEF_BUILTIN(list_insert),
-    DEF_BUILTIN(list_length),
     DEF_BUILTIN(list_remove),
     DEF_BUILTIN(log),
     DEF_BUILTIN(log_write),
     DEF_BUILTIN(string_char_at),
-    DEF_BUILTIN(string_length),
     DEF_BUILTIN(to_decimal),
     DEF_BUILTIN(to_integer),
     DEF_BUILTIN(to_string),
@@ -676,6 +660,7 @@ static Builtin methodsArray[] = {
     DEF_METHOD(has_key),
     DEF_METHOD(insert),
     DEF_METHOD(keys),
+    DEF_METHOD(length),
     DEF_METHOD(remove),
     DEF_METHOD(substring),
 };
