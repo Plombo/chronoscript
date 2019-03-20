@@ -383,6 +383,8 @@ pp_token *pp_parser::emitToken()
 
     while ((success == CC_OK) && !emitme)
     {
+        bool fromChild = false;
+
         // get token from subparser ("child") if one exists
         if (child)
         {
@@ -439,6 +441,7 @@ pp_token *pp_parser::emitToken()
         if (emitme) // re-process tokens emitted by the subparser
         {
             emitme = false;
+            fromChild = true;
         }
         else if (CC_FAIL == lexToken(false)) // lex the next token if no token is obtained from the subparser
         {
@@ -592,7 +595,7 @@ pp_token *pp_parser::emitToken()
                 memcpy(&token2, &this->token, sizeof(pp_token)); // FIXME: this should be moved into the function macro else if block
                 newline = false;
 
-                if (this->type == PP_FUNCTION_MACRO && params->findByName(this->token.theSource))
+                if (this->type == PP_FUNCTION_MACRO && !fromChild && params->findByName(this->token.theSource))
                 {
                     insertParam(this->token.theSource);
                 }
