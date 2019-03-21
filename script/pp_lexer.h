@@ -102,6 +102,7 @@ void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSourc
 void pp_lexer_Init(pp_lexer *plexer, const char *theSource, TEXTPOS theStartingPosition);
 void pp_lexer_Clear(pp_lexer *plexer);
 CCResult pp_lexer_GetNextToken(pp_lexer *plexer, pp_token *theNextToken);
+CCResult pp_lexer_GetTokenWhitespace(pp_lexer *plexer, pp_token *theNextToken);
 CCResult pp_lexer_GetTokenIdentifier(pp_lexer *plexer, pp_token *theNextToken);
 CCResult pp_lexer_GetTokenNumber(pp_lexer *plexer, pp_token *theNextToken);
 CCResult pp_lexer_GetTokenStringLiteral(pp_lexer *plexer, pp_token *theNextToken);

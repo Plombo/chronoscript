@@ -132,70 +132,12 @@ CCResult pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             return CC_OK;
         }
 
-        //Backslash-escaped Windows line break (\r\n)
-        else if ( !strncmp( plexer->pcurChar, "\\\r\n", 3))
+        // one or more whitespace characters
+        else if (!strncmp(plexer->pcurChar, "\\\n", 2) || !strncmp(plexer->pcurChar, "\\\r", 2) ||
+                 !strncmp(plexer->pcurChar, "\\\f", 2) || *plexer->pcurChar == '\t' ||
+                 *plexer->pcurChar == ' ' || *plexer->pcurChar == '\xa0')
         {
-            //interpret as a newline, but not as a PP_TOKEN_NEWLINE
-            plexer->theTokenSource[plexer->theTokenLen++] = '\n';
-            plexer->theTokenSource[plexer->theTokenLen] = '\0';
-            plexer->theTextPosition.col = 0;
-            plexer->theTextPosition.row++;
-            plexer->pcurChar += 3;
-            plexer->offset += 3;
-            MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return CC_OK;
-        }
-
-        //Backslash-escaped newline (\n), carriage return (\r), or form feed (\f)
-        else if ( !strncmp( plexer->pcurChar, "\\\n", 2) || !strncmp( plexer->pcurChar, "\\\r", 2) ||
-                  !strncmp( plexer->pcurChar, "\\\f", 2))
-        {
-            //interpret as a newline, but not as a PP_TOKEN_NEWLINE
-            plexer->theTokenSource[plexer->theTokenLen++] = '\n';
-            plexer->theTokenSource[plexer->theTokenLen] = '\0';
-            plexer->theTextPosition.col = 0;
-            plexer->theTextPosition.row++;
-            plexer->pcurChar += 2;
-            plexer->offset += 2;
-            MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return CC_OK;
-        }
-
-        //tab
-        else if ( !strncmp( plexer->pcurChar, "\t", 1))
-        {
-            //increment the offset counter by TABSIZE
-            int numSpaces = TABSIZE - (plexer->theTextPosition.col % TABSIZE);
-            snprintf(plexer->theTokenSource, sizeof(plexer->theTokenSource), "%s", "    ");
-            plexer->theTokenSource[numSpaces] = '\0';
-            plexer->theTokenLen = numSpaces;
-            plexer->theTextPosition.col += numSpaces;
-            plexer->pcurChar++;
-            plexer->offset++;
-            MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return CC_OK;
-        }
-
-        //space
-        else if ( !strncmp(plexer->pcurChar, " ", 1))
-        {
-            //increment the offset counter
-            CONSUMECHARACTER;
-            MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return CC_OK;
-        }
-
-        //non-breaking space (A0 in Windows-1252 and ISO-8859-* encodings)
-        else if ( !strncmp(plexer->pcurChar, "\xa0", 1))
-        {
-            //increment the offset counter and replace with a normal space
-            plexer->theTokenSource[plexer->theTokenLen++] = ' ';
-            plexer->theTokenSource[plexer->theTokenLen] = '\0';
-            plexer->pcurChar++;
-            plexer->offset++;
-            plexer->theTextPosition.col++;
-            MAKETOKEN( PP_TOKEN_WHITESPACE );
-            return CC_OK;
+            return pp_lexer_GetTokenWhitespace(plexer, theNextToken);
         }
 
         //an Identifier starts with an alphabetical character or underscore
@@ -340,6 +282,81 @@ CCResult pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             return CC_OK;
         }
     }
+}
+
+CCResult pp_lexer_GetTokenWhitespace(pp_lexer *plexer, pp_token *theNextToken)
+{
+    while (1)
+    {
+        if (plexer->theTokenLen + 5 >= MAX_TOKEN_LENGTH)
+        {
+            break;
+        }
+
+        //Backslash-escaped Windows line break (\r\n)
+        else if (!strncmp(plexer->pcurChar, "\\\r\n", 3))
+        {
+            //interpret as a newline, but not as a PP_TOKEN_NEWLINE
+            plexer->theTokenSource[plexer->theTokenLen++] = '\n';
+            plexer->theTokenSource[plexer->theTokenLen] = '\0';
+            plexer->theTextPosition.col = 0;
+            plexer->theTextPosition.row++;
+            plexer->pcurChar += 3;
+            plexer->offset += 3;
+        }
+
+        //Backslash-escaped newline (\n), carriage return (\r), or form feed (\f)
+        else if (!strncmp(plexer->pcurChar, "\\\n", 2) || !strncmp(plexer->pcurChar, "\\\r", 2) ||
+                 !strncmp(plexer->pcurChar, "\\\f", 2))
+        {
+            //interpret as a newline, but not as a PP_TOKEN_NEWLINE
+            plexer->theTokenSource[plexer->theTokenLen++] = '\n';
+            plexer->theTokenSource[plexer->theTokenLen] = '\0';
+            plexer->theTextPosition.col = 0;
+            plexer->theTextPosition.row++;
+            plexer->pcurChar += 2;
+            plexer->offset += 2;
+        }
+
+        //tab
+        else if (*plexer->pcurChar == '\t')
+        {
+            //increment the offset counter by TABSIZE
+            int numSpaces = TABSIZE - (plexer->theTextPosition.col % TABSIZE);
+            snprintf(plexer->theTokenSource, sizeof(plexer->theTokenSource), "%s", "    ");
+            plexer->theTokenLen += numSpaces;
+            plexer->theTokenSource[plexer->theTokenLen] = '\0';
+            plexer->theTextPosition.col += numSpaces;
+            plexer->pcurChar++;
+            plexer->offset++;
+        }
+
+        //space
+        else if (*plexer->pcurChar == ' ')
+        {
+            //increment the offset counter
+            CONSUMECHARACTER;
+        }
+
+        //non-breaking space (A0 in Windows-1252 and ISO-8859-* encodings)
+        else if (*plexer->pcurChar == '\xa0')
+        {
+            //increment the offset counter and replace with a normal space
+            plexer->theTokenSource[plexer->theTokenLen++] = ' ';
+            plexer->theTokenSource[plexer->theTokenLen] = '\0';
+            plexer->pcurChar++;
+            plexer->offset++;
+            plexer->theTextPosition.col++;
+        }
+
+        else
+        {
+            break;
+        }
+    }
+
+    MAKETOKEN(PP_TOKEN_WHITESPACE);
+    return CC_OK;
 }
 
 /******************************************************************************
