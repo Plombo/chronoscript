@@ -536,6 +536,7 @@ CCResult method_substring(int numParams, ScriptVariant *params, ScriptVariant *r
     char *newString = StrCache_Get(newStrIndex);
     memcpy(newString, sourceString + start, length);
     newString[length] = '\0';
+    StrCache_SetHash(newStrIndex);
 
     retval->strVal = newStrIndex;
     retval->vt = VT_STR;
