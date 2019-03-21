@@ -109,7 +109,7 @@ CCResult pp_lexer_GetTokenSymbol(pp_lexer *plexer, pp_token *theNextToken);
 CCResult pp_lexer_SkipComment(pp_lexer *lexer, COMMENT_TYPE theType);
 
 #ifdef __cplusplus
-}; // extern "C"
+} // extern "C"
 #endif
 
 #endif

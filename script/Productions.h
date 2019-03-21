@@ -88,7 +88,7 @@ typedef enum PRODUCTION
 
 
 #ifdef __cplusplus
-}; // end namespace
+} // end namespace
 #define    NUMPRODUCTIONS Productions::error
 typedef Productions::PRODUCTION PRODUCTION;
 #else

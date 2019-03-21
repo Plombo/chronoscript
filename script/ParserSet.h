@@ -12,10 +12,6 @@
 #include "Lexer.h"
 #include "Productions.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct ParserSet
 {
     MY_TOKEN_TYPE *firstSet[NUMPRODUCTIONS];
@@ -25,10 +21,5 @@ public:
     bool first(PRODUCTION theProduction, MY_TOKEN_TYPE theToken);
     bool follow(PRODUCTION theProduction, MY_TOKEN_TYPE theToken);
 } ParserSet;
-
-
-#ifdef __cplusplus
-}; // extern "C"
-#endif
 
 #endif

@@ -37,7 +37,7 @@
 #define closepackfile(hnd)            fclose((FILE*)hnd)
 #define printf(...)                   fprintf(stderr, __VA_ARGS__)
 #define shutdown(ret, ...)            { fprintf(stderr, __VA_ARGS__); exit(ret); }
-char *get_full_path(char *filename) { return filename; };
+char *get_full_path(char *filename) { return filename; }
 #else // otherwise, we can use OpenBOR functionality like writeToLogFile
 #include "openbor.h"
 #include "globals.h"

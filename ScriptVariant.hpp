@@ -15,10 +15,6 @@
 #include "depends.h"
 #include "StrCache.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef enum VariantType
 {
     VT_EMPTY    = 0,    //not initialized
@@ -86,8 +82,5 @@ CCResult ScriptVariant_ToBoolean(ScriptVariant *dst, const ScriptVariant *svar);
 CCResult ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *container, const ScriptVariant *key);
 CCResult ScriptVariant_ContainerSet(const ScriptVariant *container, const ScriptVariant *key, const ScriptVariant *value);
 
-#ifdef __cplusplus
-};
 #endif
 
-#endif

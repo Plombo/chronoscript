@@ -11,7 +11,7 @@ extern "C" {
 int pp_expr_eval_expression(pp_parser *parser);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

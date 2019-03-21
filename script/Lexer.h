@@ -81,7 +81,7 @@ typedef struct Lexer Lexer;
 void Token_Init(Token *ptoken, MY_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, unsigned int charOffset);
 
 #ifdef __cplusplus
-}; // extern "C"
+} // extern "C"
 #endif
 
 #endif

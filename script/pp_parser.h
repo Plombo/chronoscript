@@ -132,7 +132,7 @@ CCResult pp_error(pp_parser *self, const char *format, ...);
 void pp_warning(pp_parser *self, const char *format, ...);
 
 #ifdef __cplusplus
-}; // extern "C"
+} // extern "C"
 #endif
 
 #endif

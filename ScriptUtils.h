@@ -15,7 +15,7 @@ int escapeString(char *dst, int dstSize, const char *src, int srcLength);
 int searchList(const char *list[], const char *value, int length);
 
 #ifdef __cplusplus
-};
+} // extern "C"
 #endif
 
 #endif // !defined SCRIPT_UTILS_H

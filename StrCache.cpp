@@ -243,7 +243,6 @@ int StrCache::findString(const char *str)
     return -1;
 }
 
-extern "C" {
 
 static StrCache theCache;
 
@@ -308,6 +307,4 @@ int StrCache_FindString(const char *str)
 {
     return theCache.findString(str);
 }
-
-}; // extern "C"
 

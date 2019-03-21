@@ -1,10 +1,6 @@
 #ifndef STRCACHE_HPP
 #define STRCACHE_HPP
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include "depends.h"
 
@@ -27,9 +23,5 @@ int StrCache_Len(int index);
 const StrCacheEntry *StrCache_GetEntry(int index);
 void StrCache_SetHash(int index);
 int StrCache_FindString(const char *str);
-
-#ifdef __cplusplus
-};
-#endif
 
 #endif
