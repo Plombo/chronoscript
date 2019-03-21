@@ -716,7 +716,7 @@ CCResult pp_parser::stringify()
         source++;
     }
 
-    strncat(token.theSource, "\"", 1);
+    strcat(token.theSource, "\"");
     return CC_OK;
 }
 
