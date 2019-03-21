@@ -398,6 +398,7 @@ CCResult builtin_to_string(int numParams, ScriptVariant *params, ScriptVariant *
     int length = ScriptVariant_ToString(&params[0], NULL, 0);
     int strCacheIndex = StrCache_Pop(length);
     ScriptVariant_ToString(&params[0], StrCache_Get(strCacheIndex), length + 1);
+    StrCache_SetHash(strCacheIndex);
     retval->strVal = strCacheIndex;
     retval->vt = VT_STR;
     return CC_OK;
