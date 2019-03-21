@@ -31,18 +31,18 @@
 #if PP_TEST // using pp_test.c to test the preprocessor functionality; OpenBOR functionality is not available
 #undef printf
 #define openpackfile(fname, pname)    ((size_t)fopen(fname, "rb"))
-#define readpackfile(hnd, buf, len)    fread(buf, 1, len, (FILE*)hnd)
+#define readpackfile(hnd, buf, len)   fread(buf, 1, len, (FILE*)hnd)
 #define seekpackfile(hnd, loc, md)    fseek((FILE*)hnd, loc, md)
-#define tellpackfile(hnd)            ftell((FILE*)hnd)
+#define tellpackfile(hnd)             ftell((FILE*)hnd)
 #define closepackfile(hnd)            fclose((FILE*)hnd)
-#define printf(msg, args...)        fprintf(stderr, msg, ##args)
-#define shutdown(ret, msg, args...) { fprintf(stderr, msg, ##args); exit(ret); }
+#define printf(...)                   fprintf(stderr, __VA_ARGS__)
+#define shutdown(ret, ...)            { fprintf(stderr, __VA_ARGS__); exit(ret); }
 char *get_full_path(char *filename) { return filename; };
 #else // otherwise, we can use OpenBOR functionality like writeToLogFile
 #include "openbor.h"
 #include "globals.h"
 #include "packfile.h"
-#define tellpackfile(hnd)            seekpackfile(hnd, 0, SEEK_CUR)
+#define tellpackfile(hnd)             seekpackfile(hnd, 0, SEEK_CUR)
 #undef time
 #endif
 
