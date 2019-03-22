@@ -4,7 +4,10 @@ env_options = {
     'CXXFLAGS': '-std=c++11 -fno-exceptions -fno-rtti',
 }
 
-if Platform().name == 'win32':
+if Platform().name == 'msys':
+    # disable stack protection to improve speed (at the expense of security)
+    env_options['CCFLAGS'] += ' -fno-stack-check -fno-stack-protector -mno-stack-arg-probe'
+elif Platform().name == 'win32':
     env_options['tools'] = ['mingw']
 
 env = Environment(**env_options)
