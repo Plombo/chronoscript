@@ -13,7 +13,7 @@
 static bool builtinsInited = false;
 static List<unsigned int> builtinIndices;
 static List<unsigned int> methodIndices;
-static ScriptVariant globalsObject = {{.ptrVal = NULL}, .vt = VT_EMPTY};
+static ScriptVariant globalsObject = {{0}, VT_EMPTY};
 
 extern int script_arg_count;
 extern char **script_args;

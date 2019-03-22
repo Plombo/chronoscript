@@ -284,7 +284,7 @@ int ScriptObject::createKeysList()
 {
     unsigned int size = 1u << log2_hashTableSize, actualSize = 0;
     int list = ObjectHeap_CreateNewList(size);
-    ScriptVariant variant = {{.strVal = -1}, .vt = VT_STR};
+    ScriptVariant variant = {{-1}, VT_STR};
     for (unsigned int i = 0; i < size; i++)
     {
         if (hashTable[i].key != -1)

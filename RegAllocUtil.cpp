@@ -24,6 +24,17 @@
 
 #ifdef __MINGW32__
 #define ffs __builtin_ffs
+#elif defined(_MSC_VER)
+#include <intrin.h>
+static int ffs(int v)
+{
+    unsigned long r;
+    if (_BitScanForward(&r, (unsigned long)v))
+    {
+        return (int)(r + 1);
+    }
+    return 0;
+}
 #else
 #include <strings.h>
 #endif

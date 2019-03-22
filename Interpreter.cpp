@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <malloc.h>
+#include "globals.h"
 #include "Interpreter.hpp"
 #include "ScriptVariant.hpp"
 #include "ScriptObject.hpp"
@@ -13,8 +15,13 @@ typedef CCResult (*BinaryOperation)(ScriptVariant *dst, const ScriptVariant *src
 static CCResult execFunction(ExecFunction *function, ScriptVariant *params, ScriptVariant *retval)
 {
     int index = 0;
+#ifdef _MSC_VER
+	ScriptVariant *temps = (ScriptVariant *) _alloca(function->numTemps * sizeof(ScriptVariant));
+	ScriptVariant *callParams = (ScriptVariant *)_alloca(function->maxCallParams * sizeof(ScriptVariant));
+#else
     ScriptVariant temps[function->numTemps];
     ScriptVariant callParams[function->maxCallParams];
+#endif
     ScriptVariant *srcFiles[] = {
         NULL,
         temps,

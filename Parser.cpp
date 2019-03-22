@@ -240,7 +240,7 @@ void Parser::externalDecl2(bool variableonly)
         }
         else
         {
-            execBuilder->globals.declareGlobalVariable(token.theSource, {{.ptrVal = NULL}, .vt = VT_EMPTY});
+            execBuilder->globals.declareGlobalVariable(token.theSource, {{0}, VT_EMPTY});
         }
         match();
     }
@@ -255,7 +255,7 @@ void Parser::externalDecl2(bool variableonly)
         }
         else
         {
-            execBuilder->globals.declareGlobalVariable(token.theSource, {{.ptrVal = NULL}, .vt = VT_EMPTY});
+            execBuilder->globals.declareGlobalVariable(token.theSource, {{0}, VT_EMPTY});
         }
         match();
         externalDecl2(true);

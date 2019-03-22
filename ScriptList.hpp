@@ -18,7 +18,7 @@ private:
 public:
     inline ScriptList(uint32_t initialSize) :
         currentlyPrinting(false),
-        storage(initialSize, {{.ptrVal = 0}, VT_EMPTY})
+        storage(initialSize, {{0}, VT_EMPTY})
     {}
 
     ~ScriptList();

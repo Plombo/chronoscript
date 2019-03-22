@@ -531,26 +531,30 @@ RValue *SSABuildUtil::mkBinaryOp(OpCode op, RValue *src0, RValue *src1)
 
 Constant *SSABuildUtil::mkConstInt(int32_t val)
 {
-    ScriptVariant var = {{.lVal = val}, VT_INTEGER};
+    ScriptVariant var = {{0}, VT_INTEGER};
+    var.lVal = val;
+    var.vt = VT_INTEGER;
     return builder->addConstant(var);
 }
 
 Constant *SSABuildUtil::mkConstString(char *val)
 {
-    ScriptVariant var = {{.ptrVal = NULL}, VT_EMPTY};
+    ScriptVariant var;
     ScriptVariant_ParseStringConstant(&var, val);
     return builder->addConstant(var);
 }
 
 Constant *SSABuildUtil::mkConstFloat(double val)
 {
-    ScriptVariant var = {{.dblVal = val}, VT_DECIMAL};
+    ScriptVariant var;
+    var.dblVal = val;
+    var.vt = VT_DECIMAL;
     return builder->addConstant(var);
 }
 
 Constant *SSABuildUtil::mkNull()
 {
-    ScriptVariant var = {{.ptrVal = NULL}, VT_EMPTY};
+    ScriptVariant var = {{0}, VT_EMPTY};
     return builder->addConstant(var);
 }
 

@@ -5,6 +5,10 @@
 #include "List.hpp"
 #include "ScriptVariant.hpp"
 
+#ifdef _MSC_VER
+typedef signed long ssize_t;
+#endif
+
 struct ObjectHashNode {
     int key; // index into string cache
     int next;
