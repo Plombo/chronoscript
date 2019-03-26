@@ -139,7 +139,7 @@ void ScriptObject::resizeHashTable(unsigned int minNewSize)
 
     if (oldHashTable != NULL)
     {
-        for (ssize_t i = oldSize - 1; i >= 0; i--)
+        for (int i = oldSize - 1; i >= 0; i--)
         {
             if (oldHashTable[i].key != -1)
             {
@@ -150,7 +150,7 @@ void ScriptObject::resizeHashTable(unsigned int minNewSize)
     }
 }
 
-ssize_t ScriptObject::getFreePosition()
+int ScriptObject::getFreePosition()
 {
     while (lastFreeNode > 0)
     {
@@ -190,7 +190,7 @@ bool ScriptObject::set(int key, const ScriptVariant *value)
     }
     else // The main position is already taken.
     {
-        ssize_t freePosition = getFreePosition();
+        int freePosition = getFreePosition();
         if (freePosition == -1)
         {
             // The hash table is full; it needs to be resized so the element can be inserted.

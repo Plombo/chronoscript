@@ -24,7 +24,7 @@ private:
     unsigned int lastFreeNode;
 
     ObjectHashNode *getNodeForKey(int key);
-    ssize_t getFreePosition();
+    int getFreePosition();
     inline size_t mainPositionForKey(int key);
     void resizeHashTable(unsigned int minNewSize);
 
