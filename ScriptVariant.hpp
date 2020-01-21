@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include "depends.h"
 #include "StrCache.hpp"
+#include "ScriptHandle.hpp"
 
 typedef enum VariantType
 {
@@ -31,7 +32,7 @@ typedef struct ScriptVariant
     union//value
     {
         int32_t       lVal;
-        void         *ptrVal;
+        ScriptHandle *ptrVal;
         double        dblVal;
         int           strVal;
         int           objVal;
