@@ -481,6 +481,59 @@ CCResult builtin_file_read(int numParams, ScriptVariant *params, ScriptVariant *
     return CC_OK;
 }
 
+// create_model(name)
+// creates a model with the given name
+CCResult builtin_create_model(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 1)
+    {
+        printf("Error: create_model(name) requires exactly 1 parameter\n");
+        return CC_FAIL;
+    }
+    else if (params[0].vt != VT_STR)
+    {
+        printf("Error: create_model(name): parameter must be a string\n");
+        return CC_FAIL;
+    }
+
+    const char *name = StrCache_Get(params[0].strVal);
+    Model *model = new Model(name);
+    retval->ptrVal = model;
+    retval->vt = VT_PTR;
+    return CC_OK;
+}
+
+// create_entity(model, x, y, z)
+// creates a new entity
+CCResult builtin_create_entity(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 4)
+    {
+        printf("Error: create_entity(model, xpos, ypos, zpos) requires exactly 4 parameters\n");
+        return CC_FAIL;
+    }
+    else if (params[0].vt != VT_PTR || params[0].ptrVal->scriptHandleType != SH_TYPE_MODEL)
+    {
+        printf("Error: create_entity(): first parameter must be a model\n");
+        return CC_FAIL;
+    }
+
+    double x, y, z;
+    if (ScriptVariant_DecimalValue(&params[1], &x) == CC_FAIL ||
+        ScriptVariant_DecimalValue(&params[2], &y) == CC_FAIL ||
+        ScriptVariant_DecimalValue(&params[1], &z) == CC_FAIL)
+    {
+        printf("Error: create_entity(): parameters 2-4 must be numbers\n");
+        return CC_FAIL;
+    }
+
+    Model *model = static_cast<Model*>(params[0].ptrVal);
+    Entity *entity = new Entity(model, x, y, z);
+    retval->ptrVal = entity;
+    retval->vt = VT_PTR;
+    return CC_OK;
+}
+
 
 // string methods
 CCResult method_char_at(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -640,6 +693,8 @@ struct Builtin {
 // define each builtin IN ALPHABETICAL ORDER or binary search won't work
 static Builtin builtinsArray[] = {
     DEF_BUILTIN(char_from_integer),
+    DEF_BUILTIN(create_entity),
+    DEF_BUILTIN(create_model),
     DEF_BUILTIN(file_read),
     DEF_BUILTIN(get_args),
     DEF_BUILTIN(globals),
