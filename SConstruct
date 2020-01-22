@@ -40,6 +40,7 @@ cpp_sources = [
     'SymbolTable',
     'HashTable',
     'List',
+    'FakeEngineTypes',
     'script/Lexer',
     'script/ParserSet',
     'script/pp_parser',

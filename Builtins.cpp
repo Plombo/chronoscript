@@ -9,6 +9,7 @@
 #include "ScriptVariant.hpp"
 #include "List.hpp"
 #include "ObjectHeap.hpp"
+#include "FakeEngineTypes.hpp"
 
 static bool builtinsInited = false;
 static List<unsigned int> builtinIndices;
@@ -683,6 +684,40 @@ CCResult method_keys(int numParams, ScriptVariant *params, ScriptVariant *retval
     return CC_OK;
 }
 
+// entity.move(x, y, z)
+// "moves" the fake entity type by the given delta
+CCResult method_move(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 4)
+    {
+        printf("Error: entity.move(dx, dy, dz) requires exactly 3 parameters\n");
+        return CC_FAIL;
+    }
+    else if (params[0].vt != VT_PTR || params[0].ptrVal->scriptHandleType != SH_TYPE_ENTITY)
+    {
+        printf("Error: move() method called on something that isn't an entity\n");
+        return CC_FAIL;
+    }
+
+    double dx, dy, dz;
+    if (ScriptVariant_DecimalValue(&params[1], &dx) == CC_FAIL ||
+        ScriptVariant_DecimalValue(&params[2], &dy) == CC_FAIL ||
+        ScriptVariant_DecimalValue(&params[1], &dz) == CC_FAIL)
+    {
+        printf("Error: move(): parameters 1-3 must be numbers\n");
+        return CC_FAIL;
+    }
+
+    Entity *entity = static_cast<Entity*>(params[0].ptrVal);
+    entity->position.x += dx;
+    entity->position.y += dy;
+    entity->position.z += dz;
+
+    retval->ptrVal = NULL;
+    retval->vt = VT_EMPTY;
+    return CC_OK;
+}
+
 
 struct Builtin {
     BuiltinScriptFunction function;
@@ -718,6 +753,7 @@ static Builtin methodsArray[] = {
     DEF_METHOD(insert),
     DEF_METHOD(keys),
     DEF_METHOD(length),
+    DEF_METHOD(move),
     DEF_METHOD(remove),
     DEF_METHOD(substring),
 };

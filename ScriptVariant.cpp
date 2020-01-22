@@ -778,6 +778,18 @@ CCResult ScriptVariant_ContainerGet(ScriptVariant *dst, const ScriptVariant *con
         }
         return CC_OK;
     }
+    else if (container->vt == VT_PTR)
+    {
+        if (key->vt == VT_STR)
+        {
+            return container->ptrVal->getScriptProperty(key->strVal, dst);
+        }
+        else
+        {
+            printf("error: property name must be a string\n");
+            return CC_FAIL;
+        }
+    }
     else
     {
         // TODO: include the invalid container in the error message
@@ -813,6 +825,18 @@ CCResult ScriptVariant_ContainerSet(const ScriptVariant *container, const Script
         }
         ObjectHeap_SetListMember(container->objVal, (size_t)key->lVal, value);
         return CC_OK;
+    }
+    else if (container->vt == VT_PTR)
+    {
+        if (key->vt == VT_STR)
+        {
+            return container->ptrVal->setScriptProperty(key->strVal, value);
+        }
+        else
+        {
+            printf("error: property name must be a string\n");
+            return CC_FAIL;
+        }
     }
     else
     {
