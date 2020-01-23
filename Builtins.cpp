@@ -93,6 +93,59 @@ CCResult builtin_get_args(int numParams, ScriptVariant *params, ScriptVariant *r
     return CC_OK;
 }
 
+// this function is used by SSABuilder for constant folding, as well as in the actual cc_constant() implementation
+CCResult scriptConstantValue(const ScriptVariant *nameVar, ScriptVariant *result)
+{
+    if (nameVar->vt != VT_STR)
+    {
+        return CC_FAIL;
+    }
+
+    const char *constName = StrCache_Get(nameVar->strVal);
+
+    #define ICMPCONST(x) \
+        else if(strcmp(#x, constName)==0) {\
+	        result->lVal = x;\
+	        result->vt = VT_INTEGER;\
+	        return CC_OK;\
+        }
+
+    // some sample constants pulled from openbor.h
+    #define COMPATIBLEVERSION	0x00033748
+    #define MAX_ENTS     150
+    #define	MAX_SPECIALS 8
+
+    if (0) {}
+    ICMPCONST(COMPATIBLEVERSION)
+    ICMPCONST(MAX_ENTS)
+    ICMPCONST(MAX_SPECIALS)
+
+    // if we reach here, there was no match for the constant name
+    return CC_FAIL;
+}
+
+// cc_constant(constant_name)
+// returns value of the engine constant with the given name
+CCResult builtin_cc_constant(int numParams, ScriptVariant *params, ScriptVariant *retval)
+{
+    if (numParams != 1)
+    {
+        printf("Error: cc_constant(constant_name) requires exactly 1 parameter\n");
+        return CC_FAIL;
+    }
+    else if (params[0].vt != VT_STR)
+    {
+        printf("Error: cc_constant(): first parameter must be a string\n");
+        return CC_FAIL;
+    }
+
+    if (scriptConstantValue(&params[0], retval) == CC_FAIL)
+    {
+        printf("Error: cc_constant(): no constant named '%s'\n", StrCache_Get(params[0].strVal));
+    }
+    return CC_OK;
+}
+
 // list_append(list, value)
 // adds the given value to the end of the list
 CCResult builtin_list_append(int numParams, ScriptVariant *params, ScriptVariant *retval)
@@ -727,6 +780,7 @@ struct Builtin {
 #define DEF_BUILTIN(name) { builtin_##name, #name }
 // define each builtin IN ALPHABETICAL ORDER or binary search won't work
 static Builtin builtinsArray[] = {
+    DEF_BUILTIN(cc_constant),
     DEF_BUILTIN(char_from_integer),
     DEF_BUILTIN(create_entity),
     DEF_BUILTIN(create_model),

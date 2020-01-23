@@ -27,5 +27,8 @@ BuiltinScriptFunction getMethodByIndex(int index);
 // mark script objects in the global variant list as referenced
 void pushGlobalVariantsToGC();
 
+// maps the name of an engine constant to its value
+CCResult scriptConstantValue(const ScriptVariant *nameVar, ScriptVariant *result);
+
 #endif
 

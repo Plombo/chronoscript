@@ -257,6 +257,38 @@ void SSABuilder::printInstructionList()
     }
 }
 
+// replace calls to cc_constant("SOME_ENGINE_CONSTANT_NAME") with the actual constant value
+void SSABuilder::foldConstantCalls()
+{
+    instructionList.gotoFirst();
+    foreach_list(instructionList, Instruction *, iter)
+    {
+        Instruction *inst = iter.value();
+        if (inst->isFunctionCall())
+        {
+            FunctionCall *call = inst->asFunctionCall();
+            if (strcmp(call->functionName, "cc_constant") == 0 && call->operands.size() == 1)
+            {
+                call->operands.gotoFirst();
+                if (call->operands.retrieve()->isConstant())
+                {
+                    ScriptVariant *constantName = &call->operands.retrieve()->asConstant()->constValue;
+                    ScriptVariant constant = {{.ptrVal = NULL}, VT_EMPTY};
+                    if (scriptConstantValue(constantName, &constant) == CC_OK)
+                    {
+                        Constant *constantValue = addConstant(constant);
+                        call->dst->replaceBy(constantValue);
+
+                        // have to remove the call instruction here since DCE doesn't touch function calls
+                        call->operands.retrieve()->unref(call);
+                        iter.remove();
+                    }
+                }
+            }
+        }
+    }
+}
+
 // dead code elimination pass
 void SSABuilder::removeDeadCode()
 {

@@ -437,7 +437,10 @@ public:
 
     // add a constant
     Constant *addConstant(ScriptVariant sv);
-    
+
+    // pre-evaluate calls to cc_constant()
+    void foldConstantCalls();
+
     // dead code elimination
     void removeDeadCode();
     void prepareForRegAlloc();
