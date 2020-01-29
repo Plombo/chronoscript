@@ -728,7 +728,26 @@ void Parser::switchBody(RValue *baseVal)
         if (parserSet.first(Productions::case_label, theNextToken.theType))
         {
             body = bldUtil->currentBlock;
-            if (!bldUtil->currentBlock->isEmpty())
+
+            if (body->isEmpty())
+            {
+                bool jumpsBlockIsPred = false;
+
+                // add jumps block as a predecessor if it isn't already
+                foreach_list(body->preds, BasicBlock*, iter)
+                {
+                    if (iter.value() == jumps)
+                    {
+                        jumpsBlockIsPred = true;
+                    }
+                }
+
+                if (!jumpsBlockIsPred)
+                {
+                    body->addPred(jumps);
+                }
+            }
+            else
             {
                 BasicBlock *newBody = bldUtil->createBBAfter(bldUtil->currentBlock);
                 newBody->addPred(jumps);
@@ -737,6 +756,7 @@ void Parser::switchBody(RValue *baseVal)
                 bld->sealBlock(newBody);
                 body = newBody;
             }
+
             if (check(TOKEN_CASE))
             {
                 match();
