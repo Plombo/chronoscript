@@ -18,4 +18,9 @@
 #define INFO(format, __VA_ARGS__)
 #endif
 
+#ifndef _WIN32
+#define stricmp strcasecmp
+#define strnicmp strncasecmp
+#endif
+
 #endif

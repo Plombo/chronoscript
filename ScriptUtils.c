@@ -10,10 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-#if _POSIX_C_SOURCE
-#define stricmp strcasecmp
-#endif
+#include "globals.h"
 
 void printEscapedString(const char *string)
 {
