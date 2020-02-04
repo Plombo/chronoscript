@@ -117,6 +117,7 @@ CCResult Token_InitFromPreprocessor(Token *ptoken, pp_token *ppToken)
     ptoken->theTextPosition = ppToken->theTextPosition;
     ptoken->charOffset = ppToken->charOffset;
     snprintf(ptoken->theSource, sizeof(ptoken->theSource), "%s", ppToken->theSource);
+    ptoken->fallthrough = ppToken->fallthrough;
 
     switch (ppToken->theType)
     {

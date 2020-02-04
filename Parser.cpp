@@ -713,7 +713,8 @@ void Parser::switchBody(RValue *baseVal)
     BasicBlock *jumps = bldUtil->createBBAfter(bldUtil->currentBlock),
                *body = bldUtil->createBBAfter(jumps),
                *after = bldUtil->createBBAfter(body),
-               *defaultTarget = NULL;
+               *defaultTarget = NULL,
+               *lastCaseStartBlock = NULL;
     jumps->addPred(bldUtil->currentBlock);
     bld->sealBlock(jumps);
     body->addPred(jumps);
@@ -727,6 +728,7 @@ void Parser::switchBody(RValue *baseVal)
     {
         if (parserSet.first(Productions::case_label, theNextToken.theType))
         {
+            bool isNonTrivialFallthrough = false;
             body = bldUtil->currentBlock;
 
             if (body->isEmpty())
@@ -740,6 +742,10 @@ void Parser::switchBody(RValue *baseVal)
                     {
                         jumpsBlockIsPred = true;
                     }
+                    else
+                    {
+                        isNonTrivialFallthrough = true;
+                    }
                 }
 
                 if (!jumpsBlockIsPred)
@@ -752,10 +758,28 @@ void Parser::switchBody(RValue *baseVal)
                 BasicBlock *newBody = bldUtil->createBBAfter(bldUtil->currentBlock);
                 newBody->addPred(jumps);
                 if (!bldUtil->currentBlock->endsWithJump())
+                {
                     newBody->addPred(bldUtil->currentBlock);
+                    isNonTrivialFallthrough = true;
+                }
                 bld->sealBlock(newBody);
                 body = newBody;
             }
+
+            // Print a warning if it looks like the preceding case is missing a "break" by accident.
+            if (isNonTrivialFallthrough)
+            {
+                // Silence the warning if the case label is preceded by a "fall through" comment, or if it is the
+                // second or later of consecutive case labels (meaning the warning has already been either printed
+                // or silenced).
+                if (!theNextToken.fallthrough && body != lastCaseStartBlock)
+                {
+                    pp_warning(&(theLexer.preprocessor), "non-trivial case fallthrough (you can silence this with a "
+                        "'break;' statement or a comment including the words \"fall\" and \"through\")");
+                }
+            }
+
+            lastCaseStartBlock = body;
 
             if (check(TOKEN_CASE))
             {

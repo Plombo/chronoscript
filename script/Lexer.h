@@ -51,6 +51,7 @@ typedef struct Token
     char theSource[MAX_TOKEN_LENGTH + 1];
     TEXTPOS theTextPosition;
     unsigned int charOffset;
+    bool fallthrough;
 } Token;
 
 /******************************************************************************

@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 #include "depends.h"
+#include <stdbool.h>
 
 // define some values for use in CLexer
 #define MAX_TOKEN_LENGTH MAX_STR_LEN
@@ -68,6 +69,7 @@ typedef struct pp_token
     char theSource[MAX_TOKEN_LENGTH + 1];
     TEXTPOS theTextPosition;
     unsigned int charOffset;
+    bool fallthrough;
 } pp_token;
 
 //Enumerate the comment types for use in CLexer
@@ -94,11 +96,12 @@ typedef struct pp_lexer
     char theTokenSource [MAX_TOKEN_LENGTH + 1];
     unsigned int theTokenLen;
     TEXTPOS theTokenPosition;
+    bool fallthrough;
 } pp_lexer;
 
 
 //Constructor
-void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, unsigned int charOffset);
+void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, unsigned int charOffset, bool fallthrough);
 void pp_lexer_Init(pp_lexer *plexer, const char *theSource, TEXTPOS theStartingPosition);
 void pp_lexer_Clear(pp_lexer *plexer);
 CCResult pp_lexer_GetNextToken(pp_lexer *plexer, pp_token *theNextToken);

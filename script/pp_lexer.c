@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "globals.h"
 
 #ifdef PP_TEST
 #undef printf
@@ -43,7 +44,8 @@
 ******************************************************************************/
 #define MAKETOKEN(x) \
    pp_token_Init(theNextToken, x, plexer->theTokenSource, plexer->theTokenPosition, \
-   plexer->tokOffset);
+   plexer->tokOffset, plexer->fallthrough); \
+   if (theNextToken->fallthrough) { plexer->fallthrough = false; }
 
 /******************************************************************************
 *  SKIPCHARACTER -- Skip a char without adding it in plexer->theTokenSource
@@ -55,12 +57,13 @@
 
 
 //Constructor
-void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, unsigned int charOffset)
+void pp_token_Init(pp_token *ptoken, PP_TOKEN_TYPE theType, const char *theSource, TEXTPOS theTextPosition, unsigned int charOffset, bool fallthrough)
 {
     ptoken->theType = theType;
     ptoken->theTextPosition = theTextPosition;
     ptoken->charOffset = charOffset;
     snprintf(ptoken->theSource, sizeof(ptoken->theSource), "%s", theSource);
+    ptoken->fallthrough = (theType == PP_TOKEN_WHITESPACE || theType == PP_TOKEN_NEWLINE) ? false : fallthrough;
 }
 
 
@@ -71,6 +74,7 @@ void pp_lexer_Init(pp_lexer *plexer, const char *theSource, TEXTPOS theStartingP
     plexer->pcurChar = (char *)plexer->ptheSource;
     plexer->offset = 0;
     plexer->tokOffset = 0;
+    plexer->fallthrough = false;
 }
 
 void pp_lexer_Clear(pp_lexer *plexer)
@@ -89,6 +93,7 @@ void pp_lexer_Clear(pp_lexer *plexer)
 ******************************************************************************/
 CCResult pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
 {
+    theNextToken->fallthrough = false;
     for(;;)
     {
         plexer->theTokenSource[0] = plexer->theTokenLen = 0;
@@ -208,16 +213,10 @@ CCResult pp_lexer_GetNextToken (pp_lexer *plexer, pp_token *theNextToken)
             if ( !strncmp( plexer->pcurChar, "/", 1))
             {
                 pp_lexer_SkipComment(plexer, COMMENT_SLASH);
-                //CONSUMECHARACTER;
-                //MAKETOKEN( PP_TOKEN_COMMENT_SLASH );
-                //return CC_OK;
             }
             else if ( !strncmp( plexer->pcurChar, "*", 1))
             {
                 pp_lexer_SkipComment(plexer, COMMENT_STAR);
-                //CONSUMECHARACTER;
-                //MAKETOKEN( PP_TOKEN_COMMENT_STAR_BEGIN );
-                //return CC_OK;
             }
 
             //Now complete the symbol scan for regular symbols.
@@ -872,12 +871,13 @@ CCResult pp_lexer_GetTokenSymbol(pp_lexer *plexer, pp_token *theNextToken)
 ******************************************************************************/
 CCResult pp_lexer_SkipComment(pp_lexer *plexer, COMMENT_TYPE theType)
 {
-
+    bool fall = false;
     if (theType == COMMENT_SLASH)
     {
         do
         {
             SKIPCHARACTER;
+
             //keep going if we hit a backslash-escaped line break
             if (!strncmp( plexer->pcurChar, "\\\r\n", 3))
             {
@@ -896,6 +896,21 @@ CCResult pp_lexer_SkipComment(pp_lexer *plexer, COMMENT_TYPE theType)
                 plexer->theTextPosition.row++;
                 continue;
             }
+
+            // check for "fall through" comment
+            if (!fall && !strnicmp( plexer->pcurChar, "fall", 4))
+            {
+                fall = true;
+            }
+            else if (fall)
+            {
+                if (!strnicmp( plexer->pcurChar, "through", 7) ||
+                    !strnicmp( plexer->pcurChar, "thru", 4))
+                {
+                    plexer->fallthrough = true;
+                }
+            }
+
             //break out if we hit a new line
             if (!strncmp( plexer->pcurChar, "\r\n", 2) ||
                     !strncmp( plexer->pcurChar, "\n", 1) ||
@@ -942,6 +957,21 @@ CCResult pp_lexer_SkipComment(pp_lexer *plexer, COMMENT_TYPE theType)
                 plexer->theTextPosition.col = 0;
                 plexer->theTextPosition.row++;
             }
+
+            // check for "fall through" comment
+            if (!fall && !strnicmp( plexer->pcurChar, "fall", 4))
+            {
+                fall = true;
+            }
+            else if (fall)
+            {
+                if (!strnicmp( plexer->pcurChar, "through", 7) ||
+                    !strnicmp( plexer->pcurChar, "thru", 4))
+                {
+                    plexer->fallthrough = true;
+                }
+            }
+
             SKIPCHARACTER;
         };
     }

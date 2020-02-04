@@ -684,7 +684,7 @@ CCResult pp_parser::stringify()
 {
     const char *source = (const char*) params->retrieve();
     bool in_string = false;
-    pp_token_Init(&token, PP_TOKEN_STRING_LITERAL, "\"", token.theTextPosition, 0);
+    pp_token_Init(&token, PP_TOKEN_STRING_LITERAL, "\"", token.theTextPosition, 0, false);
 
     while(*source)
     {
