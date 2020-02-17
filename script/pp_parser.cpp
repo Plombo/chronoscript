@@ -1218,7 +1218,7 @@ void pp_parser::insertMacro(char *name)
  */
 CCResult pp_parser::insertFunctionMacro(char *name)
 {
-    int numParams, paramCount = 0, paramMacros = 0, parenLevel = 0, type;
+    int numParams, paramCount = 0, paramMacros = 0, parenLevel = 0, bracketLevel = 0, type;
     List<char*> *paramDefs; // note that params is different from self->params
     List<char*> *funcParams;
     char paramBuffer[1024] = "", *tail;
@@ -1246,6 +1246,16 @@ CCResult pp_parser::insertFunctionMacro(char *name)
         {
         case PP_TOKEN_EOF:
             return pp_error(this, "unexpected end of file in parameter list for function '%s'", name);
+        case PP_TOKEN_LBRACKET:
+        case PP_TOKEN_LCURLY:
+            bracketLevel++;
+            write = true;
+            break;
+        case PP_TOKEN_RBRACKET:
+        case PP_TOKEN_RCURLY:
+            bracketLevel--;
+            write = true;
+            break;
         case PP_TOKEN_LPAREN:
             parenLevel++;
             write = true;
@@ -1261,6 +1271,12 @@ CCResult pp_parser::insertFunctionMacro(char *name)
                 {
                     break;
                 }
+            }
+
+            if(bracketLevel > 0)
+            {
+                write = true;
+                break;
             }
 
             // remove trailing whitespace
