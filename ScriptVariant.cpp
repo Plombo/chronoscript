@@ -527,13 +527,6 @@ CCResult ScriptVariant_Add(ScriptVariant *retvar, const ScriptVariant *svar, con
 }
 
 
-// used for constant folding when compiling a script
-CCResult ScriptVariant_AddFolding(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
-{
-    return ScriptVariant_AddGeneric(retvar, svar, rightChild, StrCache_PopPersistent);
-}
-
-
 CCResult ScriptVariant_Sub(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;

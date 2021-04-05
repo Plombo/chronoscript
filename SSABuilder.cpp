@@ -498,7 +498,11 @@ Constant *SSABuildUtil::applyOp(OpCode op, ScriptVariant *src0, ScriptVariant *s
     case OP_LE: success = ScriptVariant_Le(&result, src0, src1); break;
     case OP_SHL: success = ScriptVariant_Shl(&result, src0, src1); break;
     case OP_SHR: success = ScriptVariant_Shr(&result, src0, src1); break;
-    case OP_ADD: success = ScriptVariant_AddFolding(&result, src0, src1); break;
+    case OP_ADD:
+        success = ScriptVariant_Add(&result, src0, src1);
+        if (success == CC_OK && result.vt == VT_STR)
+            StrCache_Ref(result.strVal);
+        break;
     case OP_SUB: success = ScriptVariant_Sub(&result, src0, src1); break;
     case OP_MUL: success = ScriptVariant_Mul(&result, src0, src1); break;
     case OP_DIV: success = ScriptVariant_Div(&result, src0, src1); break;
