@@ -462,8 +462,7 @@ CCResult ScriptVariant_Shr(ScriptVariant *retvar, const ScriptVariant *svar, con
 }
 
 
-inline CCResult ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild,
-                                        int (*stringPopFunc)(int))
+CCResult ScriptVariant_Add(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
 {
     double dbl1, dbl2;
     if (svar->vt == VT_INTEGER && rightChild->vt == VT_INTEGER)
@@ -480,7 +479,7 @@ inline CCResult ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVari
     else if (svar->vt == VT_STR || rightChild->vt == VT_STR)
     {
         int length = ScriptVariant_LengthAsString(svar) + ScriptVariant_LengthAsString(rightChild);
-        int strVal = stringPopFunc(length);
+        int strVal = StrCache_Pop(length);
         char *dst = StrCache_Get(strVal);
         int offset = ScriptVariant_ToString(svar, dst, length + 1);
         ScriptVariant_ToString(rightChild, dst + offset, length - offset + 1);
@@ -518,13 +517,6 @@ inline CCResult ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVari
     }
 
     return CC_OK;
-}
-
-
-// used when running a script
-CCResult ScriptVariant_Add(ScriptVariant *retvar, const ScriptVariant *svar, const ScriptVariant *rightChild)
-{
-    return ScriptVariant_AddGeneric(retvar, svar, rightChild, StrCache_Pop);
 }
 
 
