@@ -60,7 +60,8 @@ void ScriptVariant_ParseStringConstant(ScriptVariant *var, char *str)
     else
     {
         int len = strlen(str);
-        var->strVal = StrCache_PopPersistent(len);
+        var->strVal = StrCache_Pop(len);
+        StrCache_Ref(var->strVal);
         var->vt = VT_STR;
         memcpy(StrCache_Get(var->strVal), str, len + 1);
         StrCache_SetHash(var->strVal);

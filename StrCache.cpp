@@ -268,13 +268,6 @@ int StrCache_Pop(int length)
     return theCache.pop(length);
 }
 
-int StrCache_PopPersistent(int length)
-{
-    int index = theCache.pop(length);
-    theCache.ref(index);
-    return index;
-}
-
 char *StrCache_Get(int index)
 {
     return theCache.get(index);

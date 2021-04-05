@@ -17,7 +17,6 @@ void StrCache_ClearAll();
 void StrCache_Unref(int index);
 void StrCache_Ref(int index);
 int StrCache_Pop(int length);
-int StrCache_PopPersistent(int length);
 char *StrCache_Get(int index);
 int StrCache_Len(int index);
 const StrCacheEntry *StrCache_GetEntry(int index);
