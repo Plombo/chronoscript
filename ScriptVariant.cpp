@@ -488,9 +488,30 @@ inline CCResult ScriptVariant_AddGeneric(ScriptVariant *retvar, const ScriptVari
         retvar->strVal = strVal;
         retvar->vt = VT_STR;
     }
+    else if (svar->vt == VT_LIST && rightChild->vt == VT_LIST)
+    {
+        ScriptList *list1 = ObjectHeap_GetList(svar->objVal),
+                   *list2 = ObjectHeap_GetList(rightChild->objVal);
+        int dstIndex = ObjectHeap_CreateNewList(list1->size() + list2->size());
+        size_t i, j;
+        ScriptVariant value;
+        for (i = 0, j = 0; i < list1->size(); i++, j++)
+        {
+            list1->get(&value, i);
+            ObjectHeap_SetListMember(dstIndex, j, &value);
+        }
+        for (i = 0; i < list2->size(); i++, j++)
+        {
+            list2->get(&value, i);
+            ObjectHeap_SetListMember(dstIndex, j, &value);
+        }
+
+        retvar->objVal = dstIndex;
+        retvar->vt = VT_LIST;
+    }
     else
     {
-        printf("Invalid operands for addition (must be number + number or string + string)\n");
+        printf("Invalid operands for addition (must be number + number, list + list, or string + something)\n");
         ScriptVariant_Clear(retvar);
         return CC_FAIL;
     }
